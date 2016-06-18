@@ -12,8 +12,8 @@ namespace shared_mem {
 
 #define MEMPAGE_NAME_MAX_LEN 20
 
-enum ERROR_CODES {
-  OK = 0,
+enum ErrorCodes {
+  NO_ERROR = 0,
   RECORD_SIZE_TO_BIG = 1,
   NO_SPACE_TO_INSERT = 2,
   CANT_FIND_PAGE = 3
@@ -31,17 +31,22 @@ struct TablePageIndexElement {
   char page_name[MEMPAGE_NAME_MAX_LEN];
 };
 
-class OperationResult {
+template <typename ELEMENT_T>
+class ElementPointer {
  public:
-  OperationResult(ERROR_CODES error) : error(error){};
+  ElementPointer(Table<ELEMENT_T>& table, ErrorCodes error) 
+    : error(error), page_name(""), index(0), size(0) , table(table) {};
+  ElementPointer(Table<ELEMENT_T>& table, std::string page_name, uint32_t index, uint32_t size)
+      : error(NO_ERROR), page_name(page_name), index(index), size(size), table(table) {};
 
-  OperationResult(std::string page_name, uint32_t index, uint32_t size)
-      : page_name(page_name), index(index), size(size), error(OK){};
-
-  std::string page_name;
-  uint32_t index;
-  uint32_t size;
-  ERROR_CODES error;
+  ELEMENT_T* get_data();
+ 
+  const ErrorCodes error;
+  const std::string page_name;
+  const uint32_t index;
+  const uint32_t size;
+ private:
+ 	Table<ELEMENT_T>& table;
 };
 
 template <typename ELEMENT_T>
@@ -67,12 +72,17 @@ class Table {
   // cleanup all shared memory mappings on exit
   ~Table();
 
-  OperationResult addRecord(ELEMENT_T* el, uint32_t size = 1,
-                            uint32_t lifetime_seconds = 0);
+  ElementPointer<ELEMENT_T> addRecord(ELEMENT_T* el, uint32_t size = 1,
+                           uint32_t lifetime_seconds = 0);
   void process(TableProcessor<ELEMENT_T>* result);
   void cleanup();
 
  private:
+  SharedMemoryPage<ELEMENT_T>* localGetPageByName(
+      std::string page_name_to_look);
+  SharedMemoryPage<ELEMENT_T>* getPageByName(std::string page_name_to_look);
+  
+  locks::CriticalSection* lock;
   uint16_t table_max_pages;
   uint16_t last_known_index_length;
   uint32_t max_elements_in_page;
@@ -80,13 +90,11 @@ class Table {
   SharedMemoryPage<TablePageIndexElement>* table_index;
   uint32_t record_expire_seconds;
 
-  SharedMemoryPage<ELEMENT_T>* localGetPageByName(
-      std::string page_name_to_look);
-  SharedMemoryPage<ELEMENT_T>* getPageByName(std::string page_name_to_look);
-  locks::CriticalSection* lock;
-
   template <class T>
   friend class SharedMemoryPage;
+
+  template <class T>
+  friend class ElementPointer;
 };
 
 template <typename ELEMENT_T>
@@ -113,12 +121,13 @@ class SharedMemoryPage {
 
   static void unlink(std::string page_name) {
     std::cout << "UNLINK: " << page_name << std::endl;
-    // The operation of shm_unlink() is analogous to unlink(2): it removes a
+    // The operation of shm_unlink() is analogious to unlink(2): it removes a
     // shared memory object name, and, once all processes have unmapped the
     // object, de-allocates and destroys the contents of the associated memory
     // region. http://linux.die.net/man/3/shm_open
     shm_unlink(page_name.c_str());
   }
+
   template <class T>
   friend class Table;
 };

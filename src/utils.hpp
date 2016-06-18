@@ -41,5 +41,14 @@ std::string concat_string(std::vector<std::string> msgs);
   utils: search by key in object storage
 -----------------------------------------------------*/
 std::string findValueInObjs(std::vector<Object> objs, std::string name);
+
+/*-----------------------------------------------------
+  utils: search by key in object storage
+-----------------------------------------------------*/
+std::string toLowerCase(std::string);
+std::string toUpperCase(std::string);
+
+
+
 }
 #endif

@@ -21,6 +21,7 @@ class DealsServer : public srv::TCPServer<Context> {
   void on_data(Connection& conn);
 
   void addDeal(Connection& conn);
+  void getTop(Connection& conn);
 
 
   deals::DealsDatabase db;

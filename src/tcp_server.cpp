@@ -10,7 +10,8 @@ namespace srv {
 TCPConnection::TCPConnection(const int accept_sockfd)
     : created_time(timing::getTimestampSec()), connection_alive(false) {
 
-  // std::cout << "TCPConnection() accept_sockfd:" << accept_sockfd << std::endl;
+ // std::cout << "TCPConnection() accept_sockfd:" << accept_sockfd << std::endl;
+
   clilen = sizeof(cli_addr);
   sockfd = accept(accept_sockfd, (struct sockaddr*)&cli_addr, &clilen);
 
@@ -27,8 +28,6 @@ TCPConnection::TCPConnection(const int accept_sockfd)
 
   fcntl(sockfd, F_SETFL, O_NONBLOCK);
   connection_alive = true;
-
-
 }
 
 /*----------------------------------------------------------------------
@@ -83,8 +82,9 @@ void TCPConnection::network_write() {
 
   if (msg_length > NET_PACKET_SIZE) {
     std::cout << "shrink data_out" << std::endl;
-    std::string new_data = data_out.substr(NET_PACKET_SIZE);
-    data_out.swap(new_data);
+    // std::string new_data = data_out.substr(NET_PACKET_SIZE);
+    // data_out.swap(new_data);
+    data_out = data_out.substr(NET_PACKET_SIZE);;
   } else {
     // we are finished with transmitting response
     // dont closing connection here cause it could be a dialog...
@@ -101,17 +101,27 @@ std::string TCPConnection::get_data() { return data_in; }
 /*----------------------------------------------------------------------
 * TCPConnection is_dead
 *----------------------------------------------------------------------*/
-bool TCPConnection::is_dead(TCPConnection& conn) {
-  if (conn.has_something_to_send()) {
+/*bool TCPConnection::is_dead(TCPConnection* conn) {
+  std::cout << "has_something_to_send:" << conn->has_something_to_send() 
+            << " connection_alive:" << conn->connection_alive << std::endl;
+
+  if(conn == nullptr){
+    std::cout << "ERROR TCPConnection::is_dead() conn == nullptr\n";
     return false;
   }
-  return !conn.connection_alive;
-}
+  if (conn->has_something_to_send()) {
+    return false;
+  }
+  return !conn->connection_alive;
+}*/
 
 /*----------------------------------------------------------------------
 * TCPConnection is_alive
 *----------------------------------------------------------------------*/
 bool TCPConnection::is_alive() {
+  if (has_something_to_send()) {
+    return true;
+  }
   return connection_alive;
 }
 

@@ -1,4 +1,6 @@
 #include <cinttypes>
+#include <algorithm>
+
 #include "utils.hpp"
 
 namespace utils {
@@ -47,6 +49,21 @@ std::string concat_string(std::vector<std::string> msgs) {
     concated_msg += *msg;
   }
   return concated_msg;
+}
+
+/*------------------------------------------------------------------
+* util: lowercase
+------------------------------------------------------------------*/
+std::string toLowerCase(std::string text){
+  // transform lowercase
+  std::transform(text.begin(), text.end(), text.begin(), ::tolower);
+  return text;
+}
+
+std::string toUpperCase(std::string text){
+  // transform lowercase
+  std::transform(text.begin(), text.end(), text.begin(), ::toupper);
+  return text;
 }
 
 /*-----------------------------------------------------

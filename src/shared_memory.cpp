@@ -17,7 +17,7 @@ struct TestInfo {
 ** ----------------------------------------------------------*/
 class TestResult : public TableProcessor<TestInfo> {
  public:
- 	TestResult(Table<TestInfo>* table): table(table){}
+  TestResult(Table<TestInfo>* table) : table(table) {}
 
   bool process_function(TestInfo* elements, uint32_t size) {
     // std::cout << "size:" << size << std::endl;
@@ -40,9 +40,7 @@ class TestResult : public TableProcessor<TestInfo> {
     return true;
   }
 
-  void go(){
-  	table->process(this);
-  }
+  void go() { table->process(this); }
 
   Table<TestInfo>* table;
   std::vector<uint32_t> found;
@@ -68,13 +66,14 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number,
   uint32_t idx;
   for (idx = 0; idx < number; idx++) {
     TestInfo test = {numval};
-    OperationResult result = t->addRecord(&test, 1, lifetime);
+    ElementPointer<TestInfo> result = t->addRecord(&test, 1, lifetime);
 
     if (result.error) {
       std::cout << "ERROR:" << result.error << std::endl;
     } else {
       // std::cout << "OK:" << result.size << std::endl;
     }
+    assert(result.error == NO_ERROR);
   }
   // std::cout << "ADDED " << idx << " records" << std::endl;
 }
@@ -170,11 +169,9 @@ int test() {
 
   return 0;
 }
-
 }
 
-// int main(){
-//   shared_mem::test();
-// }
-
-
+int mainss(){
+  shared_mem::test();
+  return 0;
+}

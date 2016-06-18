@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cassert>
 #include <cinttypes>
 
@@ -40,9 +39,7 @@ ParserResult HttpHeaders::parse(std::string http_message) {
 
     utils::Object one_header;
     one_header.name = line->substr(0, hpos);
-    // transform lowercase
-    std::transform(one_header.name.begin(), one_header.name.end(),
-                   one_header.name.begin(), ::tolower);
+    one_header.name = utils::toLowerCase(one_header.name);
 
     // remove space if it exists after ':'
     if ((*line)[hpos + 1] == ' ') {
@@ -419,7 +416,7 @@ void test() {
 }
 }
 
-int maiwn() {
+int maidn() {
   http::test();
   return 0;
 }

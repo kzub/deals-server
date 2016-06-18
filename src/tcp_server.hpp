@@ -54,10 +54,11 @@ typedef std::string NetData;
 class TCPConnection {
  protected:
   TCPConnection(const int sockfd);
+
  public:
   ~TCPConnection();
 
-  static bool is_dead(TCPConnection& conn);
+  // static bool is_dead(TCPConnection* conn);
 
   void close();
   void close(std::string);
@@ -66,13 +67,14 @@ class TCPConnection {
   std::string get_data();
   bool has_something_to_send();
   uint16_t get_socket();
-  const uint32_t created_time;
 
   // -- actual net send/recv --
   void network_read();
   void network_write();
   void network_data_processed();
   std::string get_client_ip();
+
+  const uint32_t created_time;
 
  private:
   std::string client_addr;
@@ -108,12 +110,11 @@ class TCPServer {
  private:
   void accept_new_connection();
 
-  std::list<Connection> connections;
+  std::list<Connection*> connections;
 
   int srv_sockfd;
   struct sockaddr_in serv_addr;
 };
-
 
 // IMPLEMENTAION ->>>>>>>>>>>>>>>>>>>>>>>
 
@@ -144,13 +145,13 @@ TCPServer<Context>::TCPServer(uint16_t port) {
 
   int res = listen(srv_sockfd, ACCEPT_QUEUE_LENGTH);
 
-  if(res != 0){
-  	perror("ERROR on listening");
+  if (res != 0) {
+    perror("ERROR on listening");
     exit(-1);
   }
 
-  std::cout << "listen(max:" << ACCEPT_QUEUE_LENGTH << ") srv_sockfd:" << srv_sockfd
-            << std::endl;
+  std::cout << "listen(max:" << ACCEPT_QUEUE_LENGTH
+            << ") srv_sockfd:" << srv_sockfd << std::endl;
   fcntl(srv_sockfd, F_SETFL, O_NONBLOCK);
 }
 
@@ -163,12 +164,13 @@ void TCPServer<Context>::accept_new_connection() {
   Connection* conn = new Connection(srv_sockfd);
 
   if (!conn->is_alive()) {
-  	std::cout << "accept_new_connection() NOT ALIVE:" << srv_sockfd << std::endl;
+    std::cout << "accept_new_connection() NOT ALIVE:" << srv_sockfd
+              << std::endl;
     delete conn;
     return;
   }
 
-  connections.push_back(*conn);
+  connections.push_back(conn);
   // call virtual metod to let parent class know about new connection
   // and init connection context
   on_connect(*conn);
@@ -181,9 +183,24 @@ template <typename Context>
 void TCPServer<Context>::process() {
   uint32_t current_time = timing::getTimestampSec();
 
+  // ------------------------------------------------------
   // remove all destroyed handlers from polling cycle
-  connections.remove_if(Connection::is_dead);
+  std::list<Connection*> alive_connections;
 
+  for (typename std::list<Connection*>::iterator conn_it = connections.begin();
+       conn_it != connections.end(); ++conn_it) {
+    Connection* conn = *conn_it;
+
+    if (!conn->is_alive()) {
+      delete conn;
+    } else {
+      alive_connections.push_back(conn);
+    }
+  }
+  // update live connections list
+  connections = alive_connections;
+
+  // ------------------------------------------------------
   // setup descriptors we will be looking for
   nfds_t nfds = connections.size() + 1;
   pollfd pfd[nfds];
@@ -196,16 +213,17 @@ void TCPServer<Context>::process() {
   // and all reading/writing sockets
   int i = 1;
 
-  for (typename std::list<Connection>::iterator conn = connections.begin();
-       conn != connections.end(); ++conn, ++i) {
+  for (typename std::list<Connection *>::iterator conn_it = connections.begin();
+       conn_it != connections.end(); ++conn_it, ++i) {
+    Connection* conn = *conn_it;
+    p_connections[i] = conn;
+
     pfd[i].fd = conn->get_socket();
     pfd[i].events = POLLIN;
 
     if (conn->has_something_to_send()) {
       pfd[i].events |= POLLOUT;
     }
-
-    p_connections[i] = &(*conn);
 
     if (current_time - conn->created_time > MAX_CONNECTION_LIFETIME_SEC) {
       std::cerr << "MAX_CONNECTION_LIFETIME_SEC:" << MAX_CONNECTION_LIFETIME_SEC
@@ -215,6 +233,7 @@ void TCPServer<Context>::process() {
   }
   // std::cout << "connections length:" << i << std::endl;
 
+  // ------------------------------------------------------
   // wait for incoming event
   int retval = poll(pfd, nfds, POLL_TIMEOUT_MS);
   // std::cout << "poll res:" << retval << std::endl;
@@ -230,6 +249,8 @@ void TCPServer<Context>::process() {
     return;
   }
 
+  // ------------------------------------------------------
+  // somebody need to be procesed. let's search this one
   // i == 0 => main socket listening for new connections
   for (i = 1; i < nfds; i++) {
     if (pfd[i].revents & POLLIN) {
@@ -249,6 +270,7 @@ void TCPServer<Context>::process() {
     }
   }
 
+  // ------------------------------------------------------
   // if there are new connections -> accept them
   // do it after read/write processing because
   // accept new connection will add nec connection to the std::list<Connection>
@@ -256,6 +278,5 @@ void TCPServer<Context>::process() {
     accept_new_connection();
   }
 }
-
 }
 #endif

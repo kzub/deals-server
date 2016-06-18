@@ -10,11 +10,11 @@
 #include "shared_memory.hpp"
 #include "timing.hpp"
 
+namespace shared_mem {
+
 /*-----------------------------------------------------------------
 * TABLE
 *-----------------------------------------------------------------*/
-namespace shared_mem {
-
 // Table Constructor ----------------------------------------------
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
@@ -30,6 +30,7 @@ Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
               << "(max:" << MEMPAGE_NAME_MAX_LEN - 6 << ")" << std::endl;
     throw "TABLE_NAME_TOO_LONG";
   }
+
   // open existed index or make new one
   table_index =
       new SharedMemoryPage<TablePageIndexElement>(table_name, table_max_pages);
@@ -95,8 +96,8 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
   }
 
   uint16_t cleaning_idx = last_not_expired_idx + 1;
-  std::cout << "(PROCESS) cleaning_idx:" << cleaning_idx << " idx:" << idx
-            << std::endl;
+  // std::cout << "(PROCESS) cleaning_idx:" << cleaning_idx << " idx:" << idx
+  //          << std::endl;
 
   // remove expired pages at the table end
   // first page will never released
@@ -157,7 +158,7 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
 
   for (it = records_to_scan.begin(); it != records_to_scan.end(); ++it) {
     page_to_process = getPageByName((*it).page_name);
-    std::cout << "PAGE:" << it - records_to_scan.begin() << std::endl;
+    // std::cout << "PAGE:" << it - records_to_scan.begin() << std::endl;
     continue_iteration = processor->process_function(
         page_to_process->getElements(),
         max_elements_in_page - (*it).page_elements_available);
@@ -202,12 +203,11 @@ void Table<ELEMENT_T>::cleanup() {
 
 // Table addRecord ----------------------------------------------
 template <typename ELEMENT_T>
-OperationResult Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
+ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
                                             uint32_t records_cout,
                                             uint32_t lifetime_seconds) {
   if (records_cout > max_elements_in_page) {
-    OperationResult result(RECORD_SIZE_TO_BIG);
-    return result;
+    return ElementPointer<ELEMENT_T> (*this, RECORD_SIZE_TO_BIG);
   }
 
   std::string insert_page_name;
@@ -291,8 +291,7 @@ OperationResult Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
   lock->exit();
 
   if (insert_page_name.length() == 0) {
-    OperationResult result(NO_SPACE_TO_INSERT);
-    return result;
+    return ElementPointer<ELEMENT_T> (*this, NO_SPACE_TO_INSERT);
   }
 
   // now we have page to insert
@@ -301,8 +300,7 @@ OperationResult Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
   SharedMemoryPage<ELEMENT_T>* page = getPageByName(insert_page_name);
 
   if (!page->isAllocated()) {
-    OperationResult result(CANT_FIND_PAGE);
-    return result;
+    return ElementPointer<ELEMENT_T> (*this, CANT_FIND_PAGE);
   }
 
   // copy array of (records_cout) elements to shared memeory
@@ -313,8 +311,7 @@ OperationResult Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
   // << " cout:" << records_cout <<	" size:" <<
   // sizeof(ELEMENT_T)*records_cout
   // << std::endl;
-  OperationResult result(insert_page_name, insert_element_idx, records_cout);
-  return result;
+  return ElementPointer<ELEMENT_T> (*this, insert_page_name, insert_element_idx, records_cout);
 }
 
 // Table localGetPageByName -------------------------------------
@@ -456,4 +453,17 @@ template <typename ELEMENT_T>
 bool SharedMemoryPage<ELEMENT_T>::isAllocated() {
   return shared_memory != nullptr;
 }
+
+/*-----------------------------------------------------------------
+* ElementPointer get_data
+*-----------------------------------------------------------------*/
+template <typename ELEMENT_T>
+ELEMENT_T* ElementPointer<ELEMENT_T>::get_data(){
+	if(error != NO_ERROR){
+		return nullptr;
+	}
+
+	return table.getPageByName(page_name)->getElements() + index;
+}
+
 }
