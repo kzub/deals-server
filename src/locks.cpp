@@ -124,11 +124,13 @@ void testf() {
 
   lock.exit();
 }
-int test() {
+
+int unit_test() {
   try {
     testf();
   } catch (...) {
     std::cout << "catched" << std::endl;
+    throw "lock test error";
   }
 
   return 0;

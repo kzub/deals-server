@@ -55,6 +55,6 @@ class TimeLord {
   const uint32_t ticks_in_second;
 };
 
-void test();
+void unit_test();
 }
 #endif

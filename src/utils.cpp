@@ -1,5 +1,5 @@
-#include <cinttypes>
 #include <algorithm>
+#include <cinttypes>
 
 #include "utils.hpp"
 
@@ -11,15 +11,12 @@ std::string ObjectMap::operator[](std::string name) {
   return findValueInObjs(mapStorage, name);
 }
 
-void ObjectMap::add_object(Object obj){
-  mapStorage.push_back(obj);
-}
+void ObjectMap::add_object(Object obj) { mapStorage.push_back(obj); }
 
 /*-----------------------------------------------------
   split strings by delimiter and put it into vector
 -----------------------------------------------------*/
-std::vector<std::string> split_string(std::string text,
-                                      std::string delimiter) {
+std::vector<std::string> split_string(std::string text, std::string delimiter) {
   std::vector<std::string> result;
 
   while (text.length()) {
@@ -54,13 +51,13 @@ std::string concat_string(std::vector<std::string> msgs) {
 /*------------------------------------------------------------------
 * util: lowercase
 ------------------------------------------------------------------*/
-std::string toLowerCase(std::string text){
+std::string toLowerCase(std::string text) {
   // transform lowercase
   std::transform(text.begin(), text.end(), text.begin(), ::tolower);
   return text;
 }
 
-std::string toUpperCase(std::string text){
+std::string toUpperCase(std::string text) {
   // transform lowercase
   std::transform(text.begin(), text.end(), text.begin(), ::toupper);
   return text;

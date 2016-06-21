@@ -6,7 +6,22 @@
 
 namespace deals {
 
+#define DEALS_EXPIRES 60
+
+#define DEALINFO_TABLENAME "DealsInfo"
+#define DEALINFO_PAGES 1000
+#define DEALINFO_ELEMENTS 10000
+
+#define DEALDATA_TABLENAME "DealsData"
+#define DEALDATA_PAGES 10000
+#define DEALDATA_ELEMENTS 3200000
+
 void unit_test();
+
+struct Flags {
+  bool direct : 1;
+  bool overriden : 1;
+};
 
 namespace i {
 struct DealInfo {
@@ -15,7 +30,7 @@ struct DealInfo {
   uint32_t destination;
   uint32_t departure_date;
   uint32_t return_date;
-  uint8_t flags;  // direct?
+  Flags flags;
   uint32_t price;
   char page_name[MEMPAGE_NAME_MAX_LEN];
   uint32_t index;
@@ -30,12 +45,12 @@ struct DealInfo {
   std::string destination;
   std::string departure_date;
   std::string return_date;
-  uint8_t flags;  // direct?
+  Flags flags;
   uint32_t price;
   std::string data;
 };
 
-struct Int32Interval {
+struct DateInterval {
   uint32_t from;
   uint32_t to;
 };
@@ -67,15 +82,14 @@ class DealsDatabase {
                uint32_t departure_date, uint32_t return_date,
                bool direct_flight, uint32_t price, std::string data);
 
-  std::string searchForCheapestEverJSON(std::string origin,
-                                    std::string destinations,
-                                    uint32_t max_lifetime_sec);
-
-  std::vector<DealInfo> searchForCheapestEver(std::string origin,
-                                              std::string destinations,
-                                              uint32_t max_lifetime_sec);
+  std::vector<DealInfo> searchForCheapestEver(
+      std::string origin, std::string destinations,
+      std::string departure_date_from, std::string departure_date_to,
+      std::string return_date_from, std::string return_date_to,
+      bool direct_flights, bool stops_flights, uint32_t max_lifetime_sec);
 
   void truncate();
+
  private:
   shared_mem::Table<i::DealInfo>* db_index;
   shared_mem::Table<i::DealData>* db_data;
@@ -111,6 +125,10 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
 
   void origin(std::string origin);
   void destinations(std::string destinations);
+  void departure_dates(std::string departure_date_from,
+                       std::string departure_date_to);
+  void return_dates(std::string return_date_from, std::string return_date_to);
+  void direct_flights(bool direct_flights, bool stops_flights);
   void max_lifetime_sec(uint32_t max_lifetime);
 
   bool filter_origin;
@@ -121,13 +139,17 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
   std::vector<uint32_t> filter_destination_values_vector;
 
   bool filter_departure_date;
-  Int32Interval filter_departure_date_values;
+  DateInterval filter_departure_date_values;
 
   bool filter_return_date;
-  Int32Interval filter_return_date_values;
+  DateInterval filter_return_date_values;
 
   bool filter_timestamp;
   uint32_t filter_timestamp_value;
+
+  bool filter_flags;
+  bool direct_flights_flag;
+  bool stops_flights_flag;
 
   int16_t filter_limit;
   int16_t deals_slots_used;

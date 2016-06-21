@@ -47,8 +47,5 @@ std::string findValueInObjs(std::vector<Object> objs, std::string name);
 -----------------------------------------------------*/
 std::string toLowerCase(std::string);
 std::string toUpperCase(std::string);
-
-
-
 }
 #endif

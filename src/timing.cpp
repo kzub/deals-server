@@ -85,7 +85,7 @@ void Timer::report() {
 //---------------------------------------------------
 TimeLord::operator uint32_t() { return tick_counter / ticks_in_second; }
 
-TimeLord& TimeLord::operator++() {
+TimeLord &TimeLord::operator++() {
   tick_counter++;
 
   if (tick_counter % ticks_in_second == 0) {
@@ -96,7 +96,7 @@ TimeLord& TimeLord::operator++() {
 }
 
 //---------------------------------------------------
-TimeLord& TimeLord::operator+=(uint32_t step) {
+TimeLord &TimeLord::operator+=(uint32_t step) {
   tick_counter += step;
 
   if (tick_counter % ticks_in_second == 0) {
@@ -113,7 +113,7 @@ bool TimeLord::test(uint32_t x) {
 }
 
 //---------------------------------------------------
-void test() {
+void unit_test() {
   Timer timer("TEST");
 
   timer.tick("stage1");

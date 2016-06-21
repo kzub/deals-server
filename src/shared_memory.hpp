@@ -34,19 +34,25 @@ struct TablePageIndexElement {
 template <typename ELEMENT_T>
 class ElementPointer {
  public:
-  ElementPointer(Table<ELEMENT_T>& table, ErrorCodes error) 
-    : error(error), page_name(""), index(0), size(0) , table(table) {};
-  ElementPointer(Table<ELEMENT_T>& table, std::string page_name, uint32_t index, uint32_t size)
-      : error(NO_ERROR), page_name(page_name), index(index), size(size), table(table) {};
+  ElementPointer(Table<ELEMENT_T>& table, ErrorCodes error)
+      : error(error), page_name(""), index(0), size(0), table(table){};
+  ElementPointer(Table<ELEMENT_T>& table, std::string page_name, uint32_t index,
+                 uint32_t size)
+      : error(NO_ERROR),
+        page_name(page_name),
+        index(index),
+        size(size),
+        table(table){};
 
   ELEMENT_T* get_data();
- 
+
   const ErrorCodes error;
   const std::string page_name;
   const uint32_t index;
   const uint32_t size;
+
  private:
- 	Table<ELEMENT_T>& table;
+  Table<ELEMENT_T>& table;
 };
 
 template <typename ELEMENT_T>
@@ -73,7 +79,7 @@ class Table {
   ~Table();
 
   ElementPointer<ELEMENT_T> addRecord(ELEMENT_T* el, uint32_t size = 1,
-                           uint32_t lifetime_seconds = 0);
+                                      uint32_t lifetime_seconds = 0);
   void process(TableProcessor<ELEMENT_T>* result);
   void cleanup();
 
@@ -81,7 +87,7 @@ class Table {
   SharedMemoryPage<ELEMENT_T>* localGetPageByName(
       std::string page_name_to_look);
   SharedMemoryPage<ELEMENT_T>* getPageByName(std::string page_name_to_look);
-  
+
   locks::CriticalSection* lock;
   uint16_t table_max_pages;
   uint16_t last_known_index_length;

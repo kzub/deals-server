@@ -40,6 +40,8 @@ class CriticalSection : public Lock {
  private:
   bool unlock_needed;
 };
+
+int unit_test();
 }
 
 #endif

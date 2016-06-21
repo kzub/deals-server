@@ -269,7 +269,7 @@ void subtest() {
                 sizeof(test_result2)) == 0);
 }
 
-void test() {
+void unit_test() {
   /// TESTs
   http::HttpParser parser;
 
@@ -417,6 +417,6 @@ void test() {
 }
 
 int maidn() {
-  http::test();
+  http::unit_test();
   return 0;
 }

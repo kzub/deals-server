@@ -82,11 +82,12 @@ class HttpParser {
 class HttpResponse {
  public:
   HttpResponse(uint16_t status_code, std::string reason_phrase);
-  HttpResponse(uint16_t status_code, std::string reason_phrase, std::string body);
+  HttpResponse(uint16_t status_code, std::string reason_phrase,
+               std::string body);
 
   void add_header(std::string name, std::string value);
   void write(std::string msg);
-  
+
   operator std::string();
 
  private:
@@ -96,7 +97,7 @@ class HttpResponse {
   std::vector<std::string> body;
 };
 
-void test();
+void unit_test();
 }
 
 #endif

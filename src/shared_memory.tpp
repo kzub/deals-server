@@ -1,7 +1,7 @@
 #include <cinttypes>
+#include <cstring>
 #include <iostream>
 #include <vector>
-#include <cstring>
 
 #include <errno.h>
 #include <fcntl.h> /* For O_* constants */
@@ -190,6 +190,8 @@ void Table<ELEMENT_T>::cleanup() {
       // SharedMemoryPage<ELEMENT_T>* page =
       // getPageByName(index_current->page_name);
       SharedMemoryPage<ELEMENT_T>::unlink(index_current->page_name);
+      // mark as deleted
+      index_current->expire_at = 0;
     } else {
       // stop here. next pages are unused
       break;
@@ -203,11 +205,11 @@ void Table<ELEMENT_T>::cleanup() {
 
 // Table addRecord ----------------------------------------------
 template <typename ELEMENT_T>
-ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
-                                            uint32_t records_cout,
-                                            uint32_t lifetime_seconds) {
+ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(
+    ELEMENT_T* records_pointer, uint32_t records_cout,
+    uint32_t lifetime_seconds) {
   if (records_cout > max_elements_in_page) {
-    return ElementPointer<ELEMENT_T> (*this, RECORD_SIZE_TO_BIG);
+    return ElementPointer<ELEMENT_T>(*this, RECORD_SIZE_TO_BIG);
   }
 
   std::string insert_page_name;
@@ -291,7 +293,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   lock->exit();
 
   if (insert_page_name.length() == 0) {
-    return ElementPointer<ELEMENT_T> (*this, NO_SPACE_TO_INSERT);
+    return ElementPointer<ELEMENT_T>(*this, NO_SPACE_TO_INSERT);
   }
 
   // now we have page to insert
@@ -300,7 +302,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   SharedMemoryPage<ELEMENT_T>* page = getPageByName(insert_page_name);
 
   if (!page->isAllocated()) {
-    return ElementPointer<ELEMENT_T> (*this, CANT_FIND_PAGE);
+    return ElementPointer<ELEMENT_T>(*this, CANT_FIND_PAGE);
   }
 
   // copy array of (records_cout) elements to shared memeory
@@ -311,7 +313,8 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   // << " cout:" << records_cout <<	" size:" <<
   // sizeof(ELEMENT_T)*records_cout
   // << std::endl;
-  return ElementPointer<ELEMENT_T> (*this, insert_page_name, insert_element_idx, records_cout);
+  return ElementPointer<ELEMENT_T>(*this, insert_page_name, insert_element_idx,
+                                   records_cout);
 }
 
 // Table localGetPageByName -------------------------------------
@@ -458,12 +461,11 @@ bool SharedMemoryPage<ELEMENT_T>::isAllocated() {
 * ElementPointer get_data
 *-----------------------------------------------------------------*/
 template <typename ELEMENT_T>
-ELEMENT_T* ElementPointer<ELEMENT_T>::get_data(){
-	if(error != NO_ERROR){
-		return nullptr;
-	}
+ELEMENT_T* ElementPointer<ELEMENT_T>::get_data() {
+  if (error != NO_ERROR) {
+    return nullptr;
+  }
 
-	return table.getPageByName(page_name)->getElements() + index;
+  return table.getPageByName(page_name)->getElements() + index;
 }
-
 }

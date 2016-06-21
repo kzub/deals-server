@@ -78,7 +78,7 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number,
   // std::cout << "ADDED " << idx << " records" << std::endl;
 }
 
-int test() {
+int unit_test() {
   Table<TestInfo> index("TT", 1000, 100, 60);
   index.cleanup();
   /* ----------------------------------------------------------
@@ -171,7 +171,7 @@ int test() {
 }
 }
 
-int mainss(){
-  shared_mem::test();
+int mainss() {
+  shared_mem::unit_test();
   return 0;
 }

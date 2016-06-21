@@ -9,18 +9,18 @@ namespace srv {
 *----------------------------------------------------------------------*/
 TCPConnection::TCPConnection(const int accept_sockfd)
     : created_time(timing::getTimestampSec()), connection_alive(false) {
-
- // std::cout << "TCPConnection() accept_sockfd:" << accept_sockfd << std::endl;
+  // std::cout << "TCPConnection() accept_sockfd:" << accept_sockfd <<
+  // std::endl;
 
   clilen = sizeof(cli_addr);
-  sockfd = accept(accept_sockfd, (struct sockaddr*)&cli_addr, &clilen);
+  sockfd = accept(accept_sockfd, (struct sockaddr *)&cli_addr, &clilen);
 
   if (sockfd == -1) {
     if (errno == EAGAIN) {
       std::cout << "EAGIN (no incoming connection)" << std::endl;
       return;
     }
-    
+
     perror("ERROR on accept");
 
     return;
@@ -84,7 +84,8 @@ void TCPConnection::network_write() {
     std::cout << "shrink data_out" << std::endl;
     // std::string new_data = data_out.substr(NET_PACKET_SIZE);
     // data_out.swap(new_data);
-    data_out = data_out.substr(NET_PACKET_SIZE);;
+    data_out = data_out.substr(NET_PACKET_SIZE);
+    ;
   } else {
     // we are finished with transmitting response
     // dont closing connection here cause it could be a dialog...
@@ -102,7 +103,7 @@ std::string TCPConnection::get_data() { return data_in; }
 * TCPConnection is_dead
 *----------------------------------------------------------------------*/
 /*bool TCPConnection::is_dead(TCPConnection* conn) {
-  std::cout << "has_something_to_send:" << conn->has_something_to_send() 
+  std::cout << "has_something_to_send:" << conn->has_something_to_send()
             << " connection_alive:" << conn->connection_alive << std::endl;
 
   if(conn == nullptr){
@@ -124,7 +125,6 @@ bool TCPConnection::is_alive() {
   }
   return connection_alive;
 }
-
 
 /*----------------------------------------------------------------------
 * TCPConnection close
@@ -163,10 +163,11 @@ uint16_t TCPConnection::get_socket() { return sockfd; }
 std::string TCPConnection::get_client_ip() {
   char buf[INET_ADDRSTRLEN];
 
-  const char *res = inet_ntop(AF_INET, &(cli_addr.sin_addr), (char*)buf, INET_ADDRSTRLEN);
-  
-  if(res != nullptr){
-    return std::string(buf) + ":" + std::to_string(cli_addr.sin_port);    
+  const char *res =
+      inet_ntop(AF_INET, &(cli_addr.sin_addr), (char *)buf, INET_ADDRSTRLEN);
+
+  if (res != nullptr) {
+    return std::string(buf) + ":" + std::to_string(cli_addr.sin_port);
   }
 
   perror("cant resolve ip address\n");

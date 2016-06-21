@@ -1,6 +1,7 @@
 #include <sys/mman.h>
 #include <cassert>
 #include <cinttypes>
+#include <climits>
 #include <iostream>
 
 #include "deals.hpp"
@@ -15,9 +16,9 @@ namespace deals {
 **  Check results
 ** ----------------------------------------------------------*/
 std::vector<i::DealInfo> DealsSearchQuery::exec() {
-  if (!filter_timestamp) {
-    std::cout << "WARNING no timestamp specified" << std::endl;
-  }
+  // if (!filter_timestamp) {
+  //   std::cout << "WARNING no timestamp specified" << std::endl;
+  // }
 
   // -------------------------------------------
   // build destination's fixed array (for search)
@@ -26,11 +27,10 @@ std::vector<i::DealInfo> DealsSearchQuery::exec() {
   }
 
   // we need this definition scope to let variable live till the end of
-  // function
+  // function (for search speed)
   uint32_t destination_storage[filter_limit];
-
+  filter_destination_values = destination_storage;
   if (filter_destination) {
-    filter_destination_values = destination_storage;
     std::vector<uint32_t>::iterator dst;
     uint32_t counter = 0;
     for (dst = filter_destination_values_vector.begin();
@@ -41,6 +41,8 @@ std::vector<i::DealInfo> DealsSearchQuery::exec() {
 
   // -------------------------------------------
   // define storage to write founded deals
+  // use autoallocation instead "new" operator
+  // for search speed
   i::DealInfo deals_storage[filter_limit];
   // initialize pointer
   result_deals = deals_storage;
@@ -75,6 +77,10 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
   for (uint32_t idx = 0; idx < size; idx++) {
     const i::DealInfo &deal = elements[idx];
 
+    // ***********************************
+    // FILTERING OUT AREA
+    // ***********************************
+
     // --------------------------------
     // skip old data
     if (filter_timestamp && filter_timestamp_value > deal.timestamp) {
@@ -107,9 +113,42 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     }
 
     // --------------------------------
+    // if departure date interval provided let's look it matches
+    if (filter_departure_date) {
+      if (deal.departure_date < filter_departure_date_values.from ||
+          deal.departure_date > filter_departure_date_values.to) {
+        // departure date - out of range
+        continue;
+      }
+    }
 
-    // std::cout << "GOT" << idx << " " << deal.timestamp << " | ";
-    // utils::print(deal);
+    // --------------------------------
+    // if return date interval provided let's look it matches
+    if (filter_return_date) {
+      if (deal.return_date < filter_return_date_values.from ||
+          deal.return_date > filter_return_date_values.to) {
+        // return date - out of range
+        continue;
+      }
+    }
+
+    // --------------------------------
+    // flags
+    if (filter_flags) {
+      // hide direct flights
+      if (direct_flights_flag == false && deal.flags.direct == true) {
+        continue;
+      }
+
+      // hide stops flights
+      if (stops_flights_flag == false && deal.flags.direct == false) {
+        continue;
+      }
+    }
+
+    // ***********************************
+    // SEARCHING FOR CHEAPEST DEAL AREA
+    // ***********************************
 
     // ----------------------------------
     // try to find deal by destination in result array
@@ -125,18 +164,28 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
           max_price_deal = deals::utils::get_max_price_in_array(
               result_deals, deals_slots_used);
         }
+        // if price not cheaper but same dates, replace with
+        // newer results
+        else if (deal.departure_date == result_deal.departure_date &&
+                 deal.return_date == result_deal.return_date) {
+          deals::utils::copy(result_deal, deal);
+          result_deal.flags.overriden = true;
+          max_price_deal = deals::utils::get_max_price_in_array(
+              result_deals, deals_slots_used);
+        }
 
         found_deal_by_destination = true;
         break;
       }
     }
 
+    // ----------------------------------
     // there was found destination, so goto the next deal element
     if (found_deal_by_destination) {
       continue;
     }
-    // ----------------------------------
 
+    // ----------------------------------
     // no destinations are found in result
     // if there are unUsed slots -> fill them
     if (deals_slots_used < filter_limit) {
@@ -147,25 +196,29 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
           deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
       continue;
     }
+
+    // ----------------------------------
     // if all slots are used, but current deals
     // is cheaper than deals in result -> let replace most expensive with new
     // one
-    else if (result_deals[max_price_deal].price > deal.price) {
+    if (result_deals[max_price_deal].price > deal.price) {
       deals::utils::copy(result_deals[max_price_deal], deal);
       max_price_deal =
           deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
       continue;
     }
 
-    std::cout << std::endl << "SOME EXPSNSIVE DEAL:" << deal.price << std::endl;
+    std::cout << std::endl << "SOME STRANGE CASE:" << deal.price << std::endl;
   }
-  // std::cout << std::endl << "found:" << found << std::endl;
+
+  // true - means continue to iterate
   return true;
 }
 
 // after iteration
 void DealsSearchQuery::post_process_function() {
-  // std::cout << "(POSTPROCESS) max price:" << result_deals[max_price_deal].price
+  // std::cout << "(POSTPROCESS) max price:" <<
+  // result_deals[max_price_deal].price
   //          << std::endl;
 }
 
@@ -175,7 +228,7 @@ void DealsSearchQuery::origin(std::string origin) {
 }
 
 void DealsSearchQuery::destinations(std::string destinations) {
-  if (!destinations.length()) {
+  if (destinations.length() == 0) {
     return;
   }
   std::vector<std::string> split_result = ::utils::split_string(destinations);
@@ -190,20 +243,81 @@ void DealsSearchQuery::destinations(std::string destinations) {
 }
 
 void DealsSearchQuery::max_lifetime_sec(uint32_t max_lifetime) {
+  if (max_lifetime == 0) {
+    return;
+  }
+
   filter_timestamp = true;
   filter_timestamp_value = timing::getTimestampSec() - max_lifetime;
 }
 
+void DealsSearchQuery::departure_dates(std::string departure_date_from,
+                                       std::string departure_date_to) {
+  if (departure_date_from.length() == 0 && departure_date_to.length() == 0) {
+    return;
+  }
+
+  filter_departure_date = true;
+
+  if (departure_date_from.length() == 0) {
+    filter_departure_date_values.from = 0;
+  } else {
+    filter_departure_date_values.from =
+        deals::utils::date_to_int(departure_date_from);
+  }
+
+  if (departure_date_to.length() == 0) {
+    filter_departure_date_values.to = UINT32_MAX;
+  } else {
+    filter_departure_date_values.to =
+        deals::utils::date_to_int(departure_date_to);
+  }
+}
+
+void DealsSearchQuery::return_dates(std::string return_date_from,
+                                    std::string return_date_to) {
+  if (return_date_from.length() == 0 && return_date_to.length() == 0) {
+    return;
+  }
+
+  filter_return_date = true;
+
+  if (return_date_from.length() == 0) {
+    filter_return_date_values.from = 0;
+  } else {
+    filter_return_date_values.from =
+        deals::utils::date_to_int(return_date_from);
+  }
+
+  if (return_date_to.length() == 0) {
+    filter_return_date_values.to = UINT32_MAX;
+  } else {
+    filter_return_date_values.to = deals::utils::date_to_int(return_date_to);
+  }
+}
+
+void DealsSearchQuery::direct_flights(bool direct_flights, bool stops_flights) {
+  if (direct_flights == true && stops_flights == true) {
+    return;
+  }
+
+  filter_flags = true;
+  direct_flights_flag = direct_flights;
+  stops_flights_flag = stops_flights;
+}
+
 DealsDatabase::DealsDatabase() {
   // 1k pages x 10k elements per page, 10m records total, expire 60 seconds
-  db_index = new shared_mem::Table<i::DealInfo>("DealsInfo", 1000 /* pages */,
-                                                10000 /* elements in page */,
-                                                10 /* page expire */);
+  db_index = new shared_mem::Table<i::DealInfo>(
+      DEALINFO_TABLENAME, DEALINFO_PAGES /* pages */,
+      DEALINFO_ELEMENTS /* elements in page */,
+      DEALS_EXPIRES /* page expire */);
 
-  // 10k pages x 3.2m per page = 32g bytes, expire 60 s§econds
-  db_data = new shared_mem::Table<i::DealData>("DealsData", 10000 /* pages */,
-                                               3200000 /* elements in page */,
-                                               10 /* page expire */);
+  // 10k pages x 3.2m per page = 32g bytes, expire 60 seconds
+  db_data = new shared_mem::Table<i::DealData>(
+      DEALDATA_TABLENAME, DEALDATA_PAGES /* pages */,
+      DEALDATA_ELEMENTS /* elements in page */,
+      DEALS_EXPIRES /* page expire */);
 }
 
 DealsDatabase::~DealsDatabase() {
@@ -211,11 +325,10 @@ DealsDatabase::~DealsDatabase() {
   delete db_index;
 }
 
-void DealsDatabase::truncate(){
+void DealsDatabase::truncate() {
   db_data->cleanup();
   db_index->cleanup();
 }
-
 
 void DealsDatabase::addDeal(std::string origin, std::string destination,
                             uint32_t departure_date, uint32_t return_date,
@@ -242,7 +355,6 @@ void DealsDatabase::addDeal(std::string origin, std::string destination,
     return;
   }
 
-
   // std::cout << "{" << result.page_name << "}" << std::endl;
   // std::cout << "{" << result.index << "}" << std::endl;
   // std::cout << "{" << result.size << "}" << std::endl;
@@ -254,7 +366,7 @@ void DealsDatabase::addDeal(std::string origin, std::string destination,
   info.destination = deals::utils::origin_to_code(destination);
   info.departure_date = departure_date;
   info.return_date = return_date;
-  info.flags = direct_flight;
+  info.flags.direct = direct_flight;
   info.price = price;
   strncpy(info.page_name, result.page_name.c_str(), MEMPAGE_NAME_MAX_LEN);
   info.index = result.index;
@@ -279,26 +391,36 @@ void DealsDatabase::addDeal(std::string origin, std::string destination,
 * DealsDatabase   searchForCheapestEver
 *---------------------------------------------------------*/
 std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
-    std::string origin, std::string destinations, uint32_t max_lifetime_sec) {
+    std::string origin, std::string destinations,
+    std::string departure_date_from, std::string departure_date_to,
+    std::string return_date_from, std::string return_date_to,
+    bool direct_flights, bool stops_flights, uint32_t max_lifetime_sec)
+
+{
   DealsSearchQuery query(*db_index);
 
-  query.max_lifetime_sec(max_lifetime_sec);
   query.origin(origin);
   query.destinations(destinations);
+  query.departure_dates(departure_date_from, departure_date_to);
+  query.return_dates(return_date_from, return_date_to);
+  query.direct_flights(direct_flights, stops_flights);
+  query.max_lifetime_sec(max_lifetime_sec);
 
   std::vector<i::DealInfo> deals = query.exec();
+  // internal <i::DealInfo> contain shared memory page name and
+  // information offsets. It's not useful anywhere outside
+  // so lets transofrm internal format to external <DealInfo>
   std::vector<DealInfo> result;
 
   for (std::vector<i::DealInfo>::iterator deal = deals.begin();
        deal != deals.end(); ++deal) {
-    // std::cout << "PPP(" << deal->page_name << " " << deal->index << " " <<
-    // deal->size << ")" << std::endl;
+    // std::cout << "DEAL> page:(" << deal->page_name << " " << deal->index << "
+    // " << deal->size << ")" << std::endl;
     shared_mem::ElementPointer<i::DealData> deal_data(*db_data, deal->page_name,
                                                       deal->index, deal->size);
     i::DealData *data_pointer = deal_data.get_data();
     std::string data((char *)data_pointer, deal->size);
 
-    // std::cout << text << std::endl;
     result.push_back((DealInfo){
         deal->timestamp, utils::code_to_origin(deal->origin),
         utils::code_to_origin(deal->destination),
@@ -516,8 +638,8 @@ void unit_test() {
 
   timer.tick("data generated");
 
-  std::vector<DealInfo> result =
-      db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", 10);
+  std::vector<DealInfo> result = db.searchForCheapestEver(
+      "MOW", "AAA,PAR,BER,MAD", "", "", "", "", true, true, 10);
   timer.tick("ok");
   timer.report();
 
@@ -532,16 +654,32 @@ void unit_test() {
   for (int i = 0; i < result.size(); i++) {
     if (result[i].destination == "MAD") {
       city_count[0]++;
-      assert(result[i].price == 5000);
+      if (result[i].flags.overriden) {
+        assert(result[i].price > 5000);
+        assert(result[i].data == "1, 2, 3, 4, 5, 6, 7, 8");
+      } else {
+        assert(result[i].price == 5000);
+        assert(result[i].data == "7, 7, 7");
+      }
     } else if (result[i].destination == "BER") {
       city_count[1]++;
-      assert(result[i].price == 6000);
+      if (result[i].flags.overriden) {
+        assert(result[i].price > 6000);
+        assert(result[i].data == "1, 2, 3, 4, 5, 6, 7, 8");
+      } else {
+        assert(result[i].price == 6000);
+        assert(result[i].data == "7, 7, 7");
+      }
     } else if (result[i].destination == "PAR") {
       city_count[2]++;
-      assert(result[i].price == 7000);
+      if (result[i].flags.overriden) {
+        assert(result[i].price > 7000);
+        assert(result[i].data == "1, 2, 3, 4, 5, 6, 7, 8");
+      } else {
+        assert(result[i].price == 7000);
+        assert(result[i].data == "7, 7, 7");
+      }
     }
-
-    assert(result[i].data == "7, 7, 7");
   }
 
   assert(city_count[0] == 1);
@@ -553,33 +691,29 @@ void unit_test() {
   std::cout << "OK" << std::endl;
 }
 
+}  // deals namespace
 
-} // deals namespace
+int mainasd() {
+  deals::unit_test();
 
-int main222(){
-  // deals::unit_test();
+  return 0;
+
   deals::DealsDatabase db;
   std::string dumb = "1, 2, 3, 4, 5, 6, 7, 8";
   srand(timing::getTimestampSec());
 
   // add some data, that will be outdated
   for (int i = 0; i < 1000000; ++i) {
-    db.addDeal(deals::getRandomOrigin(), deals::getRandomOrigin(), deals::getRandomDate(),
-               deals::getRandomDate(), true, deals::getRandomPrice(1000), dumb);
+    db.addDeal(deals::getRandomOrigin(), deals::getRandomOrigin(),
+               deals::getRandomDate(), deals::getRandomDate(), true,
+               deals::getRandomPrice(1000), dumb);
   }
-
-  sleep(10);
 
   for (int i = 0; i < 1000000; ++i) {
-    db.addDeal(deals::getRandomOrigin(), deals::getRandomOrigin(), deals::getRandomDate(),
-               deals::getRandomDate(), true, deals::getRandomPrice(1000), dumb);
+    db.addDeal(deals::getRandomOrigin(), deals::getRandomOrigin(),
+               deals::getRandomDate(), deals::getRandomDate(), true,
+               deals::getRandomPrice(1000), dumb);
   }
-
-  sleep(10);
 
   return 0;
 }
-
-
-
-
