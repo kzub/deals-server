@@ -1,69 +1,48 @@
-#include <iostream>
-
+#include <cassert>
 #include <cinttypes>
+#include <iostream>
 
 #include <fcntl.h> /* For O_* constants */
 #include <semaphore.h>
 
 #include "locks.hpp"
+#include "timing.hpp"
 
 namespace locks {
 
-Lock::Lock(std::string name) : name(name), initialized(false) {
+//-----------------------------------------------
+// CriticalSection Constructor
+//-----------------------------------------------
+CriticalSection::CriticalSection(std::string name)
+    : name(name), initialized(false), unlock_needed(false) {
   lock = sem_open(name.c_str(), O_RDWR | O_CREAT, (mode_t)0666, 1);
+
   if (lock == SEM_FAILED) {
     std::cout << "error opening semaphore errorcode:" << errno << std::endl;
     return;
   }
 
   initialized = true;
-
-  try {
-    semaphore_accuire();
-  } catch (...) {
-    semaphore_reset();
-
-    // retry
-    try {
-      semaphore_accuire();
-    } catch (...) {
-      std::cout << "error accuring semaphore:" << std::endl;
-      initialized = false;
-      sem_close(lock);
-      return;
-    }
-  }
-
-  semaphore_release();
 }
 
-Lock::~Lock() {
+//-----------------------------------------------
+// CriticalSection Destructor
+//-----------------------------------------------
+CriticalSection::~CriticalSection() {
+  if (unlock_needed) {
+    std::cout << "ERR: auto unlocking CriticalSection:" << name << std::endl;
+    semaphore_release(true);
+  }
+
   if (initialized) {
     sem_close(lock);
   }
-}
+};
 
-void Lock::semaphore_reset() {
-  std::cout << "FORCE to reset semaphore " << name << std::endl;
-
-  while (sem_trywait(lock) == EAGAIN) {
-    int res = sem_post(lock);
-    if (res != 0) {
-      std::cout << "semaphore reset errorcode:" << errno << std::endl;
-      return;
-    }
-  }
-  sem_post(lock);
-
-  std::cout << "semaphore cleared!" << std::endl;
-}
-
-void Lock::semaphore_accuire() {
-  if (!initialized) {
-    std::cout << "Error: not initialized" << std::endl;
-    throw "semaphore_accuire(): uninitialized";
-  }
-
+//-----------------------------------------------
+// CriticalSection acciure
+//-----------------------------------------------
+void CriticalSection::semaphore_accuire() {
   uint32_t wait_retries = 0;
   while (1) {
     int res = sem_trywait(lock);
@@ -83,56 +62,89 @@ void Lock::semaphore_accuire() {
   }
 }
 
-void Lock::semaphore_release() {
-  if (!initialized) {
-    std::cout << "Error: not initialized" << std::endl;
-    throw "semaphore_release(): uninitialized";
-  }
-
+//-----------------------------------------------
+// CriticalSection release
+//-----------------------------------------------
+void CriticalSection::semaphore_release(bool nothrow) {
   int res = sem_post(lock);
   if (res == -1) {
     std::cout << "error post() semaphore errorcode:" << errno << std::endl;
+    if (nothrow) {
+      return;
+    }
     throw "semaphore_release(): cannot sem_post";
   }
 }
 
-CriticalSection::~CriticalSection() {
-  if (unlock_needed) {
-    std::cout << "something go wrong, auto unlocking CriticalSection ..."
-              << std::endl;
-    semaphore_release();
+//-----------------------------------------------
+// CriticalSection check
+//-----------------------------------------------
+void CriticalSection::check() {
+  if (!initialized) {
+    std::cout << "Error: not initialized" << std::endl;
+    throw "check(): uninitialized";
   }
-};
-
-void CriticalSection::enter() {
-  unlock_needed = true;
-  semaphore_accuire();
 }
 
+//-----------------------------------------------
+// CriticalSection enter()
+//-----------------------------------------------
+void CriticalSection::enter() {
+  check();
+  semaphore_accuire();
+  unlock_needed = true;
+}
+
+//-----------------------------------------------
+// CriticalSection exit()
+//-----------------------------------------------
 void CriticalSection::exit() {
+  check();
   semaphore_release();
   unlock_needed = false;
 }
 
-void testf() {
+//-----------------------------------------------
+// Testing...
+//-----------------------------------------------
+void testf(bool& second_enter) {
+  //-------------------------------
+  // test1
   CriticalSection lock("dbread");
-
+  uint32_t start_time = timing::getTimestampSec();
   lock.enter();
-
-  std::cout << "IAM IN" << std::endl;
-  sleep(1);
-
+  std::cout << "IAM IN 1" << std::endl;
   lock.exit();
+  uint32_t start_time2 = timing::getTimestampSec();
+  std::cout << "IAM OUT 1" << std::endl;
+  assert(start_time2 - start_time < WAIT_FOR_LOCK_MSEC / 1000);
+
+  //-------------------------------
+  // test2
+  start_time = timing::getTimestampSec();
+  lock.enter();
+  std::cout << "IAM IN 2" << std::endl;
+
+  CriticalSection lock2("dbread");
+  std::cout << "TRY TO ENTER LOCKED SECTION..." << std::endl;
+  second_enter = true;
+  lock2.enter();
+
+  assert(true == false /*can't be here*/);
 }
 
 int unit_test() {
+  bool exception = false;
+  bool second_enter = false;
   try {
-    testf();
+    testf(second_enter);
   } catch (...) {
-    std::cout << "catched" << std::endl;
-    throw "lock test error";
+    exception = true;
   }
 
+  assert(second_enter == true);
+  assert(exception == true);
+  std::cout << "locks... OK" << std::endl;
   return 0;
 }
 }

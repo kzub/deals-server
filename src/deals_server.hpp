@@ -23,7 +23,6 @@ class DealsServer : public srv::TCPServer<Context> {
   void addDeal(Connection& conn);
   void getTop(Connection& conn);
 
-
   deals::DealsDatabase db;
 };
 }

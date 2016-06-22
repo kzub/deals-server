@@ -47,7 +47,7 @@ io_handler close() do nothing, if all io_handkers closed -> connection->close()
 
 typedef std::string NetData;
 // typedef void (ConnectionProcessor)(Connection& conn);
-
+std::string inet_addr_to_string(struct sockaddr_in& hostaddr);
 /*----------------------------------------------------------------------
 * TCPConnection
 *----------------------------------------------------------------------*/
@@ -72,7 +72,7 @@ class TCPConnection {
   void network_read();
   void network_write();
   void network_data_processed();
-  std::string get_client_ip();
+  std::string get_client_address();
 
   const uint32_t created_time;
 
@@ -104,6 +104,7 @@ class TCPServer {
 
  public:
   void process();
+  std::string get_server_address();
   virtual void on_data(Connection& conn) = 0;
   virtual void on_connect(Connection& conn) = 0;
 
@@ -150,8 +151,8 @@ TCPServer<Context>::TCPServer(uint16_t port) {
     exit(-1);
   }
 
-  std::cout << "listen(max:" << ACCEPT_QUEUE_LENGTH
-            << ") srv_sockfd:" << srv_sockfd << std::endl;
+  std::cout << "listen on " << get_server_address()
+            << " max_connections:" << ACCEPT_QUEUE_LENGTH << std::endl;
   fcntl(srv_sockfd, F_SETFL, O_NONBLOCK);
 }
 
@@ -277,6 +278,14 @@ void TCPServer<Context>::process() {
   if (pfd[0].revents & POLLIN) {
     accept_new_connection();
   }
+}
+
+/*----------------------------------------------------------------------
+* TCPServer get_server_address
+*----------------------------------------------------------------------*/
+template <typename Context>
+std::string TCPServer<Context>::get_server_address() {
+  return inet_addr_to_string(serv_addr);
 }
 }
 #endif

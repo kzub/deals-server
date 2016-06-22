@@ -86,7 +86,8 @@ class DealsDatabase {
       std::string origin, std::string destinations,
       std::string departure_date_from, std::string departure_date_to,
       std::string return_date_from, std::string return_date_to,
-      bool direct_flights, bool stops_flights, uint32_t max_lifetime_sec);
+      bool direct_flights, bool stops_flights, uint16_t limit,
+      uint32_t max_lifetime_sec);
 
   void truncate();
 
@@ -130,6 +131,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
   void return_dates(std::string return_date_from, std::string return_date_to);
   void direct_flights(bool direct_flights, bool stops_flights);
   void max_lifetime_sec(uint32_t max_lifetime);
+  void deals_limit(uint16_t limit);
 
   bool filter_origin;
   uint32_t filter_origin_value;
@@ -151,8 +153,8 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
   bool direct_flights_flag;
   bool stops_flights_flag;
 
-  int16_t filter_limit;
-  int16_t deals_slots_used;
+  uint16_t filter_limit;
+  uint16_t deals_slots_used;
   i::DealInfo* result_deals;
   uint16_t max_price_deal;
 };

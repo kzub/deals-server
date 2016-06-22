@@ -160,7 +160,12 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       if (deal.destination == result_deal.destination) {
         // we already have this destination, let's check for price
         if (deal.price < result_deal.price) {
+          bool overriden = false;
+          if (result_deal.flags.overriden) {
+            overriden = true;
+          }
           deals::utils::copy(result_deal, deal);
+          result_deal.flags.overriden = overriden;
           max_price_deal = deals::utils::get_max_price_in_array(
               result_deals, deals_slots_used);
         }
@@ -200,15 +205,18 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     // ----------------------------------
     // if all slots are used, but current deals
     // is cheaper than deals in result -> let replace most expensive with new
-    // one
-    if (result_deals[max_price_deal].price > deal.price) {
+    // one (new destiantion is not in result_deals)
+    if (deal.price < result_deals[max_price_deal].price) {
       deals::utils::copy(result_deals[max_price_deal], deal);
       max_price_deal =
           deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
       continue;
     }
 
-    std::cout << std::endl << "SOME STRANGE CASE:" << deal.price << std::endl;
+    // result_deals are full by "limit"
+    // and current deal price is more than any price in result vector
+    // (result_deals)
+    // so just skip it
   }
 
   // true - means continue to iterate
@@ -306,6 +314,13 @@ void DealsSearchQuery::direct_flights(bool direct_flights, bool stops_flights) {
   stops_flights_flag = stops_flights;
 }
 
+void DealsSearchQuery::deals_limit(uint16_t _filter_limit) {
+  if (_filter_limit) {
+    // ignore zero value
+    filter_limit = _filter_limit;
+  }
+}
+
 DealsDatabase::DealsDatabase() {
   // 1k pages x 10k elements per page, 10m records total, expire 60 seconds
   db_index = new shared_mem::Table<i::DealInfo>(
@@ -345,7 +360,7 @@ void DealsDatabase::addDeal(std::string origin, std::string destination,
   }
 
   uint32_t departure_date_int = deals::utils::date_to_int(departure_date);
-  if (departure_date_int == 0){
+  if (departure_date_int == 0) {
     std::cout << "wrong departure date:" << departure_date << std::endl;
     return;
   }
@@ -374,6 +389,7 @@ void DealsDatabase::addDeal(std::string origin, std::string destination,
   info.destination = deals::utils::origin_to_code(destination);
   info.departure_date = departure_date_int;
   info.return_date = return_date_int;
+  info.flags.overriden = false;
   info.flags.direct = direct_flight;
   info.price = price;
   strncpy(info.page_name, result.page_name.c_str(), MEMPAGE_NAME_MAX_LEN);
@@ -402,7 +418,8 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
     std::string origin, std::string destinations,
     std::string departure_date_from, std::string departure_date_to,
     std::string return_date_from, std::string return_date_to,
-    bool direct_flights, bool stops_flights, uint32_t max_lifetime_sec)
+    bool direct_flights, bool stops_flights, uint16_t limit,
+    uint32_t max_lifetime_sec)
 
 {
   DealsSearchQuery query(*db_index);
@@ -413,6 +430,7 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
   query.return_dates(return_date_from, return_date_to);
   query.direct_flights(direct_flights, stops_flights);
   query.max_lifetime_sec(max_lifetime_sec);
+  query.deals_limit(limit);
 
   std::vector<i::DealInfo> deals = query.exec();
   // internal <i::DealInfo> contain shared memory page name and
@@ -572,10 +590,9 @@ uint32_t getRandomPrice(uint32_t minPrice) {
   return price;
 }
 
-std::string getRandomDate() {
-  uint32_t year = 2016;
+std::string getRandomDate(uint32_t year = 2016) {
   uint32_t month = (rand() & 0x00000007) + 1;
-  uint32_t day = (rand() & 0x00000007) + 1;
+  uint32_t day = (rand() & 0x00000007) + (rand() & 0x00000007);
 
   return deals::utils::int_to_date(year * 10000 + month * 100 + day);
 }
@@ -601,9 +618,10 @@ void convertertionTest() {
   assert(date == "2017-01-01");
 }
 
-#define TEST_ELEMENTS_COUNT 10000
+#define TEST_ELEMENTS_COUNT 60000
 void unit_test() {
   DealsDatabase db;
+  db.truncate();
   std::string dumb = "1, 2, 3, 4, 5, 6, 7, 8";
   std::string check = "7, 7, 7";
 
@@ -634,22 +652,24 @@ void unit_test() {
 
   // add some good
   for (int i = 0; i < TEST_ELEMENTS_COUNT; ++i) {
-    db.addDeal(getRandomOrigin(), "MAD", getRandomDate(), getRandomDate(), true,
-               getRandomPrice(5100), dumb);
+    db.addDeal(getRandomOrigin(), "MAD", getRandomDate(2015),
+               getRandomDate(2015), true, getRandomPrice(5100), dumb);
     db.addDeal(getRandomOrigin(), "BER", getRandomDate(), getRandomDate(), true,
                getRandomPrice(6200), dumb);
     db.addDeal(getRandomOrigin(), "PAR", getRandomDate(), getRandomDate(), true,
                getRandomPrice(7200), dumb);
+
+    // MAD will be 2016 here: and > 8000 price
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(),
                getRandomDate(), true, getRandomPrice(8000), dumb);
   }
 
-  timer.tick("data generated");
-
+  timer.tick("before test1");
+  // 1st test ----------------------------
+  // *********************************************************
   std::vector<DealInfo> result = db.searchForCheapestEver(
-      "MOW", "AAA,PAR,BER,MAD", "", "", "", "", true, true, 10);
-  timer.tick("ok");
-  timer.report();
+      "MOW", "AAA,PAR,BER,MAD", "", "", "", "", true, true, 0, 10);
+  timer.tick("test1");
 
   for (std::vector<DealInfo>::iterator deal = result.begin();
        deal != result.end(); ++deal) {
@@ -699,9 +719,63 @@ void unit_test() {
     }
   }
 
-  assert(city_count[0] == 1);
-  assert(city_count[1] == 1);
-  assert(city_count[2] == 1);
+  timer.tick("before test2");
+  // 2nd test -------------------------------
+  // *********************************************************
+  result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "2016-06-01",
+                                    "2016-06-23", "2016-06-10", "2016-06-22",
+                                    true, true, 0, 10);
+
+  timer.tick("test2");
+
+  for (std::vector<DealInfo>::iterator deal = result.begin();
+       deal != result.end(); ++deal) {
+    deals::utils::print(*deal);
+  }
+
+  assert(result.size() <= 3);
+  int city_count2[3] = {0, 0, 0};
+
+  for (int i = 0; i < result.size(); i++) {
+    assert(deals::utils::date_to_int(result[i].departure_date) >=
+           deals::utils::date_to_int("2016-06-01"));
+    assert(deals::utils::date_to_int(result[i].departure_date) <=
+           deals::utils::date_to_int("2016-06-23"));
+    assert(deals::utils::date_to_int(result[i].return_date) >=
+           deals::utils::date_to_int("2016-06-10"));
+    assert(deals::utils::date_to_int(result[i].return_date) <=
+           deals::utils::date_to_int("2016-06-22"));
+
+    if (result[i].destination == "MAD") {
+      city_count2[0]++;
+      // madrid in this dates only over 8000
+      assert(result[i].price >= 8000);
+      assert(result[i].data == "1, 2, 3, 4, 5, 6, 7, 8");
+
+    } else if (result[i].destination == "BER") {
+      city_count2[1]++;
+      if (result[i].flags.overriden) {
+        assert(result[i].price > 6000);
+        assert(result[i].data == "1, 2, 3, 4, 5, 6, 7, 8");
+      } else {
+        assert(result[i].price == 6000);
+        assert(result[i].data == "7, 7, 7");
+      }
+
+      assert(result[i].departure_date == "2016-06-01");
+      assert(result[i].return_date == "2016-06-11");
+
+    } else if (result[i].destination == "PAR") {
+      city_count2[2]++;
+      // Paris in this dates only over 7200
+      assert(result[i].price >= 7200);
+      assert(result[i].data == "1, 2, 3, 4, 5, 6, 7, 8");
+    }
+  }
+
+  assert(city_count2[0] <= 1);
+  assert(city_count2[1] == 1);
+  assert(city_count2[2] <= 1);
 
   convertertionTest();
 

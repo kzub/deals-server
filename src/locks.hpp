@@ -14,31 +14,23 @@ namespace locks {
 #define SLEEP_BETWEEN_TRIES_USEC 1000
 #define WAIT_FOR_LOCK_MSEC 5000
 
-class Lock {
- protected:
-  Lock(std::string name);
-  ~Lock();
-
-  void semaphore_accuire();
-  void semaphore_release();
-  void semaphore_reset();
-
- private:
-  sem_t *lock;
-  std::string name;
-  bool initialized;
-};
-
-class CriticalSection : public Lock {
+class CriticalSection {
  public:
-  CriticalSection(std::string name) : Lock(name), unlock_needed(false){};
+  CriticalSection(std::string name);
   ~CriticalSection();
 
   void enter();
   void exit();
 
  private:
+  void semaphore_accuire();
+  void semaphore_release(bool nothrow = false);
+  void check();
+
+  std::string name;
+  bool initialized;
   bool unlock_needed;
+  sem_t *lock;
 };
 
 int unit_test();
