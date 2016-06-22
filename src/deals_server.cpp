@@ -170,28 +170,26 @@ void DealsServer::addDeal(Connection& conn) {
   } catch (std::exception e) {
   }
 
-  uint32_t departure_date = deals::utils::date_to_int(
-      conn.context.http.request.query.params["departure_date"]);
-  uint32_t return_date = deals::utils::date_to_int(
-      conn.context.http.request.query.params["return_date"]);
-  bool direct_flight =
-      conn.context.http.request.query.params["direct_flight"] != "false";
+  bool direct_flight = utils::toLowerCase(
+      conn.context.http.request.query.params["direct_flight"]) != "false";
+  std::string departure_date = conn.context.http.request.query.params["departure_date"];
+  std::string return_date = conn.context.http.request.query.params["return_date"];
 
   if (origin.length() == 0) {
-    conn.close(http::HttpResponse(400, "No origin", "No origin"));
+    conn.close(http::HttpResponse(400, "Bad origin", "Bad origin"));
     return;
   }
   if (destination.length() == 0) {
-    conn.close(http::HttpResponse(400, "No destination", "No destination"));
+    conn.close(http::HttpResponse(400, "Bad destination", "Bad destination"));
     return;
   }
   if (price == 0) {
-    conn.close(http::HttpResponse(400, "No price", "No price"));
+    conn.close(http::HttpResponse(400, "Bad price", "Bad price"));
     return;
   }
-  if (departure_date == 0) {
+  if (deals::utils::date_to_int(departure_date) == 0) {
     conn.close(
-        http::HttpResponse(400, "No departure_date", "No departure_date"));
+        http::HttpResponse(400, "Bad departure_date", "Bad departure_date"));
     return;
   }
 

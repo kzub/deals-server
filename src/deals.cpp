@@ -331,7 +331,7 @@ void DealsDatabase::truncate() {
 }
 
 void DealsDatabase::addDeal(std::string origin, std::string destination,
-                            uint32_t departure_date, uint32_t return_date,
+                            std::string departure_date, std::string return_date,
                             bool direct_flight, uint32_t price,
                             std::string data) {
   if (origin.length() != 3) {
@@ -343,6 +343,14 @@ void DealsDatabase::addDeal(std::string origin, std::string destination,
     std::cout << "wrong destination length:" << destination << std::endl;
     return;
   }
+
+  uint32_t departure_date_int = deals::utils::date_to_int(departure_date);
+  if (departure_date_int == 0){
+    std::cout << "wrong departure date:" << departure_date << std::endl;
+    return;
+  }
+
+  uint32_t return_date_int = deals::utils::date_to_int(return_date);
 
   // Firstly add data and get data position at db
   deals::i::DealData *data_pointer = (deals::i::DealData *)data.c_str();
@@ -364,8 +372,8 @@ void DealsDatabase::addDeal(std::string origin, std::string destination,
   info.timestamp = timing::getTimestampSec();
   info.origin = deals::utils::origin_to_code(origin);
   info.destination = deals::utils::origin_to_code(destination);
-  info.departure_date = departure_date;
-  info.return_date = return_date;
+  info.departure_date = departure_date_int;
+  info.return_date = return_date_int;
   info.flags.direct = direct_flight;
   info.price = price;
   strncpy(info.page_name, result.page_name.c_str(), MEMPAGE_NAME_MAX_LEN);
@@ -564,12 +572,12 @@ uint32_t getRandomPrice(uint32_t minPrice) {
   return price;
 }
 
-uint32_t getRandomDate() {
+std::string getRandomDate() {
   uint32_t year = 2016;
   uint32_t month = (rand() & 0x00000007) + 1;
   uint32_t day = (rand() & 0x00000007) + 1;
 
-  return year * 10000 + month * 100 + day;
+  return deals::utils::int_to_date(year * 10000 + month * 100 + day);
 }
 
 void convertertionTest() {
@@ -618,9 +626,9 @@ void unit_test() {
   time += 1000;
 
   // add data we will expect
-  db.addDeal("MOW", "MAD", getRandomDate(), getRandomDate(), true, 5000, check);
-  db.addDeal("MOW", "BER", getRandomDate(), getRandomDate(), true, 6000, check);
-  db.addDeal("MOW", "PAR", getRandomDate(), getRandomDate(), true, 7000, check);
+  db.addDeal("MOW", "MAD", "2016-05-01", "2016-05-21", true, 5000, check);
+  db.addDeal("MOW", "BER", "2016-06-01", "2016-06-11", true, 6000, check);
+  db.addDeal("MOW", "PAR", "2016-07-01", "2016-07-15", true, 7000, check);
 
   time += 5;
 
@@ -661,6 +669,9 @@ void unit_test() {
         assert(result[i].price == 5000);
         assert(result[i].data == "7, 7, 7");
       }
+
+      assert(result[i].departure_date == "2016-05-01");
+      assert(result[i].return_date == "2016-05-21");
     } else if (result[i].destination == "BER") {
       city_count[1]++;
       if (result[i].flags.overriden) {
@@ -670,6 +681,9 @@ void unit_test() {
         assert(result[i].price == 6000);
         assert(result[i].data == "7, 7, 7");
       }
+
+      assert(result[i].departure_date == "2016-06-01");
+      assert(result[i].return_date == "2016-06-11");
     } else if (result[i].destination == "PAR") {
       city_count[2]++;
       if (result[i].flags.overriden) {
@@ -679,6 +693,9 @@ void unit_test() {
         assert(result[i].price == 7000);
         assert(result[i].data == "7, 7, 7");
       }
+
+      assert(result[i].departure_date == "2016-07-01");
+      assert(result[i].return_date == "2016-07-15");
     }
   }
 

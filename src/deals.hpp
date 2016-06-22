@@ -79,7 +79,7 @@ class DealsDatabase {
   ~DealsDatabase();
 
   void addDeal(std::string origin, std::string destination,
-               uint32_t departure_date, uint32_t return_date,
+               std::string departure_date, std::string return_date,
                bool direct_flight, uint32_t price, std::string data);
 
   std::vector<DealInfo> searchForCheapestEver(
