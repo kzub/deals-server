@@ -107,7 +107,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       }
 
       if (!condition_matched) {
-        // std::cout << "condition_matched" << std::endl;
+        // std::cout << "!condition_matched" << std::endl;
         continue;
       }
     }
@@ -118,6 +118,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       if (deal.departure_date < filter_departure_date_values.from ||
           deal.departure_date > filter_departure_date_values.to) {
         // departure date - out of range
+        // std::cout << "filter_departure_date" << std::endl;
         continue;
       }
     }
@@ -128,6 +129,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       if (deal.return_date < filter_return_date_values.from ||
           deal.return_date > filter_return_date_values.to) {
         // return date - out of range
+        // std::cout << "filter_return_date" << std::endl;
         continue;
       }
     }
@@ -137,11 +139,13 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     if (filter_flags) {
       // hide direct flights
       if (direct_flights_flag == false && deal.flags.direct == true) {
+        // std::cout << "filter_flags1" << std::endl;
         continue;
       }
 
       // hide stops flights
       if (stops_flights_flag == false && deal.flags.direct == false) {
+        // std::cout << "filter_flags2" << std::endl;
         continue;
       }
     }
@@ -431,6 +435,17 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
   query.direct_flights(direct_flights, stops_flights);
   query.max_lifetime_sec(max_lifetime_sec);
   query.deals_limit(limit);
+
+  /*std::cout << "origin:" << origin
+            << " destinations:" << destinations
+            << " departure_date_from:" << departure_date_from
+            << " departure_date_to:" << departure_date_to
+            << " return_date_from:" << return_date_from
+            << " return_date_to:" << return_date_to
+            << " direct_flights:" << direct_flights
+            << " stops_flights:" << stops_flights
+            << " max_lifetime_sec:" << max_lifetime_sec
+            << " limit:" << limit << std::endl;*/
 
   std::vector<i::DealInfo> deals = query.exec();
   // internal <i::DealInfo> contain shared memory page name and

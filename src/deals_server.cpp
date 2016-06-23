@@ -79,7 +79,7 @@ void DealsServer::getTop(Connection& conn) {
   bool direct_flights = false;
   bool stops_flights = false;
   std::string direct =
-      utils::toLowerCase(conn.context.http.request.query.params["direct"]);
+      utils::toLowerCase(conn.context.http.request.query.params["direct_flights"]);
 
   if (direct == "") {
     direct_flights = true;
@@ -89,8 +89,8 @@ void DealsServer::getTop(Connection& conn) {
   } else if (direct == "false") {
     stops_flights = true;
   } else {
-    conn.close(http::HttpResponse(400, "Bad direct parameter",
-                                  "Bad direct parameter"));
+    conn.close(http::HttpResponse(400, "Bad direct_flights parameter",
+                                  "Bad direct_flights parameter"));
     return;
   }
 
@@ -113,10 +113,22 @@ void DealsServer::getTop(Connection& conn) {
   // search limit
   uint16_t limit = 0;
   try {
-    limit = std::stol(conn.context.http.request.query.params["limit"]);
+    limit = std::stol(conn.context.http.request.query.params["deals_limit"]);
   } catch (...) {
   }
-
+/*origin
+destinations
+direct_flights
+departure_date_from
+departure_date_to
+departure_date_weekend
+return_date_from
+return_date_to
+return_date_weekend
+stay_from
+stay_to
+deals_limit
+timelimit*/
   // 2016-05-01  <- dates format
   //-------------------------
   // search itself
@@ -125,8 +137,8 @@ void DealsServer::getTop(Connection& conn) {
       conn.context.http.request.query.params["departure_date_from"],
       conn.context.http.request.query.params["departure_date_to"],
       conn.context.http.request.query.params["return_date_from"],
-      conn.context.http.request.query.params["return_date_to"], direct_flights,
-      stops_flights, limit, max_lifetime_sec);
+      conn.context.http.request.query.params["return_date_to"], 
+      direct_flights, stops_flights, limit, max_lifetime_sec);
 
   //------------------------------------
   // prepare response format
@@ -165,7 +177,11 @@ void DealsServer::getTop(Connection& conn) {
     response += deal->data;
   }
 
-  conn.close(http::HttpResponse(200, "OK", response));
+  http::HttpResponse rq_result(200, "OK");
+  rq_result.add_header("Content-Type", "application/octet-stream");
+  rq_result.add_header("Content-Length", std::to_string(response.length()));
+  rq_result.write(response);
+  conn.close(rq_result);
 }
 
 /*---------------------------------------------------------

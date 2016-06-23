@@ -107,6 +107,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
         filter_departure_date(false),
         filter_return_date(false),
         filter_timestamp(false),
+        filter_flags(false),
         filter_limit(20) {}
 
   std::vector<i::DealInfo> exec();
