@@ -21,8 +21,7 @@ ParserResult HttpHeaders::parse(std::string http_message) {
 
   // headers are fully loaded. let we parse it
   std::string http_headers = http_message.substr(0, pos);
-  std::vector<std::string> http_headers_lines =
-      utils::split_string(http_headers, "\r\n");
+  std::vector<std::string> http_headers_lines = utils::split_string(http_headers, "\r\n");
 
   // std::cout << "RequestLine:" << http_headers_lines[0] << std::endl;
 
@@ -70,12 +69,11 @@ ParserResult URIQueryParams::parse(std::string query_text) {
   path = query_text.substr(0, pos);
 
   // separate params strings by '&' char
-  std::vector<std::string> query_params =
-      utils::split_string(query_text.substr(pos + 1), "&");
+  std::vector<std::string> query_params = utils::split_string(query_text.substr(pos + 1), "&");
 
   // for every param 'param1=value' make an object
-  for (std::vector<std::string>::iterator param = query_params.begin();
-       param != query_params.end(); ++param) {
+  for (std::vector<std::string>::iterator param = query_params.begin(); param != query_params.end();
+       ++param) {
     utils::Object one_param;
     // std::cout << "param;" << *param << std::endl;
     size_t pos = param->find("=");
@@ -106,8 +104,7 @@ ParserResult HttpRequest::parse(std::string requestline) {
   }
 
   /* Request-Line   = Method SP Request-URI SP HTTP-Version CRLF */
-  std::vector<std::string> res =
-      utils::split_string(requestline.substr(0, pos), " ");
+  std::vector<std::string> res = utils::split_string(requestline.substr(0, pos), " ");
   if (res.size() != 3) {
     return PARSE_ERR;
   }
@@ -122,12 +119,16 @@ ParserResult HttpRequest::parse(std::string requestline) {
 //------------------------------------------------------------------
 // HttpParser is_request_complete
 //------------------------------------------------------------------
-bool HttpParser::is_request_complete() { return parsing_complete; }
+bool HttpParser::is_request_complete() {
+  return parsing_complete;
+}
 
 //------------------------------------------------------------------
 // HttpParser is_headers_complete
 //------------------------------------------------------------------
-bool HttpParser::is_headers_complete() { return headers_written; }
+bool HttpParser::is_headers_complete() {
+  return headers_written;
+}
 
 //------------------------------------------------------------------
 // Process network data
@@ -207,8 +208,7 @@ std::string HttpParser::get_headers() {
 HttpResponse::HttpResponse(uint16_t status_code, std::string reason_phrase)
     : status_code(status_code), reason_phrase(reason_phrase){};
 
-HttpResponse::HttpResponse(uint16_t status_code, std::string reason_phrase,
-                           std::string _body)
+HttpResponse::HttpResponse(uint16_t status_code, std::string reason_phrase, std::string _body)
     : status_code(status_code), reason_phrase(reason_phrase) {
   body.push_back(_body);
 };
@@ -223,7 +223,9 @@ void HttpResponse::add_header(std::string name, std::string value) {
 //------------------------------------------------------------------
 // Response: Write data to response
 //------------------------------------------------------------------
-void HttpResponse::write(std::string msg) { body.push_back(msg); }
+void HttpResponse::write(std::string msg) {
+  body.push_back(msg);
+}
 
 //------------------------------------------------------------------
 // Response      = Status-Line               ; Section 6.1
@@ -239,8 +241,8 @@ HttpResponse::operator std::string() {
   std::string full_result =
       "HTTP/1.0 " + std::to_string(status_code) + " " + reason_phrase + "\r\n";
 
-  for (std::vector<std::string>::iterator header = headers.begin();
-       header != headers.end(); ++header) {
+  for (std::vector<std::string>::iterator header = headers.begin(); header != headers.end();
+       ++header) {
     full_result += *header;
   }
   full_result += "\r\n";
@@ -258,15 +260,13 @@ void subtest() {
       "HTTP/1.0 404 Not found\r\n"
       "\r\n";
   http::HttpResponse res(404, "Not found");
-  assert(memcmp(((std::string)res).c_str(), test_result, sizeof(test_result)) ==
-         0);
+  assert(memcmp(((std::string)res).c_str(), test_result, sizeof(test_result)) == 0);
 
   char test_result2[] =
       "HTTP/1.0 404 Not found\r\n"
       "\r\nMessage";
   http::HttpResponse res2(404, "Not found", "Message");
-  assert(memcmp(((std::string)res2).c_str(), test_result2,
-                sizeof(test_result2)) == 0);
+  assert(memcmp(((std::string)res2).c_str(), test_result2, sizeof(test_result2)) == 0);
 }
 
 void unit_test() {
@@ -278,8 +278,8 @@ void unit_test() {
       "/Protocols/rfc2616/"
       "rfc2616-sec5.html?test=value&param1=keys&param2=ee&empty=&test=true "
       "HTTP/1.1\r\n",
-      "Host:www.w3.org\r\n", "Connection: keep-alive\r\n",
-      "Pragma: no-cache\r\n", "Cache-Control: no-cache\r\n",
+      "Host:www.w3.org\r\n", "Connection: keep-alive\r\n", "Pragma: no-cache\r\n",
+      "Cache-Control: no-cache\r\n",
       "Accept: "
       "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/"
       "*;q=0.8\r\n",
@@ -288,8 +288,8 @@ void unit_test() {
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 "
       "Safari/537.36\r\n",
       "Referer: https://www.w3.org/Protocols/rfc2616/rfc2616.html\r\n",
-      "Accept-Encoding: gzip, deflate, sdch\r\n",
-      "Accept-Language: en-US,en;q=0.8,ru;q=0.6\r\n", "\r\n",
+      "Accept-Encoding: gzip, deflate, sdch\r\n", "Accept-Language: en-US,en;q=0.8,ru;q=0.6\r\n",
+      "\r\n",
       "<!DOCTYPE html><p>\
        A request message from a client to a server includes, within the\
        first line of that message, the method to be applied to the resource,\
@@ -365,8 +365,7 @@ void unit_test() {
   res.write(test);
   res.write(message);
 
-  assert(memcmp(((std::string)res).c_str(), test_result, sizeof(test_result)) ==
-         0);
+  assert(memcmp(((std::string)res).c_str(), test_result, sizeof(test_result)) == 0);
 
   //-------------------------------------------
   // POST check
@@ -409,8 +408,7 @@ void unit_test() {
   }
 
   assert(parser2.headers["content-length"] == "21");
-  assert(memcmp(parser2.get_body().c_str(), "1234567890\000abcdefghik", 22) ==
-         0);
+  assert(memcmp(parser2.get_body().c_str(), "1234567890\000abcdefghik", 22) == 0);
 
   std::cout << "OK =)" << std::endl;
 }

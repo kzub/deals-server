@@ -17,15 +17,15 @@ struct TestInfo {
 ** ----------------------------------------------------------*/
 class TestResult : public TableProcessor<TestInfo> {
  public:
-  TestResult(Table<TestInfo>* table) : table(table) {}
+  TestResult(Table<TestInfo>* table) : table(table) {
+  }
 
   bool process_function(TestInfo* elements, uint32_t size) {
     // std::cout << "size:" << size << std::endl;
     uint32_t idx;
     for (idx = 0; idx < size; idx++) {
       if (found.size() <= elements[idx].value) {
-        for (uint32_t todo = elements[idx].value - found.size() + 1; todo > 0;
-             todo--) {
+        for (uint32_t todo = elements[idx].value - found.size() + 1; todo > 0; todo--) {
           // std::cout << "PUSHBACK size:" << found.size() << " value:" <<
           // elements[idx].value << std::endl;
           found.push_back(0);
@@ -40,7 +40,9 @@ class TestResult : public TableProcessor<TestInfo> {
     return true;
   }
 
-  void go() { table->process(this); }
+  void go() {
+    table->process(this);
+  }
 
   Table<TestInfo>* table;
   std::vector<uint32_t> found;
@@ -61,8 +63,8 @@ std::vector<uint32_t> check(Table<TestInfo>& index) {
 }
 // ---------------------------------------------------------
 
-void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number,
-                            uint8_t numval = 0, uint32_t lifetime = 0) {
+void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval = 0,
+                            uint32_t lifetime = 0) {
   uint32_t idx;
   for (idx = 0; idx < number; idx++) {
     TestInfo test = {numval};
@@ -115,7 +117,8 @@ int unit_test() {
     else
       assert(res[3] == 0);
 
-    if (seconds <= 10) assert(res[5] == 100);
+    if (seconds <= 10)
+      assert(res[5] == 100);
   }
 
   testAddMultipleRecords(&index, 50, 2, 2);

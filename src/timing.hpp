@@ -41,8 +41,8 @@ class Timer {
 //---------------------------------------------------
 class TimeLord {
  public:
-  TimeLord(uint32_t ticks_in_second = 1)
-      : tick_counter(1), ticks_in_second(ticks_in_second) {}
+  TimeLord(uint32_t ticks_in_second = 1) : tick_counter(1), ticks_in_second(ticks_in_second) {
+  }
 
   operator uint32_t();
   TimeLord &operator++();

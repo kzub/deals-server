@@ -60,7 +60,9 @@ void TCPConnection::network_read() {
 /*----------------------------------------------------------------------
 * TCPConnection Read
 *----------------------------------------------------------------------*/
-void TCPConnection::network_data_processed() { data_in.clear(); }
+void TCPConnection::network_data_processed() {
+  data_in.clear();
+}
 
 /*----------------------------------------------------------------------
 * TCPConnection Write
@@ -97,7 +99,9 @@ void TCPConnection::network_write() {
 /*----------------------------------------------------------------------
 * TCPConnection close
 *----------------------------------------------------------------------*/
-std::string TCPConnection::get_data() { return data_in; }
+std::string TCPConnection::get_data() {
+  return data_in;
+}
 
 /*----------------------------------------------------------------------
 * TCPConnection is_dead
@@ -145,17 +149,23 @@ void TCPConnection::close(std::string msg) {
 /*----------------------------------------------------------------------
 * Connection write
 *----------------------------------------------------------------------*/
-void TCPConnection::write(std::string out) { data_out += out; }
+void TCPConnection::write(std::string out) {
+  data_out += out;
+}
 
 /*----------------------------------------------------------------------
 * Connection sendbuf checker
 *----------------------------------------------------------------------*/
-bool TCPConnection::has_something_to_send() { return data_out.length() > 0; }
+bool TCPConnection::has_something_to_send() {
+  return data_out.length() > 0;
+}
 
 /*----------------------------------------------------------------------
 * Connection socket accesor
 *----------------------------------------------------------------------*/
-uint16_t TCPConnection::get_socket() { return sockfd; }
+uint16_t TCPConnection::get_socket() {
+  return sockfd;
+}
 
 /*----------------------------------------------------------------------
 * Connection socket accesor
@@ -170,8 +180,7 @@ std::string TCPConnection::get_client_address() {
 std::string inet_addr_to_string(struct sockaddr_in &hostaddr) {
   char buf[INET_ADDRSTRLEN];
 
-  const char *res =
-      inet_ntop(AF_INET, &(hostaddr.sin_addr), (char *)buf, INET_ADDRSTRLEN);
+  const char *res = inet_ntop(AF_INET, &(hostaddr.sin_addr), (char *)buf, INET_ADDRSTRLEN);
 
   if (res != nullptr) {
     return std::string(buf) + ":" + std::to_string(htons(hostaddr.sin_port));

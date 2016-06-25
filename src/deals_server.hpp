@@ -14,7 +14,8 @@ class Context {
 
 class DealsServer : public srv::TCPServer<Context> {
  public:
-  DealsServer(uint16_t port) : srv::TCPServer<Context>(port) {}
+  DealsServer(uint16_t port) : srv::TCPServer<Context>(port) {
+  }
 
  private:
   void on_connect(Connection& conn);

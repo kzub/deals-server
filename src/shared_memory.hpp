@@ -36,13 +36,8 @@ class ElementPointer {
  public:
   ElementPointer(Table<ELEMENT_T>& table, ErrorCodes error)
       : error(error), page_name(""), index(0), size(0), table(table){};
-  ElementPointer(Table<ELEMENT_T>& table, std::string page_name, uint32_t index,
-                 uint32_t size)
-      : error(NO_ERROR),
-        page_name(page_name),
-        index(index),
-        size(size),
-        table(table){};
+  ElementPointer(Table<ELEMENT_T>& table, std::string page_name, uint32_t index, uint32_t size)
+      : error(NO_ERROR), page_name(page_name), index(index), size(size), table(table){};
 
   ELEMENT_T* get_data();
 
@@ -73,8 +68,8 @@ class TableProcessor {
 template <typename ELEMENT_T>
 class Table {
  public:
-  Table(std::string table_name, uint16_t table_max_pages,
-        uint32_t max_elements_in_page, uint32_t record_expire_seconds);
+  Table(std::string table_name, uint16_t table_max_pages, uint32_t max_elements_in_page,
+        uint32_t record_expire_seconds);
   // cleanup all shared memory mappings on exit
   ~Table();
 
@@ -84,8 +79,7 @@ class Table {
   void cleanup();
 
  private:
-  SharedMemoryPage<ELEMENT_T>* localGetPageByName(
-      std::string page_name_to_look);
+  SharedMemoryPage<ELEMENT_T>* localGetPageByName(std::string page_name_to_look);
   SharedMemoryPage<ELEMENT_T>* getPageByName(std::string page_name_to_look);
 
   locks::CriticalSection* lock;

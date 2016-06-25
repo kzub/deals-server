@@ -53,7 +53,8 @@ class HttpParser {
         headers_end(0),
         bytes_written(0),
         content_length(0),
-        parsing_complete(false) {}
+        parsing_complete(false) {
+  }
 
   void write(const char* data, size_t size);
   void write(std::string msg);
@@ -82,8 +83,7 @@ class HttpParser {
 class HttpResponse {
  public:
   HttpResponse(uint16_t status_code, std::string reason_phrase);
-  HttpResponse(uint16_t status_code, std::string reason_phrase,
-               std::string body);
+  HttpResponse(uint16_t status_code, std::string reason_phrase, std::string body);
 
   void add_header(std::string name, std::string value);
   void write(std::string msg);

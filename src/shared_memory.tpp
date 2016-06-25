@@ -18,25 +18,23 @@ namespace shared_mem {
 // Table Constructor ----------------------------------------------
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
-                        uint32_t max_elements_in_page,
-                        uint32_t record_expire_seconds)
+                        uint32_t max_elements_in_page, uint32_t record_expire_seconds)
     : table_max_pages(table_max_pages),
       last_known_index_length(0),
       max_elements_in_page(max_elements_in_page),
       record_expire_seconds(record_expire_seconds) {
   // max 6 digits (uint16_t) ->  ':65536' - suffix for pages
   if (table_name.length() > MEMPAGE_NAME_MAX_LEN - 6) {
-    std::cout << "TABLE_NAME_TOO_LONG" << table_name
-              << "(max:" << MEMPAGE_NAME_MAX_LEN - 6 << ")" << std::endl;
+    std::cout << "TABLE_NAME_TOO_LONG" << table_name << "(max:" << MEMPAGE_NAME_MAX_LEN - 6 << ")"
+              << std::endl;
     throw "TABLE_NAME_TOO_LONG";
   }
 
   // open existed index or make new one
-  table_index =
-      new SharedMemoryPage<TablePageIndexElement>(table_name, table_max_pages);
+  table_index = new SharedMemoryPage<TablePageIndexElement>(table_name, table_max_pages);
   if (!table_index->isAllocated()) {
-    std::cout << "CANNOT_ALLOCATE_TABLE_INDEX for: " << table_name
-              << " pages:" << table_max_pages << std::endl;
+    std::cout << "CANNOT_ALLOCATE_TABLE_INDEX for: " << table_name << " pages:" << table_max_pages
+              << std::endl;
     throw "CANNOT_ALLOCATE_TABLE_INDEX";
   }
 
@@ -50,8 +48,7 @@ Table<ELEMENT_T>::~Table() {
   // cleanup all shared memory mappings on exit
   typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
 
-  for (page = opened_pages_list.begin(); page != opened_pages_list.end();
-       ++page) {
+  for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
     delete (*page);
   }
 
@@ -109,8 +106,7 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
       // mark as deleted in shared mem
       index_current->expire_at = 0;
 
-      SharedMemoryPage<ELEMENT_T>* page =
-          getPageByName(index_current->page_name);
+      SharedMemoryPage<ELEMENT_T>* page = getPageByName(index_current->page_name);
       page->shared_pageinfo->unlinked = true;
       // The operation of shm_unlink() removes a shared memory object name, and,
       // once all processes have unmapped the object, de-allocates and destroys
@@ -127,8 +123,7 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
   // check pages amount
   if (last_known_index_length > idx) {
     index_current = index_first + last_not_expired_idx;
-    SharedMemoryPage<ELEMENT_T>* good_page =
-        localGetPageByName(index_current->page_name);
+    SharedMemoryPage<ELEMENT_T>* good_page = localGetPageByName(index_current->page_name);
 
     // if page exists localy => it was allocated and we could pop() open_pages
     // till we meet it.
@@ -160,8 +155,7 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
     page_to_process = getPageByName((*it).page_name);
     // std::cout << "PAGE:" << it - records_to_scan.begin() << std::endl;
     continue_iteration = processor->process_function(
-        page_to_process->getElements(),
-        max_elements_in_page - (*it).page_elements_available);
+        page_to_process->getElements(), max_elements_in_page - (*it).page_elements_available);
     if (continue_iteration == false) {
       break;
     }
@@ -205,9 +199,9 @@ void Table<ELEMENT_T>::cleanup() {
 
 // Table addRecord ----------------------------------------------
 template <typename ELEMENT_T>
-ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(
-    ELEMENT_T* records_pointer, uint32_t records_cout,
-    uint32_t lifetime_seconds) {
+ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
+                                                      uint32_t records_cout,
+                                                      uint32_t lifetime_seconds) {
   if (records_cout > max_elements_in_page) {
     return ElementPointer<ELEMENT_T>(*this, RECORD_SIZE_TO_BIG);
   }
@@ -238,8 +232,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(
     }
 
     // page exist and not fit (go next)
-    if (index_record->expire_at > 0 &&
-        index_record->page_elements_available < records_cout) {
+    if (index_record->expire_at > 0 && index_record->page_elements_available < records_cout) {
       continue;
     }
 
@@ -252,11 +245,9 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(
       std::cout << "USE EMPTY page:" << insert_page_name << std::endl;
 
       // calculate capacity after we will put records
-      index_record->page_elements_available =
-          max_elements_in_page - records_cout;
+      index_record->page_elements_available = max_elements_in_page - records_cout;
       // copy page_name to shared meme
-      std::memcpy(index_record->page_name, insert_page_name.c_str(),
-                  insert_page_name.length());
+      std::memcpy(index_record->page_name, insert_page_name.c_str(), insert_page_name.length());
 
       // fill with zero next index row in case last row  has no space
       if (!current_record_was_cleared && idx < table_max_pages - 1) {
@@ -268,8 +259,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(
       // std::cout << "use AVAIL page:" << std::endl;
       // max_elements_in_page stored in table
       // must be the same on all program instances
-      insert_element_idx =
-          max_elements_in_page - index_record->page_elements_available;
+      insert_element_idx = max_elements_in_page - index_record->page_elements_available;
       // decrease available elements
       index_record->page_elements_available -= records_cout;
     }
@@ -313,18 +303,15 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(
   // << " cout:" << records_cout <<	" size:" <<
   // sizeof(ELEMENT_T)*records_cout
   // << std::endl;
-  return ElementPointer<ELEMENT_T>(*this, insert_page_name, insert_element_idx,
-                                   records_cout);
+  return ElementPointer<ELEMENT_T>(*this, insert_page_name, insert_element_idx, records_cout);
 }
 
 // Table localGetPageByName -------------------------------------
 template <typename ELEMENT_T>
-SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(
-    std::string page_name_to_look) {
+SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(std::string page_name_to_look) {
   // find page in open pages list
   typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
-  for (page = opened_pages_list.begin(); page != opened_pages_list.end();
-       ++page) {
+  for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
     if ((*page)->page_name == page_name_to_look) {
       return *page;
     }
@@ -335,15 +322,13 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(
 
 // Table getPageByName -------------------------------------------
 template <typename ELEMENT_T>
-SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(
-    std::string page_name_to_look) {
+SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(std::string page_name_to_look) {
   // let's look for page now in local heap
   SharedMemoryPage<ELEMENT_T>* page = localGetPageByName(page_name_to_look);
 
   // if not already open or created -> do it
   if (page == nullptr) {
-    page = new SharedMemoryPage<ELEMENT_T>(page_name_to_look,
-                                           max_elements_in_page);
+    page = new SharedMemoryPage<ELEMENT_T>(page_name_to_look, max_elements_in_page);
 
     if (!page->isAllocated()) {
       delete page;
@@ -363,8 +348,7 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(
 
 // SharedMemoryPage Constructor ----------------------------------
 template <typename ELEMENT_T>
-SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name,
-                                              uint32_t elements)
+SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t elements)
     : page_name(page_name), shared_memory(nullptr) {
   if (!page_name.length()) {
     std::cout << "page_name error" << std::endl;
@@ -383,8 +367,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name,
     }
 
     if (fd == -1) {
-      std::cout << "Cannot create or open memory page:" << errno << " "
-                << page_name << std::endl;
+      std::cout << "Cannot create or open memory page:" << errno << " " << page_name << std::endl;
       return;
     }
 
@@ -393,18 +376,15 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name,
     // if new setup page size
     int res = ftruncate(fd, page_memory_size);
     if (res == -1) {
-      std::cout << "ERROR: cant truncate:" << errno << " " << page_name
-                << std::endl;
+      std::cout << "ERROR: cant truncate:" << errno << " " << page_name << std::endl;
       close(fd);
       return;
     }
     new_memory_allocated = true;
-    std::cout << "CREATE:" << page_name << " size:" << page_memory_size
-              << std::endl;
+    std::cout << "CREATE:" << page_name << " size:" << page_memory_size << std::endl;
   }
 
-  void* map = mmap(nullptr, page_memory_size, PROT_READ | PROT_WRITE,
-                   MAP_SHARED, fd, 0);
+  void* map = mmap(nullptr, page_memory_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
   // After a call to mmap(2) the file descriptor may be closed without affecting
   // the memory mapping.
@@ -412,15 +392,13 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name,
   close(fd);
 
   if (map == MAP_FAILED) {
-    std::cerr << "MAP_FAILED:" << errno << page_name
-              << " size:" << page_memory_size << std::endl;
+    std::cerr << "MAP_FAILED:" << errno << page_name << " size:" << page_memory_size << std::endl;
     return;
   }
 
   shared_memory = map;
   shared_pageinfo = (page_information*)shared_memory;
-  shared_elements =
-      (ELEMENT_T*)((uint8_t*)shared_memory + sizeof(page_information));
+  shared_elements = (ELEMENT_T*)((uint8_t*)shared_memory + sizeof(page_information));
 
   if (new_memory_allocated) {
     // cleanup info structure & first element

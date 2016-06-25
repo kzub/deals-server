@@ -96,7 +96,8 @@ class TCPServer {
  protected:
   class Connection : public TCPConnection {
    public:
-    Connection(const int sockfd) : TCPConnection(sockfd) {}
+    Connection(const int sockfd) : TCPConnection(sockfd) {
+    }
     Context context;
   };
 
@@ -151,8 +152,8 @@ TCPServer<Context>::TCPServer(uint16_t port) {
     exit(-1);
   }
 
-  std::cout << "listen on " << get_server_address()
-            << " max_connections:" << ACCEPT_QUEUE_LENGTH << std::endl;
+  std::cout << "listen on " << get_server_address() << " max_connections:" << ACCEPT_QUEUE_LENGTH
+            << std::endl;
   fcntl(srv_sockfd, F_SETFL, O_NONBLOCK);
 }
 
@@ -165,8 +166,7 @@ void TCPServer<Context>::accept_new_connection() {
   Connection* conn = new Connection(srv_sockfd);
 
   if (!conn->is_alive()) {
-    std::cout << "accept_new_connection() NOT ALIVE:" << srv_sockfd
-              << std::endl;
+    std::cout << "accept_new_connection() NOT ALIVE:" << srv_sockfd << std::endl;
     delete conn;
     return;
   }
@@ -227,8 +227,7 @@ void TCPServer<Context>::process() {
     }
 
     if (current_time - conn->created_time > MAX_CONNECTION_LIFETIME_SEC) {
-      std::cerr << "MAX_CONNECTION_LIFETIME_SEC:" << MAX_CONNECTION_LIFETIME_SEC
-                << std::endl;
+      std::cerr << "MAX_CONNECTION_LIFETIME_SEC:" << MAX_CONNECTION_LIFETIME_SEC << std::endl;
       conn->close();
     }
   }
@@ -245,8 +244,7 @@ void TCPServer<Context>::process() {
   }
 
   if (retval == 0) {
-    std::cout << "No data within (n) seconds. length:" << connections.size()
-              << std::endl;
+    std::cout << "No data within (n) seconds. length:" << connections.size() << std::endl;
     return;
   }
 
