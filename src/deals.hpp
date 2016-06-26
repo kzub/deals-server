@@ -29,6 +29,7 @@ struct Flags {
   bool overriden : 1;
   uint8_t departure_day_of_week : 4;
   uint8_t return_day_of_week : 4;
+  bool is2gds4rt : 1;
 };
 
 namespace i {
@@ -101,14 +102,15 @@ class DealsDatabase {
   ~DealsDatabase();
 
   void addDeal(std::string origin, std::string destination, std::string departure_date,
-               std::string return_date, bool direct_flight, uint32_t price, std::string data);
+               std::string return_date, bool direct_flight, uint32_t price, bool is2gds4rt,
+               std::string data);
 
   std::vector<DealInfo> searchForCheapestEver(
       std::string origin, std::string destinations, std::string departure_date_from,
       std::string departure_date_to, std::string departure_days_of_week,
       std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
-      uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights, uint16_t limit,
-      uint32_t max_lifetime_sec);
+      uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights,
+      bool skip_2gds4rt, uint16_t limit, uint32_t max_lifetime_sec);
 
   void truncate();
 
@@ -132,6 +134,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
         filter_departure_weekdays(false),
         filter_return_weekdays(false),
         filter_stay_days(false),
+        filter_2gds4rt(false),
         filter_limit(20),
         query_is_broken(false) {
   }
@@ -146,6 +149,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
   void stay_days(uint16_t stay_from, uint16_t stay_to);
   void departure_weekdays(std::string days_of_week);
   void return_weekdays(std::string days_of_week);
+  void skip_2gds4rt();
 
  protected:
   std::vector<i::DealInfo> exec();
@@ -194,6 +198,8 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
 
   bool filter_stay_days;
   StayInterval stay_days_values;
+
+  bool filter_2gds4rt;
 
   uint16_t filter_limit;
   uint16_t deals_slots_used;

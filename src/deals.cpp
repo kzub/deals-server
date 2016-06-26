@@ -180,6 +180,12 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       }
     }
 
+    // skip 2gds4rt deals
+    // --------------------------------
+    if (filter_2gds4rt && deal.flags.is2gds4rt == true) {
+      continue;
+    }
+
     // **********************************************************************
     // SEARCHING FOR CHEAPEST DEAL AREA
     // **********************************************************************
@@ -435,6 +441,10 @@ void DealsSearchQuery::deals_limit(uint16_t _filter_limit) {
   }
 }
 
+void DealsSearchQuery::skip_2gds4rt() {
+  filter_2gds4rt = true;
+}
+
 DealsDatabase::DealsDatabase() {
   // 1k pages x 10k elements per page, 10m records total, expire 60 seconds
   db_index = new shared_mem::Table<i::DealInfo>(DEALINFO_TABLENAME, DEALINFO_PAGES /* pages */,
@@ -459,7 +469,7 @@ void DealsDatabase::truncate() {
 
 void DealsDatabase::addDeal(std::string origin, std::string destination, std::string departure_date,
                             std::string return_date, bool direct_flight, uint32_t price,
-                            std::string data) {
+                            bool is2gds4rt, std::string data) {
   if (origin.length() != 3) {
     std::cout << "wrong origin length:" << origin << std::endl;
     return;
@@ -503,6 +513,7 @@ void DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   info.flags.direct = direct_flight;
   info.flags.departure_day_of_week = ::utils::day_of_week_from_date(departure_date);
   info.flags.return_day_of_week = ::utils::day_of_week_from_date(return_date);
+  info.flags.is2gds4rt = is2gds4rt;
   info.price = price;
   strncpy(info.page_name, result.page_name.c_str(), MEMPAGE_NAME_MAX_LEN);
   info.index = result.index;
@@ -536,7 +547,7 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, bool direct_flights, bool stops_flights, uint16_t limit,
+    uint16_t stay_to, bool direct_flights, bool stops_flights, bool skip_2gds4rt, uint16_t limit,
     uint32_t max_lifetime_sec)
 
 {
@@ -552,6 +563,9 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
   query.max_lifetime_sec(max_lifetime_sec);
   query.departure_weekdays(departure_days_of_week);
   query.return_weekdays(return_days_of_week);
+  if (skip_2gds4rt) {
+    query.skip_2gds4rt();
+  }
 
   /*std::cout << "origin:" << origin
             << " destinations:" << destinations
@@ -816,11 +830,11 @@ void unit_test() {
   // add some data, that will be outdated
   for (int i = 0; i < TEST_ELEMENTS_COUNT; ++i) {
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
-               getRandomPrice(1000), dumb);
+               getRandomPrice(1000), false, dumb);
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
-               getRandomPrice(2000), dumb);
+               getRandomPrice(2000), false, dumb);
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
-               getRandomPrice(3000), dumb);
+               getRandomPrice(3000), false, dumb);
   }
   return;
   // go to the feature (+1000 seconds)
@@ -828,31 +842,31 @@ void unit_test() {
   time += 1000;
 
   // add data we will expect
-  db.addDeal("MOW", "MAD", "2016-05-01", "2016-05-21", true, 5000, check);
-  db.addDeal("MOW", "BER", "2016-06-01", "2016-06-11", true, 6000, check);
-  db.addDeal("MOW", "PAR", "2016-07-01", "2016-07-15", true, 7000, check);
+  db.addDeal("MOW", "MAD", "2016-05-01", "2016-05-21", true, 5000, false, check);
+  db.addDeal("MOW", "BER", "2016-06-01", "2016-06-11", true, 6000, false, check);
+  db.addDeal("MOW", "PAR", "2016-07-01", "2016-07-15", true, 7000, false, check);
 
   time += 5;
 
   // add some good
   for (int i = 0; i < TEST_ELEMENTS_COUNT; ++i) {
     db.addDeal(getRandomOrigin(), "MAD", getRandomDate(2015), getRandomDate(2015), true,
-               getRandomPrice(5100), dumb);
+               getRandomPrice(5100), false, dumb);
     db.addDeal(getRandomOrigin(), "BER", getRandomDate(), getRandomDate(), true,
-               getRandomPrice(6200), dumb);
+               getRandomPrice(6200), false, dumb);
     db.addDeal(getRandomOrigin(), "PAR", getRandomDate(), getRandomDate(), true,
-               getRandomPrice(7200), dumb);
+               getRandomPrice(7200), false, dumb);
 
     // MAD will be 2016 here: and > 8000 price
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), false,
-               getRandomPrice(8000), dumb);
+               getRandomPrice(8000), false, dumb);
   }
 
   timer.tick("before test1");
   // 1st test ----------------------------
   // *********************************************************
   std::vector<DealInfo> result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "", "", "", "",
-                                                          "", "", 0, 0, true, true, 0, 10);
+                                                          "", "", 0, 0, true, true, false, 0, 10);
   timer.tick("test1");
 
   for (std::vector<DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
@@ -906,7 +920,7 @@ void unit_test() {
   // 2nd test -------------------------------
   // *********************************************************
   result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "2016-06-01", "2016-06-23", "",
-                                    "2016-06-10", "2016-06-22", "", 0, 0, true, true, 0, 10);
+                                    "2016-06-10", "2016-06-22", "", 0, 0, true, true, false, 0, 10);
 
   timer.tick("test2");
 
@@ -971,7 +985,7 @@ void unit_test() {
   // *********************************************************
   timer.tick("before test3");
   result = db.searchForCheapestEver("MOW", "", "", "", "fri,sat,sun", "", "", "sat,sun,mon", 4, 18,
-                                    false, true, 0, 2000);
+                                    false, true, false, 0, 2000);
   timer.tick("test3");
 
   for (std::vector<DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
@@ -1004,12 +1018,12 @@ int mainasd() {
   // add some data, that will be outdated
   for (int i = 0; i < 1000000; ++i) {
     db.addDeal(deals::getRandomOrigin(), deals::getRandomOrigin(), deals::getRandomDate(),
-               deals::getRandomDate(), true, deals::getRandomPrice(1000), dumb);
+               deals::getRandomDate(), true, deals::getRandomPrice(1000), false, dumb);
   }
 
   for (int i = 0; i < 1000000; ++i) {
     db.addDeal(deals::getRandomOrigin(), deals::getRandomOrigin(), deals::getRandomDate(),
-               deals::getRandomDate(), true, deals::getRandomPrice(1000), dumb);
+               deals::getRandomDate(), true, deals::getRandomPrice(1000), false, dumb);
   }
 
   return 0;

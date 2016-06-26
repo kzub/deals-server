@@ -11,7 +11,7 @@
 
 namespace locks {
 
-#define WAIT_INFINITY_TIME 1
+// #define WAIT_INFINITY_TIME TRUE
 #define SLEEP_BETWEEN_TRIES_USEC 100
 #define WAIT_FOR_LOCK_MSEC 5000
 
@@ -22,6 +22,7 @@ class CriticalSection {
 
   void enter();
   void exit();
+  void reset_not_for_production();
 
  private:
   void semaphore_accuire();

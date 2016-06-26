@@ -71,6 +71,14 @@ void CriticalSection::semaphore_accuire() {
 #endif
 }
 
+void CriticalSection::reset_not_for_production() {
+  while (sem_trywait(lock) == -1) {
+    sem_post(lock);
+  }
+  sem_post(lock);
+  std::cout << "reset_not_for_production() done" << std::endl;
+}
+
 //-----------------------------------------------
 // CriticalSection release
 //-----------------------------------------------
@@ -120,6 +128,8 @@ void testf(bool& second_enter) {
   //-------------------------------
   // test1
   CriticalSection lock("dbread");
+  lock.reset_not_for_production();
+
   uint32_t start_time = timing::getTimestampSec();
   lock.enter();
   std::cout << "IAM IN 1" << std::endl;
