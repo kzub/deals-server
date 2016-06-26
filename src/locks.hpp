@@ -11,7 +11,8 @@
 
 namespace locks {
 
-#define SLEEP_BETWEEN_TRIES_USEC 1000
+#define WAIT_INFINITY_TIME 1
+#define SLEEP_BETWEEN_TRIES_USEC 100
 #define WAIT_FOR_LOCK_MSEC 5000
 
 class CriticalSection {

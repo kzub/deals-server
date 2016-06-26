@@ -43,6 +43,14 @@ CriticalSection::~CriticalSection() {
 // CriticalSection acciure
 //-----------------------------------------------
 void CriticalSection::semaphore_accuire() {
+#ifdef WAIT_INFINITY_TIME
+  int res = sem_wait(lock);
+  if (res == -1) {
+    std::cout << "semaphore wait errorcode:" << errno << std::endl;
+    throw "cant unlock";
+  }
+  return;
+#else
   uint32_t wait_retries = 0;
   while (1) {
     int res = sem_trywait(lock);
@@ -60,6 +68,7 @@ void CriticalSection::semaphore_accuire() {
 
     break;
   }
+#endif
 }
 
 //-----------------------------------------------

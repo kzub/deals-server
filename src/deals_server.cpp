@@ -209,6 +209,12 @@ void DealsServer::getTop(Connection &conn) {
                                dweekdays, return_date_from, return_date_to, rweekdays, stay_from,
                                stay_to, direct_flights, stops_flights, limit, max_lifetime_sec);
 
+  if (result.size() == 0) {
+    http::HttpResponse rq_result(204, "empty result");
+    rq_result.add_header("Content-Length", "0");
+    conn.close(rq_result);
+    return;
+  }
   //------------------------------------
   // prepare response format
   // <-  size_info  -><-     data blocks       ->

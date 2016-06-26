@@ -786,7 +786,7 @@ void convertertionTest() {
   assert(date == "2017-01-01");
 }
 
-#define TEST_ELEMENTS_COUNT 1000000
+#define TEST_ELEMENTS_COUNT 50000
 void unit_test() {
   assert(::utils::days_between_dates("2015-01-01", "2015-01-01") == 0);
   assert(::utils::days_between_dates("2015-01-01", "2016-01-01") == 365);

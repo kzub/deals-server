@@ -38,10 +38,10 @@ function parseAnswer(response_body){
 	}
 
 	if(!data){
-		console.log(data);		
+		console.log(data);
 	}
 
-	return data;	
+	return data;
 }
 
 var server_ports = [5000/*, 5001, 5002, 5003*/];
@@ -60,6 +60,10 @@ function httpsend(mode, params, postData, callback){
 			method: 'GET'
 		}
 	}
+
+	// console.log('req');
+	// setTimeout(callback, 1000);
+	// return;
 
 	if(!modes[mode]){
 		callback('bad mode');
@@ -123,7 +127,7 @@ function getRandomCityPair(){
 	if(Math.random() > 0.5){
 		key1 = Math.floor(Math.random() * 5);
 	}else{
-		key1 = Math.floor(Math.random() * cities.length);		
+		key1 = Math.floor(Math.random() * cities.length);
 	}
 
 	do {
@@ -141,7 +145,7 @@ function getRandomDate(){
 
 	if (month < 10) { month = '0' + month; }
 	if (day < 10) { day = '0' + day; }
-	
+
 	return [year, month, day].join('-');
 }
 
@@ -199,7 +203,7 @@ async.until(
 
 				var params = {
 					origin: pair[0],
-					departure_date: dates[0], 
+					departure_date: dates[0],
 					destination: pair[1],
 					return_date: dates[1],
 					direct_flight: Math.random() > 0.5,
@@ -218,6 +222,8 @@ if(skipget){
 	return;
 }
 
+var pconn = [];
+
 async.until(
 	function test() {
 		if(counter2++ % 500 === 0){
@@ -230,15 +236,23 @@ async.until(
 		return stop;
 	},
 	function iter(cb) {
+		pconn.push(1);
 		httpsend('top', { origin: getRandomCityPair()[0]}, undefined, function(err, data){
 			// if(!err){
 			// 	parseAnswer(data);
 			// }
-			cb();
+			if(pconn.length == 5){
+				cb();
+			}
+			pconn.pop();
 		});
+		// console.log('pconn.length',pconn.length);
+		if(pconn.length < 5){
+			cb();
+		}
 	},
-	function done() {
-		console.log('top done')
+	function done(err) {
+		console.log(err||'top done')
 	}
 );
 
