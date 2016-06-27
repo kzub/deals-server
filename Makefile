@@ -19,10 +19,10 @@ OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CFLAGS := -g -O3 -Wall -std=c++0x
 
 ifeq ($(UNAME), Linux)
-LIB :=  -L lib -lrt
+LIB :=  -L lib -lrt -pthread
 endif
 ifeq ($(UNAME), Darwin)
-LIB :=  -L lib #-lrt
+LIB :=  -L lib
 endif
 
 INC := -I include

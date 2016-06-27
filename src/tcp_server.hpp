@@ -244,7 +244,7 @@ void TCPServer<Context>::process() {
   }
 
   if (retval == 0) {
-    std::cout << "No data within (n) seconds. length:" << connections.size() << std::endl;
+    // std::cout << "No data within (n) seconds. length:" << connections.size() << std::endl;
     return;
   }
 
