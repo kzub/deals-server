@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h> /* For O_* constants */
 #include <string.h>
+#include <unistd.h>
 
 #include "shared_memory.hpp"
 #include "timing.hpp"
