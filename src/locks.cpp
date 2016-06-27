@@ -4,6 +4,7 @@
 
 #include <fcntl.h> /* For O_* constants */
 #include <semaphore.h>
+#include <unistd.h>
 
 #include "locks.hpp"
 #include "timing.hpp"

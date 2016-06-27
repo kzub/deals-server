@@ -1,6 +1,7 @@
 #include "tcp_server.hpp"
 #include <arpa/inet.h>
 #include <strings.h>
+#include <unistd.h>
 
 namespace srv {
 
