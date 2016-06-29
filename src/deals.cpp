@@ -186,6 +186,19 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       continue;
     }
 
+    // filter deal price
+    // ----------------------------------------
+    if (filter_price) {
+      if (deal.price < price_from_value) {
+        // std::cout << "filter_price_from:" << deal.price << std::endl;
+        continue;
+      }
+      if (deal.price > price_to_value) {
+        // std::cout << "filter_price_to:" << deal.price << std::endl;
+        continue;
+      }
+    }
+
     // **********************************************************************
     // SEARCHING FOR CHEAPEST DEAL AREA
     // **********************************************************************
@@ -445,6 +458,17 @@ void DealsSearchQuery::skip_2gds4rt() {
   filter_2gds4rt = true;
 }
 
+void DealsSearchQuery::price(uint32_t price_from, uint32_t price_to) {
+  if (price_from == 0 && price_to == 0) {
+    // nofilter applied
+    return;
+  }
+
+  filter_price = true;
+  price_from_value = price_from;
+  price_to_value = price_to ? price_to : UINT32_MAX;
+}
+
 DealsDatabase::DealsDatabase() {
   // 1k pages x 10k elements per page, 10m records total, expire 60 seconds
   db_index = new shared_mem::Table<i::DealInfo>(DEALINFO_TABLENAME, DEALINFO_PAGES /* pages */,
@@ -547,8 +571,8 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, bool direct_flights, bool stops_flights, bool skip_2gds4rt, uint16_t limit,
-    uint32_t max_lifetime_sec)
+    uint16_t stay_to, bool direct_flights, bool stops_flights, bool skip_2gds4rt,
+    uint32_t price_from, uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec)
 
 {
   DealsSearchQuery query(*db_index);
@@ -566,6 +590,7 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
   if (skip_2gds4rt) {
     query.skip_2gds4rt();
   }
+  query.price(price_from, price_to);
 
   /*std::cout << "origin:" << origin
             << " destinations:" << destinations
@@ -762,8 +787,6 @@ std::string getRandomOrigin() {
 }
 
 uint32_t getRandomPrice(uint32_t minPrice) {
-  return minPrice;
-
   uint32_t price = rand() & 0x0000FFFF;
   price += minPrice;
 
@@ -812,13 +835,13 @@ void unit_test() {
   assert(::utils::day_of_week_from_str("mon") == 0);
   assert(::utils::day_of_week_from_str("sun") == 6);
   assert(::utils::day_of_week_from_str("eff") == 7);
-  std::cout << "date functions... OK" << std::endl;
+  std::cout << "Date functions... OK" << std::endl;
 
   convertertionTest();
-  std::cout << "city conv functions... OK" << std::endl;
+  std::cout << "City conv functions... OK" << std::endl;
 
   DealsDatabase db;
-  // db.truncate();
+  db.truncate();
 
   std::string dumb = "1, 2, 3, 4, 5, 6, 7, 8";
   std::string check = "7, 7, 7";
@@ -836,7 +859,7 @@ void unit_test() {
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
                getRandomPrice(3000), false, dumb);
   }
-  return;
+
   // go to the feature (+1000 seconds)
   timing::TimeLord time;
   time += 1000;
@@ -865,8 +888,8 @@ void unit_test() {
   timer.tick("before test1");
   // 1st test ----------------------------
   // *********************************************************
-  std::vector<DealInfo> result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "", "", "", "",
-                                                          "", "", 0, 0, true, true, false, 0, 10);
+  std::vector<DealInfo> result = db.searchForCheapestEver(
+      "MOW", "AAA,PAR,BER,MAD", "", "", "", "", "", "", 0, 0, true, true, false, 0, 0, 0, 10);
   timer.tick("test1");
 
   for (std::vector<DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
@@ -920,7 +943,8 @@ void unit_test() {
   // 2nd test -------------------------------
   // *********************************************************
   result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "2016-06-01", "2016-06-23", "",
-                                    "2016-06-10", "2016-06-22", "", 0, 0, true, true, false, 0, 10);
+                                    "2016-06-10", "2016-06-22", "", 0, 0, true, true, false, 0, 0,
+                                    0, 10);
 
   timer.tick("test2");
 
@@ -985,14 +1009,17 @@ void unit_test() {
   // *********************************************************
   timer.tick("before test3");
   result = db.searchForCheapestEver("MOW", "", "", "", "fri,sat,sun", "", "", "sat,sun,mon", 4, 18,
-                                    false, true, false, 0, 2000);
+                                    false, true, false, 9100, 19200, 0, 2000);
   timer.tick("test3");
+  std::cout << "search 3 result size:" << result.size() << std::endl;
 
   for (std::vector<DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
     deals::utils::print(*deal);
   }
 
   for (int i = 0; i < result.size(); i++) {
+    assert(result[i].price >= 9100);
+    assert(result[i].price <= 19200);
     assert(result[i].stay_days >= 4 && result[i].stay_days <= 18);
     assert(result[i].flags.direct == false);
     std::string dw = ::utils::day_of_week_str_from_code(result[i].flags.departure_day_of_week);

@@ -211,19 +211,46 @@ void DealsServer::getTop(Connection &conn) {
   }
   bool skip_2gds4rt_bool = skip_2gds4rt == "true";
 
-  // search itself
+  // check price_from filter
+  //-------------------------
+  uint32_t price_from = 0;
+  if (conn.context.http.request.query.params["price_from"].length()) {
+    try {
+      price_from = std::stol(conn.context.http.request.query.params["price_from"]);
+    } catch (...) {
+      conn.close(http::HttpResponse(400, "Bad price_from", "Bad price_from\n"));
+      return;
+    }
+  }
+
+  // check price_to filter
+  //-------------------------
+  uint32_t price_to = 0;
+  if (conn.context.http.request.query.params["price_to"].length()) {
+    try {
+      price_to = std::stol(conn.context.http.request.query.params["price_to"]);
+    } catch (...) {
+      conn.close(http::HttpResponse(400, "Bad price_to", "Bad price_to\n"));
+      return;
+    }
+  }
+
+  // SEARCH
   //-------------------------
   std::vector<deals::DealInfo> result = db.searchForCheapestEver(
       origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
       return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
-      skip_2gds4rt_bool, limit, max_lifetime_sec);
+      skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
 
+  // No results
+  //-------------------------
   if (result.size() == 0) {
     http::HttpResponse rq_result(204, "empty result");
     rq_result.add_header("Content-Length", "0");
     conn.close(rq_result);
     return;
   }
+
   //------------------------------------
   // prepare response format
   // <-  size_info  -><-     data blocks       ->
@@ -340,10 +367,10 @@ int main(int argc, char *argv[]) {
   if (argc > 1 && std::string(argv[1]) == "test") {
     std::cout << "running autotests..." << std::endl;
 
-    locks::unit_test();
     http::unit_test();
     deals::unit_test();
     timing::unit_test();
+    locks::unit_test();
 
     std::cout << "ALL OK" << std::endl;
     return 0;

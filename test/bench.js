@@ -77,10 +77,10 @@ function httpsend(mode, params, postData, callback){
 	}
 
 	var options = {
-	  hostname: '127.0.0.1',
-	  // hostname: '192.168.55.100',
-	  // port: 5000,
-	  port: getRandomPort(),
+	  hostname: '139.162.233.244',
+	  port: 8090,
+	  // hostname: '127.0.0.1',
+	  // port: getRandomPort(),
 	  path: modes[mode].path + qs,
 	  method: modes[mode].method,
 	  headers: {
@@ -95,8 +95,8 @@ function httpsend(mode, params, postData, callback){
 	var data = '';
 	var req = http.request(options, function(res) {
 	  if(res.statusCode !== 200) {
-	  	console.log('STATUS:' + res.statusCode + res.statusMessage);
-	  	console.log(options.path);
+	  	// console.log('STATUS:' + res.statusCode + res.statusMessage);
+	  	// console.log(options.path);
 	  }
 	  // console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
 	  res.setEncoding('utf8');
@@ -224,11 +224,14 @@ if(skipget){
 
 var pconn = [];
 
+var ticks = 100;
+var parallel = 25;
+
 async.until(
 	function test() {
-		if(counter2++ % 500 === 0){
+		if(counter2++ % ticks === 0){
 			var timeframe = Date.now() - timer2;
-			var ticks = 500;
+			
 			var rate = 1000 * ticks / timeframe;
 			timer2 = Date.now();
 			console.log('TOP rate:' + rate.toFixed(2));
@@ -239,15 +242,18 @@ async.until(
 		pconn.push(1);
 		httpsend('top', { origin: getRandomCityPair()[0]}, undefined, function(err, data){
 			// if(!err){
-			// 	parseAnswer(data);
+				// parseAnswer(data);
 			// }
-			if(pconn.length == 5){
+			if(err){
+				console.log('errror!!!!!!!', err);
+			}
+			if(pconn.length == parallel){
 				cb();
 			}
 			pconn.pop();
 		});
 		// console.log('pconn.length',pconn.length);
-		if(pconn.length < 5){
+		if(pconn.length < parallel){
 			cb();
 		}
 	},

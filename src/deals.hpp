@@ -6,7 +6,8 @@
 
 namespace deals {
 
-#define DEALS_EXPIRES 3600
+//                    8h
+#define DEALS_EXPIRES 28000
 
 #define DEALINFO_TABLENAME "DealsInfo"
 #define DEALINFO_PAGES 1000
@@ -110,7 +111,8 @@ class DealsDatabase {
       std::string departure_date_to, std::string departure_days_of_week,
       std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
       uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights,
-      bool skip_2gds4rt, uint16_t limit, uint32_t max_lifetime_sec);
+      bool skip_2gds4rt, uint32_t price_from, uint32_t price_to, uint16_t limit,
+      uint32_t max_lifetime_sec);
 
   void truncate();
 
@@ -136,7 +138,8 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
         filter_stay_days(false),
         filter_2gds4rt(false),
         filter_limit(20),
-        query_is_broken(false) {
+        query_is_broken(false),
+        filter_price(false) {
   }
 
   void origin(std::string origin);
@@ -150,6 +153,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
   void departure_weekdays(std::string days_of_week);
   void return_weekdays(std::string days_of_week);
   void skip_2gds4rt();
+  void price(uint32_t price_from, uint32_t price_to);
 
  protected:
   std::vector<i::DealInfo> exec();
@@ -206,6 +210,9 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo> {
   uint16_t max_price_deal;
   bool query_is_broken;
 
+  bool filter_price;
+  uint32_t price_from_value;
+  uint32_t price_to_value;
   // this pointers used at search for speed optimization
   // for iterating throught simple values array but not vectors.
   // at exec() function there are local arrays this pointers
