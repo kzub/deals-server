@@ -53,13 +53,9 @@ class ElementPointer {
 template <typename ELEMENT_T>
 class TableProcessor {
  protected:
-  // called before iteration process
-  virtual void pre_process_function(){};
   /* function that will be called for iterating over all not expired pages in
    * table */
   virtual bool process_function(ELEMENT_T* elements, uint32_t size);
-  // called after iteration process
-  virtual void post_process_function(){};
 
   template <class T>
   friend class Table;

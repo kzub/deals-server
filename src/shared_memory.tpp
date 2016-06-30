@@ -150,8 +150,6 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
   std::vector<TablePageIndexElement>::iterator it;
   bool continue_iteration;
 
-  processor->pre_process_function();
-
   for (it = records_to_scan.begin(); it != records_to_scan.end(); ++it) {
     page_to_process = getPageByName((*it).page_name);
     // std::cout << "PAGE:" << it - records_to_scan.begin() << std::endl;
@@ -161,8 +159,6 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
       break;
     }
   }
-
-  processor->post_process_function();
 }
 
 // cleanup ----------------------------------------------

@@ -77,10 +77,10 @@ function httpsend(mode, params, postData, callback){
 	}
 
 	var options = {
-	  hostname: '139.162.233.244',
-	  port: 8090,
-	  // hostname: '127.0.0.1',
-	  // port: getRandomPort(),
+	  // hostname: '139.162.233.244',
+	  // port: 8090,
+	  hostname: '127.0.0.1',
+	  port: 5000,
 	  path: modes[mode].path + qs,
 	  method: modes[mode].method,
 	  headers: {
@@ -94,9 +94,11 @@ function httpsend(mode, params, postData, callback){
 	// console.log(options.path)
 	var data = '';
 	var req = http.request(options, function(res) {
-	  if(res.statusCode !== 200) {
+	  if(res.statusCode !== 200 && res.statusCode !== 204) {
 	  	// console.log('STATUS:' + res.statusCode + res.statusMessage);
 	  	// console.log(options.path);
+	  	callback('STATUS:' + res.statusCode);
+	  	return;
 	  }
 	  // console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
 	  res.setEncoding('utf8');
@@ -165,6 +167,11 @@ function getRandomDatesPair(){
 	return [date1, date2];
 }
 
+locales = ['ru', 'de', 'us', 'es'];
+function getRandomLocale(){
+	return  locales[Math.ceil(Math.random()*locales.length) - 1];
+}
+
 var testcount = process.argv[2];
 var skipget = false;
 
@@ -207,13 +214,14 @@ async.until(
 					destination: pair[1],
 					return_date: dates[1],
 					direct_flight: Math.random() > 0.5,
+					locale: getRandomLocale(),
 					price: getRandomPrice()
 				};
 				httpsend('add', params, JSON.stringify(params), cb);
 		},
 		function done(err, data) {
 			stop = true;
-			console.log('add done');
+			console.log(err || 'add done');
 		}
 	);
 }
@@ -225,7 +233,7 @@ if(skipget){
 var pconn = [];
 
 var ticks = 100;
-var parallel = 25;
+var parallel = 15;
 
 async.until(
 	function test() {

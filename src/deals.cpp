@@ -7,10 +7,6 @@
 #include "deals.hpp"
 #include "timing.hpp"
 
-// Как найти популярное,
-// hash таблица, ключ город, на поиске +1
-// каждую секунду/минуту -1
-// дальше сортировка по числу
 namespace deals {
 /* ----------------------------------------------------------
 **  Check results
@@ -70,11 +66,6 @@ std::vector<i::DealInfo> DealsSearchQuery::exec() {
   return exec_result;
 };
 
-// before iteration
-void DealsSearchQuery::pre_process_function() {
-  // std::cout << "(PREPROCESS)" << std::endl;
-}
-
 /* function that will be called by TableProcessor
       *  for iterating over all not expired pages in table */
 bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
@@ -85,17 +76,15 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     // FILTERING OUT AREA
     // ******************************************************************
 
-    // skip old data
-    // --------------------------------
-    if (filter_timestamp && timestamp_value > deal.timestamp) {
-      // std::cout << "filter_timestamp" << std::endl;
-      continue;
-    }
-
     // if origin is provided let's look only for this origin
     // --------------------------------
     if (filter_origin && origin_value != deal.origin) {
       // std::cout << "filter_origin" << std::endl;
+      continue;
+    }
+
+    if (filter_timestamp && timestamp_value > deal.timestamp) {
+      // std::cout << "filter_timestamp" << std::endl;
       continue;
     }
 
@@ -139,24 +128,6 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
 
     // filter desired departure week days
     //------------------------------------
-    if (filter_departure_weekdays) {
-      if (((1 << deal.flags.departure_day_of_week) & departure_weekdays_bitmask) == 0) {
-        // std::cout << "filter_departure_weekdays" << std::endl;
-        continue;
-      }
-    }
-
-    // filter desired return week days
-    //------------------------------------
-    if (filter_return_weekdays && deal.return_date) {
-      if (((1 << deal.flags.return_day_of_week) & return_weekdays_bitmask) == 0) {
-        // std::cout << "filter_return_weekdays" << std::endl;
-        continue;
-      }
-    }
-
-    // filter desired departure week days
-    //------------------------------------
     if (filter_stay_days && deal.return_date) {
       if (deal.stay_days < stay_days_values.from || deal.stay_days > stay_days_values.to) {
         // std::cout << "filter_stay_days" << std::endl;
@@ -180,12 +151,6 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       }
     }
 
-    // skip 2gds4rt deals
-    // --------------------------------
-    if (filter_2gds4rt && deal.flags.is2gds4rt == true) {
-      continue;
-    }
-
     // filter deal price
     // ----------------------------------------
     if (filter_price) {
@@ -197,6 +162,30 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
         // std::cout << "filter_price_to:" << deal.price << std::endl;
         continue;
       }
+    }
+
+    // filter desired departure week days
+    //------------------------------------
+    if (filter_departure_weekdays) {
+      if (((1 << deal.flags.departure_day_of_week) & departure_weekdays_bitmask) == 0) {
+        // std::cout << "filter_departure_weekdays" << std::endl;
+        continue;
+      }
+    }
+
+    // filter desired return week days
+    //------------------------------------
+    if (filter_return_weekdays && deal.return_date) {
+      if (((1 << deal.flags.return_day_of_week) & return_weekdays_bitmask) == 0) {
+        // std::cout << "filter_return_weekdays" << std::endl;
+        continue;
+      }
+    }
+
+    // skip 2gds4rt deals
+    // --------------------------------
+    if (filter_2gds4rt && deal.flags.is2gds4rt == true) {
+      continue;
     }
 
     // **********************************************************************
@@ -213,12 +202,10 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       if (deal.destination == result_deal.destination) {
         // we already have this destination, let's check for price
         if (deal.price < result_deal.price) {
-          bool overriden = false;
-          if (result_deal.flags.overriden) {
-            overriden = true;
-          }
+          bool overriden = result_deal.flags.overriden;
           deals::utils::copy(result_deal, deal);
           result_deal.flags.overriden = overriden;
+          // evaluate it here but not every compare itearation
           max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
         }
         // if price not cheaper but same dates, replace with
@@ -227,6 +214,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
                  deal.return_date == result_deal.return_date) {
           deals::utils::copy(result_deal, deal);
           result_deal.flags.overriden = true;
+          // evaluate it here but not every compare itearation
           max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
         }
 
@@ -248,6 +236,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       // deals::utils::print(deal);
       deals::utils::copy(result_deals[deals_slots_used], deal);
       deals_slots_used++;
+      // evaluate it here but not every compare itearation
       max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
       continue;
     }
@@ -258,6 +247,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     // one (new destiantion is not in result_deals)
     if (deal.price < result_deals[max_price_deal].price) {
       deals::utils::copy(result_deals[max_price_deal], deal);
+      // evaluate it here but not every compare itearation
       max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
       continue;
     }
@@ -270,203 +260,6 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
 
   // true - means continue to iterate
   return true;
-}
-
-// after iteration
-void DealsSearchQuery::post_process_function() {
-  // std::cout << "(POSTPROCESS) max price:" <<
-  // result_deals[max_price_deal].price
-  //          << std::endl;
-}
-
-void DealsSearchQuery::origin(std::string origin) {
-  if (origin.length() == 0) {
-    return;
-  }
-  filter_origin = true;
-  origin_value = deals::utils::origin_to_code(origin);
-}
-
-void DealsSearchQuery::destinations(std::string destinations) {
-  if (destinations.length() == 0) {
-    return;
-  }
-  std::vector<std::string> split_result = ::utils::split_string(destinations);
-
-  for (std::vector<std::string>::iterator dst = split_result.begin(); dst != split_result.end();
-       ++dst) {
-    if (dst->length() == 3) {
-      destination_values_vector.push_back(deals::utils::origin_to_code(*dst));
-    }
-  }
-
-  if (destination_values_vector.size()) {
-    filter_destination = true;
-  }
-}
-
-void DealsSearchQuery::max_lifetime_sec(uint32_t max_lifetime) {
-  if (max_lifetime == 0) {
-    return;
-  }
-
-  filter_timestamp = true;
-  timestamp_value = timing::getTimestampSec() - max_lifetime;
-}
-
-void DealsSearchQuery::departure_dates(std::string departure_date_from,
-                                       std::string departure_date_to) {
-  if (departure_date_from.length() == 0 && departure_date_to.length() == 0) {
-    return;
-  }
-
-  filter_departure_date = true;
-
-  if (departure_date_from.length() == 0) {
-    departure_date_values.from = 0;
-  } else {
-    departure_date_values.from = deals::utils::date_to_int(departure_date_from);
-  }
-
-  if (departure_date_to.length() == 0) {
-    departure_date_values.to = UINT32_MAX;
-  } else {
-    departure_date_values.to = deals::utils::date_to_int(departure_date_to);
-  }
-
-  if (departure_date_values.from > departure_date_values.to) {
-    query_is_broken = true;
-  }
-}
-
-void DealsSearchQuery::return_dates(std::string return_date_from, std::string return_date_to) {
-  if (return_date_from.length() == 0 && return_date_to.length() == 0) {
-    return;
-  }
-
-  filter_return_date = true;
-  std::cout << "DealsSearchQuery::return_dates:(" << return_date_from << "-" << return_date_to
-            << ")" << std::endl;
-
-  if (return_date_from.length() == 0) {
-    return_date_values.from = 0;
-  } else {
-    return_date_values.from = deals::utils::date_to_int(return_date_from);
-  }
-
-  if (return_date_to.length() == 0) {
-    return_date_values.to = UINT32_MAX;
-  } else {
-    return_date_values.to = deals::utils::date_to_int(return_date_to);
-  }
-
-  if (return_date_values.from > return_date_values.to) {
-    query_is_broken = true;
-  }
-  if (return_date_values.from == 0 && return_date_values.to == 0) {
-    query_is_broken = true;
-  }
-}
-
-void DealsSearchQuery::stay_days(uint16_t stay_from, uint16_t stay_to) {
-  if (stay_from == 0 && (stay_to == 0 || stay_to >= UINT8_MAX)) {
-    return;
-  }
-
-  filter_stay_days = true;
-
-  if (stay_from == 0) {
-    stay_days_values.from = 0;
-  } else {
-    stay_days_values.from = stay_from;
-  }
-
-  if (stay_to == 0 || stay_to >= UINT8_MAX) {
-    stay_days_values.to = UINT8_MAX;
-  } else {
-    stay_days_values.to = stay_to;
-  }
-
-  if (stay_days_values.from > stay_days_values.to) {
-    query_is_broken = true;
-  }
-  if (stay_days_values.from == 0 && stay_days_values.to == 0) {
-    query_is_broken = true;
-  }
-}
-
-void DealsSearchQuery::departure_weekdays(std::string days_of_week) {
-  if (days_of_week.length() == 0) {
-    return;
-  }
-  departure_weekdays_bitmask = weekdays_bitmask(days_of_week);
-  filter_departure_weekdays = true;
-}
-
-void DealsSearchQuery::return_weekdays(std::string days_of_week) {
-  if (days_of_week.length() == 0) {
-    return;
-  }
-  return_weekdays_bitmask = weekdays_bitmask(days_of_week);
-  filter_return_weekdays = true;
-}
-
-uint8_t DealsSearchQuery::weekdays_bitmask(std::string days_of_week) {
-  uint8_t result = 0;
-  std::vector<std::string> split_result = ::utils::split_string(days_of_week);
-
-  std::vector<std::string>::iterator day = split_result.begin();
-  for (; day != split_result.end(); ++day) {
-    uint8_t daycode = ::utils::day_of_week_from_str(*day);
-    if (daycode < 0 || daycode > 6) {
-      std::cout << "bad daycode for " << *day << "-" << days_of_week << std::endl;
-      continue;
-    }
-    result |= (1 << daycode);
-  }
-
-  if (result == 0) {
-    std::cout << "bad bitmask for " << days_of_week << std::endl;
-    query_is_broken = true;
-  }
-
-  return result;
-}
-
-void DealsSearchQuery::direct_flights(bool direct_flights, bool stops_flights) {
-  if (direct_flights == true && stops_flights == true) {
-    return;
-  }
-
-  filter_flight_by_stops = true;
-  direct_flights_flag = direct_flights;
-  stops_flights_flag = stops_flights;
-
-  if (direct_flights_flag == false && stops_flights_flag == false) {
-    query_is_broken = true;
-  }
-}
-
-void DealsSearchQuery::deals_limit(uint16_t _filter_limit) {
-  if (_filter_limit) {
-    // ignore zero value
-    filter_limit = _filter_limit;
-  }
-}
-
-void DealsSearchQuery::skip_2gds4rt() {
-  filter_2gds4rt = true;
-}
-
-void DealsSearchQuery::price(uint32_t price_from, uint32_t price_to) {
-  if (price_from == 0 && price_to == 0) {
-    // nofilter applied
-    return;
-  }
-
-  filter_price = true;
-  price_from_value = price_from;
-  price_to_value = price_to ? price_to : UINT32_MAX;
 }
 
 DealsDatabase::DealsDatabase() {
@@ -491,26 +284,26 @@ void DealsDatabase::truncate() {
   db_index->cleanup();
 }
 
-void DealsDatabase::addDeal(std::string origin, std::string destination, std::string departure_date,
+bool DealsDatabase::addDeal(std::string origin, std::string destination, std::string departure_date,
                             std::string return_date, bool direct_flight, uint32_t price,
                             bool is2gds4rt, std::string data) {
   if (origin.length() != 3) {
     std::cout << "wrong origin length:" << origin << std::endl;
-    return;
+    return false;
   }
 
   if (destination.length() != 3) {
     std::cout << "wrong destination length:" << destination << std::endl;
-    return;
+    return false;
   }
 
-  uint32_t departure_date_int = deals::utils::date_to_int(departure_date);
+  uint32_t departure_date_int = query::date_to_int(departure_date);
   if (departure_date_int == 0) {
     std::cout << "wrong departure date:" << departure_date << std::endl;
-    return;
+    return false;
   }
 
-  uint32_t return_date_int = deals::utils::date_to_int(return_date);
+  uint32_t return_date_int = query::date_to_int(return_date);
 
   // Firstly add data and get data position at db
   deals::i::DealData *data_pointer = (deals::i::DealData *)data.c_str();
@@ -519,7 +312,7 @@ void DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   shared_mem::ElementPointer<i::DealData> result = db_data->addRecord(data_pointer, data_size);
   if (result.error) {
     std::cout << "ERROR:" << result.error << std::endl;
-    return;
+    return false;
   }
 
   // std::cout << "{" << result.page_name << "}" << std::endl;
@@ -529,8 +322,8 @@ void DealsDatabase::addDeal(std::string origin, std::string destination, std::st
 
   i::DealInfo info;
   info.timestamp = timing::getTimestampSec();
-  info.origin = deals::utils::origin_to_code(origin);
-  info.destination = deals::utils::origin_to_code(destination);
+  info.origin = query::origin_to_code(origin);
+  info.destination = query::origin_to_code(destination);
   info.departure_date = departure_date_int;
   info.return_date = return_date_int;
   info.flags.overriden = false;
@@ -552,9 +345,9 @@ void DealsDatabase::addDeal(std::string origin, std::string destination, std::st
 
   // Secondly add deal to index, include data position information
   shared_mem::ElementPointer<i::DealInfo> di_result = db_index->addRecord(&info);
-  if (result.error) {
+  if (di_result.error) {
     std::cout << "ERROR:" << di_result.error << std::endl;
-    return;
+    return false;
   }
 
   // std::cout << "{" << result.page_name << "}" << std::endl;
@@ -562,6 +355,7 @@ void DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   // std::cout << "{" << result.size << "}" << std::endl;
   // std::cout << "{" << result.error << "}" << std::endl;
   // std::cout << "addDeal OK" << std::endl;
+  return true;
 }
 
 /*---------------------------------------------------------
@@ -583,13 +377,11 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
   query.return_dates(return_date_from, return_date_to);
   query.stay_days(stay_from, stay_to);
   query.direct_flights(direct_flights, stops_flights);
-  query.deals_limit(limit);
+  query.result_limit(limit);
   query.max_lifetime_sec(max_lifetime_sec);
   query.departure_weekdays(departure_days_of_week);
   query.return_weekdays(return_days_of_week);
-  if (skip_2gds4rt) {
-    query.skip_2gds4rt();
-  }
+  query.skip_2gds4rt(skip_2gds4rt);
   query.price(price_from, price_to);
 
   /*std::cout << "origin:" << origin
@@ -618,34 +410,15 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
     std::string data((char *)data_pointer, deal->size);
 
     result.push_back((DealInfo){
-        deal->timestamp, utils::code_to_origin(deal->origin),
-        utils::code_to_origin(deal->destination), utils::int_to_date(deal->departure_date),
-        utils::int_to_date(deal->return_date), deal->stay_days, deal->flags, deal->price, data});
+        deal->timestamp, query::code_to_origin(deal->origin),
+        query::code_to_origin(deal->destination), query::int_to_date(deal->departure_date),
+        query::int_to_date(deal->return_date), deal->stay_days, deal->flags, deal->price, data});
   }
 
   return result;
 }
 
 namespace utils {
-// deals Utils
-uint32_t origin_to_code(std::string code) {
-  PlaceCodec a2i;
-  a2i.iata_code[0] = 0;
-  a2i.iata_code[1] = code[0];
-  a2i.iata_code[2] = code[1];
-  a2i.iata_code[3] = code[2];
-  return a2i.int_code;
-}
-
-std::string code_to_origin(uint32_t code) {
-  PlaceCodec a2i;
-  a2i.int_code = code;
-  std::string result;
-  result += a2i.iata_code[1];
-  result += a2i.iata_code[2];
-  result += a2i.iata_code[3];
-  return result;
-}
 
 void copy(i::DealInfo &dst, const i::DealInfo &src) {
   memcpy(&dst, &src, sizeof(i::DealInfo));
@@ -666,10 +439,9 @@ uint16_t get_max_price_in_array(i::DealInfo *&dst, uint16_t size) {
 }
 
 void print(const i::DealInfo &deal) {
-  std::cout << "i::DEAL: (" << deals::utils::int_to_date(deal.departure_date) << ")"
-            << deals::utils::code_to_origin(deal.origin) << "-"
-            << deals::utils::code_to_origin(deal.destination) << "("
-            << deals::utils::int_to_date(deal.return_date) << ") : " << deal.price << std::endl;
+  std::cout << "i::DEAL: (" << query::int_to_date(deal.departure_date) << ")"
+            << query::code_to_origin(deal.origin) << "-" << query::code_to_origin(deal.destination)
+            << "(" << query::int_to_date(deal.return_date) << ") : " << deal.price << std::endl;
 }
 void print(const DealInfo &deal) {
   std::cout << "DEAL: (" << deal.departure_date << ")" << deal.origin << "-" << deal.destination
@@ -679,102 +451,6 @@ void print(const DealInfo &deal) {
 std::string sprint(const DealInfo &deal) {
   return "(" + deal.departure_date + ")" + deal.origin + "-" + deal.destination + "(" +
          deal.return_date + ") : " + std::to_string(deal.price) + "|" + deal.data + "\n";
-}
-
-// ISO date standare 2016-06-16
-uint32_t date_to_int(std::string date) {
-  if (date.length() != 10) {
-    return 0;
-  }
-  if (date[4] != '-' || date[7] != '-') {
-    return 0;
-  }
-
-  date.erase(4, 1);
-  date.erase(6, 1);
-
-  try {
-    return std::stol(date);
-  } catch (std::exception e) {
-    return 0;
-  }
-};
-
-std::string int_to_date(uint32_t date) {
-  if (!date) {
-    return "";
-  }
-
-  std::string result;
-  uint16_t year;
-  uint16_t month;
-  uint16_t day;
-
-  // 20160601
-  year = date / 10000;
-  month = (date - year * 10000) / 100;
-  day = date - year * 10000 - month * 100;
-
-  result = std::to_string(year) + "-" + (month < 10 ? "0" : "") + std::to_string(month) + "-" +
-           (day < 10 ? "0" : "") + std::to_string(day);
-  return result;
-};
-
-bool check_destinations_format(std::string destinations) {
-  if (destinations.length() == 0) {
-    return true;
-  }
-
-  std::vector<std::string> split_result = ::utils::split_string(destinations);
-
-  for (std::vector<std::string>::iterator dst = split_result.begin(); dst != split_result.end();
-       ++dst) {
-    if (dst->length() != 3) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool check_weekdays_format(std::string weekdays) {
-  if (weekdays.length() == 0) {
-    return true;
-  }
-
-  std::vector<std::string> split_result = ::utils::split_string(weekdays);
-
-  for (std::vector<std::string>::iterator day = split_result.begin(); day != split_result.end();
-       ++day) {
-    if (day->length() != 3) {
-      return false;
-    }
-
-    if (::utils::day_of_week_from_str(*day) > 6) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-//--------------------------------------------------
-//
-//--------------------------------------------------
-bool check_date_format(std::string date) {
-  return date_to_int(date) != 0;
-}
-
-//--------------------------------------------------
-//
-//--------------------------------------------------
-bool check_date_to_date(std::string _date_from, std::string _date_to) {
-  uint32_t date_from = date_to_int(_date_from);
-  uint32_t date_to = date_to_int(_date_to);
-  if (date_from && date_to) {
-    return date_from <= date_to;
-  }
-  return true;
 }
 
 }  // utils napespace
@@ -800,7 +476,7 @@ std::string getRandomDate(uint32_t year = 2016) {
   uint32_t month = (rand() & 0x00000003) + (rand() & 0x00000003) + (rand() & 0x00000003) + 1;
   uint32_t day = (rand() & 0x00000007) + (rand() & 0x00000007) + (rand() & 0x00000007) + 1;
 
-  return deals::utils::int_to_date(year * 10000 + month * 100 + day);
+  return query::int_to_date(year * 10000 + month * 100 + day);
 }
 
 void convertertionTest() {
@@ -808,16 +484,16 @@ void convertertionTest() {
   std::string origins[10] = {"MOW", "MAD", "BER", "PAR", "LON", "FRA", "VKO", "JFK", "LAX", "MEX"};
 
   for (int i = 0; i < 10; i++) {
-    uint32_t code = deals::utils::origin_to_code(origins[i]);
-    std::string decode = deals::utils::code_to_origin(code);
+    uint32_t code = query::origin_to_code(origins[i]);
+    std::string decode = query::code_to_origin(code);
     std::cout << origins[i] << " -> " << code << " -> " << decode << std::endl;
 
     assert(origins[i] == decode);
   }
 
   std::cout << "Date encoder/decoder test:\n";
-  uint32_t code = deals::utils::date_to_int("2017-01-01");
-  std::string date = deals::utils::int_to_date(code);
+  uint32_t code = query::date_to_int("2017-01-01");
+  std::string date = query::int_to_date(code);
 
   assert(code == 20170101);
   assert(date == "2017-01-01");
@@ -956,14 +632,10 @@ void unit_test() {
   int city_count2[3] = {0, 0, 0};
 
   for (int i = 0; i < result.size(); i++) {
-    assert(deals::utils::date_to_int(result[i].departure_date) >=
-           deals::utils::date_to_int("2016-06-01"));
-    assert(deals::utils::date_to_int(result[i].departure_date) <=
-           deals::utils::date_to_int("2016-06-23"));
-    assert(deals::utils::date_to_int(result[i].return_date) >=
-           deals::utils::date_to_int("2016-06-10"));
-    assert(deals::utils::date_to_int(result[i].return_date) <=
-           deals::utils::date_to_int("2016-06-22"));
+    assert(query::date_to_int(result[i].departure_date) >= query::date_to_int("2016-06-01"));
+    assert(query::date_to_int(result[i].departure_date) <= query::date_to_int("2016-06-23"));
+    assert(query::date_to_int(result[i].return_date) >= query::date_to_int("2016-06-10"));
+    assert(query::date_to_int(result[i].return_date) <= query::date_to_int("2016-06-22"));
 
     if (result[i].destination == "MAD") {
       city_count2[0]++;

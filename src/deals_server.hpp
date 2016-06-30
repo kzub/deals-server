@@ -4,6 +4,7 @@
 #include "deals.hpp"
 #include "http.hpp"
 #include "tcp_server.hpp"
+#include "top_destinations.hpp"
 
 namespace deals_srv {
 class Context {
@@ -23,8 +24,10 @@ class DealsServer : public srv::TCPServer<Context> {
 
   void addDeal(Connection& conn);
   void getTop(Connection& conn);
+  void getDestiantionsTop(Connection& conn);
 
   deals::DealsDatabase db;
+  top::TopDstDatabase db_dst;
 };
 }
 
