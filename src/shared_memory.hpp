@@ -77,6 +77,7 @@ class Table {
  private:
   SharedMemoryPage<ELEMENT_T>* localGetPageByName(std::string page_name_to_look);
   SharedMemoryPage<ELEMENT_T>* getPageByName(std::string page_name_to_look);
+  void release_open_pages();
 
   locks::CriticalSection* lock;
   uint16_t table_max_pages;

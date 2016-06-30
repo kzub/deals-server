@@ -47,11 +47,7 @@ template <typename ELEMENT_T>
 Table<ELEMENT_T>::~Table() {
   std::cout << "TABLE destructor called" << std::endl;
   // cleanup all shared memory mappings on exit
-  typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
-
-  for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
-    delete (*page);
-  }
+  release_open_pages();
 
   // delete index
   delete table_index;
@@ -164,7 +160,7 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
 // cleanup ----------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::cleanup() {
-  ;
+  release_open_pages();
 
   lock->enter();
   uint16_t idx = 0;
@@ -178,11 +174,12 @@ void Table<ELEMENT_T>::cleanup() {
     // if page not empty and not expired
 
     if (index_current->expire_at > 0) {
+      // mark as deleted
+      index_current->expire_at = 0;
+      index_current->page_elements_available = max_elements_in_page;
       // SharedMemoryPage<ELEMENT_T>* page =
       // getPageByName(index_current->page_name);
       SharedMemoryPage<ELEMENT_T>::unlink(index_current->page_name);
-      // mark as deleted
-      index_current->expire_at = 0;
     } else {
       // stop here. next pages are unused
       break;
@@ -192,6 +189,16 @@ void Table<ELEMENT_T>::cleanup() {
   lock->exit();
 
   SharedMemoryPage<ELEMENT_T>::unlink(table_index->page_name);
+}
+
+// release_open_pages ----------------------------------------------
+template <typename ELEMENT_T>
+void Table<ELEMENT_T>::release_open_pages() {
+  typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
+
+  for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
+    delete (*page);
+  }
 }
 
 // Table addRecord ----------------------------------------------

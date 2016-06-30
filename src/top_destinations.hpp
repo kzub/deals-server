@@ -9,8 +9,7 @@
 
 namespace top {
 
-//                     12h
-#define TOPDST_EXPIRES 43200
+#define TOPDST_EXPIRES DEALS_EXPIRES
 
 #define TOPDST_TABLENAME "TopDst"
 #define TOPDST_PAGES 1000
