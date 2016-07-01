@@ -1,4 +1,5 @@
 #include <sys/mman.h>
+#include <algorithm>
 #include <cassert>
 #include <cinttypes>
 #include <climits>
