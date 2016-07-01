@@ -403,7 +403,7 @@ void DealsServer::addDeal(Connection &conn) {
 }
 
 /*---------------------------------------------------------
-* DealsServer addDeal
+* DealsServer getDestiantionsTop
 *-----------------------------------------------------------*/
 void DealsServer::getDestiantionsTop(Connection &conn) {
   std::string locale = utils::toLowerCase(conn.context.http.request.query.params["locale"]);
