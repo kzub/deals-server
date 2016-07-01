@@ -93,10 +93,11 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
     top_destinations.resize(filter_limit);
   }
 
-  for (std::vector<DstInfo>::iterator dst = top_destinations.begin(); dst != top_destinations.end();
-       ++dst) {
-    utils::print(*dst);
-  }
+  // for (std::vector<DstInfo>::iterator dst = top_destinations.begin(); dst !=
+  // top_destinations.end();
+  //      ++dst) {
+  //   utils::print(*dst);
+  // }
 
   return top_destinations;
 }

@@ -250,16 +250,14 @@ void DealsServer::getTop(Connection &conn) {
     std::vector<top::DstInfo> result =
         db_dst.getLocaleTop(locale, departure_date_from, departure_date_to, limit);
 
-    std::cout << "before destiantions:" << destinations << std::endl;
-
+    // std::cout << "before destiantions:" << destinations << std::endl;
     for (std::vector<top::DstInfo>::iterator dst = result.begin(); dst != result.end(); ++dst) {
       if (destinations.length() != 0) {
         destinations += ",";
       }
       destinations += query::code_to_origin(dst->destination);
     }
-
-    std::cout << "after destiantions:" << destinations << std::endl;
+    // std::cout << "after destiantions:" << destinations << std::endl;
   }
 
   // SEARCH
