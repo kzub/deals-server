@@ -78,6 +78,7 @@ void TCPConnection::network_write() {
   ssize_t res = send(sockfd, chunk.c_str(), chunk.length(), 0);
 
   if (res == -1 || res == 0) {
+    std::cout << "ERROR on send network_write()" << std::endl;
     data_out.clear();  // mark connection as nothing to send
     close();           // mark connections as dead
     return;
@@ -103,23 +104,6 @@ void TCPConnection::network_write() {
 std::string TCPConnection::get_data() {
   return data_in;
 }
-
-/*----------------------------------------------------------------------
-* TCPConnection is_dead
-*----------------------------------------------------------------------*/
-/*bool TCPConnection::is_dead(TCPConnection* conn) {
-  std::cout << "has_something_to_send:" << conn->has_something_to_send()
-            << " connection_alive:" << conn->connection_alive << std::endl;
-
-  if(conn == nullptr){
-    std::cout << "ERROR TCPConnection::is_dead() conn == nullptr\n";
-    return false;
-  }
-  if (conn->has_something_to_send()) {
-    return false;
-  }
-  return !conn->connection_alive;
-}*/
 
 /*----------------------------------------------------------------------
 * TCPConnection is_alive
