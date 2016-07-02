@@ -11,9 +11,9 @@ if [[ $1 = "start" ]]; then
 	PORT=5000
 	for i in `seq 1 $2`;
 	do
-		RUN="chpst -o 8000 -P -u zubkov $APPFILE $PORT >> $LOGFILE&"
+		RUN="chpst -o 8000 -P -u zubkov $APPFILE $PORT >> $LOGFILE"
 		echo $RUN
-		$($RUN)
+		$($RUN)&
 		PORT=$((1+$PORT))
 	done 
 
