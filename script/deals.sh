@@ -8,16 +8,19 @@ if [[ $1 = "start" ]]; then
 		echo "server count needed"
 		exit
 	fi
+
 	PORT=5000
+
 	for i in `seq 1 $2`;
 	do
 		RUN="chpst -o 8000 -P -u zubkov $APPFILE $PORT"
-		echo $RUN
-		$($RUN) >> $LOGFILE &
+		# echo $RUN
+		$RUN >> $LOGFILE &
 		PORT=$((1+$PORT))
-	done 
+	done
 
 	echo "ok"
+	exit
 fi
 
 if [[ $1 = "stop" ]]; then
