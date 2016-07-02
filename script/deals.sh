@@ -16,8 +16,11 @@ if [[ $1 = "start" ]]; then
 		$($RUN)
 		PORT=$((1+$PORT))
 	done 
+
+	echo "ok"
 fi
 
 if [[ $1 = "stop" ]]; then
  killall deals-server
+ echo "stopped"
 fi
