@@ -85,7 +85,7 @@ void TCPConnection::network_write() {
   }
 
   if (msg_length > NET_PACKET_SIZE) {
-    std::cout << "shrink data_out" << std::endl;
+    // std::cout << "shrink data_out" << std::endl;
     // std::string new_data = data_out.substr(NET_PACKET_SIZE);
     // data_out.swap(new_data);
     data_out = data_out.substr(NET_PACKET_SIZE);
