@@ -7,7 +7,8 @@
 CC := clang++
 SRCDIR := src
 BUILDDIR := build
-TARGET := bin/deals-server
+TARGET_DIR := bin
+TARGET_FILE := deals-server
 
 UNAME := $(shell uname)
 
@@ -27,19 +28,20 @@ endif
 
 INC := -I include
 
-$(TARGET): $(OBJECTS)
+$(TARGET_DIR)/$(TARGET_FILE): $(OBJECTS)
+	@mkdir -p $(TARGET_DIR)
 	@echo " Linking..."
-	@echo " $(CC) $^ -o $(TARGET) -arch x86_64 $(LIB)"; $(CC) $^ -o $(TARGET) -arch x86_64 $(LIB)
+	@echo " $(CC) $^ -o $(TARGET_DIR)/$(TARGET_FILE) -arch x86_64 $(LIB)"; $(CC) $^ -o $(TARGET_DIR)/$(TARGET_FILE) -arch x86_64 $(LIB)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(BUILDDIR)
 	@echo " $(CC) $(CFLAGS) $(INC) -arch x86_64 -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -arch x86_64 -c -o $@ $<
 run:
-	$(TARGET)
+	$(TARGET_DIR)/$(TARGET_FILE)
 
 clean:
 	@echo " Cleaning..."; 
-	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
+	@echo " $(RM) -r $(BUILDDIR) $(TARGET_DIR)/$(TARGET_FILE)"; $(RM) -r $(BUILDDIR) $(TARGET_DIR)/$(TARGET_FILE)
 
 # Tests
 tester:
