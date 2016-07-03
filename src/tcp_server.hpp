@@ -61,8 +61,8 @@ class TCPConnection {
   // static bool is_dead(TCPConnection* conn);
 
   void close();
-  void close(std::string);
-  void write(std::string);
+  void close(const std::string);
+  void write(const std::string);
   bool is_alive();
   std::string get_data();
   bool has_something_to_send();
@@ -101,7 +101,7 @@ class TCPServer {
     Context context;
   };
 
-  TCPServer(uint16_t port);
+  TCPServer(const uint16_t port);
 
  public:
   void process();
@@ -124,7 +124,7 @@ class TCPServer {
 * TCPServer init
 *----------------------------------------------------------------------*/
 template <typename Context>
-TCPServer<Context>::TCPServer(uint16_t port) {
+TCPServer<Context>::TCPServer(const uint16_t port) {
   srv_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (srv_sockfd == -1) {
@@ -188,10 +188,7 @@ void TCPServer<Context>::process() {
   // remove all destroyed handlers from polling cycle
   std::list<Connection*> alive_connections;
 
-  for (typename std::list<Connection*>::iterator conn_it = connections.begin();
-       conn_it != connections.end(); ++conn_it) {
-    Connection* conn = *conn_it;
-
+  for (auto conn : connections) {
     if (!conn->is_alive()) {
       delete conn;
     } else {
@@ -214,9 +211,10 @@ void TCPServer<Context>::process() {
   // and all reading/writing sockets
   int i = 1;
 
-  for (typename std::list<Connection *>::iterator conn_it = connections.begin();
-       conn_it != connections.end(); ++conn_it, ++i) {
-    Connection* conn = *conn_it;
+  // for (typename std::list<Connection *>::iterator conn_it = connections.begin();
+  //      conn_it != connections.end(); ++conn_it, ++i) {
+  //   Connection* conn = *conn_it;
+  for (auto conn : connections) {
     p_connections[i] = conn;
 
     pfd[i].fd = conn->get_socket();
@@ -230,6 +228,7 @@ void TCPServer<Context>::process() {
       std::cerr << "MAX_CONNECTION_LIFETIME_SEC:" << MAX_CONNECTION_LIFETIME_SEC << std::endl;
       conn->close();
     }
+    i++;
   }
   // std::cout << "connections length:" << i << std::endl;
 

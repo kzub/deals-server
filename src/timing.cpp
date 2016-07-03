@@ -64,7 +64,7 @@ void Timer::report() {
 
   std::cout << "--------------------------------------------" << std::endl;
 
-  for (std::vector<tick_t>::iterator it = ticks.begin() + 1; it != ticks.end(); ++it) {
+  for (auto it = ticks.begin() + 1; it != ticks.end(); ++it) {
     timing_t msec = it->clock - (it - 1)->clock;
     std::cout << name << " " << idx << ") " << msec << "ms " << it->text << std::endl;
     idx++;

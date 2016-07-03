@@ -251,11 +251,11 @@ void DealsServer::getTop(Connection &conn) {
         db_dst.getLocaleTop(locale, departure_date_from, departure_date_to, limit);
 
     // std::cout << "before destiantions:" << destinations << std::endl;
-    for (std::vector<top::DstInfo>::iterator dst = result.begin(); dst != result.end(); ++dst) {
+    for (auto dst : result) {
       if (destinations.length() != 0) {
         destinations += ",";
       }
-      destinations += query::code_to_origin(dst->destination);
+      destinations += query::code_to_origin(dst.destination);
     }
     // std::cout << "after destiantions:" << destinations << std::endl;
   }
@@ -284,8 +284,8 @@ void DealsServer::getTop(Connection &conn) {
   //    ↑   ↑   ↑  ↑  each data block length
   std::string sizes = "";
 
-  for (std::vector<deals::DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
-    sizes += std::to_string(deal->data.size()) + ";";
+  for (auto deal : result) {
+    sizes += std::to_string(deal.data.size()) + ";";
   }
 
   uint32_t sizes_strlen = std::to_string(sizes.length()).length();
@@ -305,8 +305,8 @@ void DealsServer::getTop(Connection &conn) {
 
   // write to response deals data
   //-------------------------
-  for (std::vector<deals::DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
-    response += deal->data;
+  for (auto deal : result) {
+    response += deal.data;
   }
 
   http::HttpResponse rq_result(200, "OK");
@@ -471,8 +471,8 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
   std::string response;
   // write to response  data
   //-------------------------
-  for (std::vector<top::DstInfo>::iterator elm = result.begin(); elm != result.end(); ++elm) {
-    response += query::code_to_origin(elm->destination) + ";" + std::to_string(elm->counter) + "\n";
+  for (auto elm : result) {
+    response += query::code_to_origin(elm.destination) + ";" + std::to_string(elm.counter) + "\n";
   }
 
   http::HttpResponse rq_result(200, "OK");

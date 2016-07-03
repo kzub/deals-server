@@ -12,11 +12,11 @@ namespace deals {
 **  Check results
 ** ----------------------------------------------------------*/
 std::vector<i::DealInfo> DealsSearchQuery::exec() {
-  std::vector<i::DealInfo> exec_result;
-
+  // if there was bad parameters
+  // -------------------------------------------
   if (query_is_broken) {
     std::cout << "ERROR: query has inconsistent parameters" << std::endl;
-    return exec_result;
+    return {};
   }
 
   // redefine filter limit if destinations are specified
@@ -45,11 +45,9 @@ std::vector<i::DealInfo> DealsSearchQuery::exec() {
   // fill destination array
   // -------------------------------------------
   if (filter_destination) {
-    std::vector<uint32_t>::iterator dst;
     uint32_t counter = 0;
-    for (dst = destination_values_vector.begin(); dst != destination_values_vector.end();
-         ++dst, ++counter) {
-      destination_values[counter] = *dst;
+    for (auto dst : destination_values_vector) {
+      destination_values[counter++] = dst;
     }
   }
 
@@ -57,8 +55,9 @@ std::vector<i::DealInfo> DealsSearchQuery::exec() {
   // -----------------------------------------
   table.process(this);
 
-  //-------------------------------------------
   // process results
+  //-------------------------------------------
+  std::vector<i::DealInfo> exec_result;
   for (int i = 0; i < deals_slots_used; ++i) {
     exec_result.push_back(deals_storage[i]);
   }
@@ -310,8 +309,8 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   uint32_t data_size = data.length();
 
   shared_mem::ElementPointer<i::DealData> result = db_data->addRecord(data_pointer, data_size);
-  if (result.error) {
-    std::cout << "ERROR:" << result.error << std::endl;
+  if (result.error != shared_mem::ErrorCode::NO_ERROR) {
+    std::cout << "ERROR:" << (int)result.error << std::endl;
     return false;
   }
 
@@ -345,8 +344,8 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
 
   // Secondly add deal to index, include data position information
   shared_mem::ElementPointer<i::DealInfo> di_result = db_index->addRecord(&info);
-  if (di_result.error) {
-    std::cout << "ERROR:" << di_result.error << std::endl;
+  if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
+    std::cout << "ERROR:" << (int)di_result.error << std::endl;
     return false;
   }
 
@@ -401,18 +400,18 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
   // so lets transofrm internal format to external <DealInfo>
   std::vector<DealInfo> result;
 
-  for (std::vector<i::DealInfo>::iterator deal = deals.begin(); deal != deals.end(); ++deal) {
+  for (auto deal : deals) {
     // std::cout << "DEAL> page:(" << deal->page_name << " " << deal->index << "
     // " << deal->size << ")" << std::endl;
-    shared_mem::ElementPointer<i::DealData> deal_data(*db_data, deal->page_name, deal->index,
-                                                      deal->size);
+    shared_mem::ElementPointer<i::DealData> deal_data(*db_data, deal.page_name, deal.index,
+                                                      deal.size);
     i::DealData *data_pointer = deal_data.get_data();
-    std::string data((char *)data_pointer, deal->size);
+    std::string data((char *)data_pointer, deal.size);
 
     result.push_back((DealInfo){
-        deal->timestamp, query::code_to_origin(deal->origin),
-        query::code_to_origin(deal->destination), query::int_to_date(deal->departure_date),
-        query::int_to_date(deal->return_date), deal->stay_days, deal->flags, deal->price, data});
+        deal.timestamp, query::code_to_origin(deal.origin), query::code_to_origin(deal.destination),
+        query::int_to_date(deal.departure_date), query::int_to_date(deal.return_date),
+        deal.stay_days, deal.flags, deal.price, data});
   }
 
   return result;
@@ -568,8 +567,8 @@ void unit_test() {
       "MOW", "AAA,PAR,BER,MAD", "", "", "", "", "", "", 0, 0, true, true, false, 0, 0, 0, 10);
   timer.tick("test1");
 
-  for (std::vector<DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
-    deals::utils::print(*deal);
+  for (auto deal : result) {
+    deals::utils::print(deal);
   }
 
   assert(result.size() == 3);
@@ -624,8 +623,8 @@ void unit_test() {
 
   timer.tick("test2");
 
-  for (std::vector<DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
-    deals::utils::print(*deal);
+  for (auto deal : result) {
+    deals::utils::print(deal);
   }
 
   assert(result.size() <= 3);
@@ -685,8 +684,8 @@ void unit_test() {
   timer.tick("test3");
   std::cout << "search 3 result size:" << result.size() << std::endl;
 
-  for (std::vector<DealInfo>::iterator deal = result.begin(); deal != result.end(); ++deal) {
-    deals::utils::print(*deal);
+  for (auto deal : result) {
+    deals::utils::print(deal);
   }
 
   for (int i = 0; i < result.size(); i++) {

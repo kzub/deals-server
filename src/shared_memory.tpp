@@ -143,14 +143,23 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
 
   // and go to process pages:
   SharedMemoryPage<ELEMENT_T>* page_to_process;
-  std::vector<TablePageIndexElement>::iterator it;
   bool continue_iteration;
 
-  for (it = records_to_scan.begin(); it != records_to_scan.end(); ++it) {
-    page_to_process = getPageByName((*it).page_name);
+  // std::vector<TablePageIndexElement>::iterator it;
+  // for (it = records_to_scan.begin(); it != records_to_scan.end(); ++it) {
+  //   page_to_process = getPageByName((*it).page_name);
+  //   // std::cout << "PAGE:" << it - records_to_scan.begin() << std::endl;
+  //   continue_iteration = processor->process_function(
+  //       page_to_process->getElements(), max_elements_in_page - (*it).page_elements_available);
+  //   if (continue_iteration == false) {
+  //     break;
+  //   }
+  // }
+  for (auto it : records_to_scan) {
+    page_to_process = getPageByName(it.page_name);
     // std::cout << "PAGE:" << it - records_to_scan.begin() << std::endl;
     continue_iteration = processor->process_function(
-        page_to_process->getElements(), max_elements_in_page - (*it).page_elements_available);
+        page_to_process->getElements(), max_elements_in_page - it.page_elements_available);
     if (continue_iteration == false) {
       break;
     }
@@ -194,10 +203,14 @@ void Table<ELEMENT_T>::cleanup() {
 // release_open_pages ----------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_open_pages() {
-  typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
+  // typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
 
-  for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
-    delete (*page);
+  // for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
+  //   delete (*page);
+  // }
+
+  for (auto page : opened_pages_list) {
+    delete page;
   }
 }
 
@@ -207,7 +220,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
                                                       uint32_t records_cout,
                                                       uint32_t lifetime_seconds) {
   if (records_cout > max_elements_in_page) {
-    return ElementPointer<ELEMENT_T>(*this, RECORD_SIZE_TO_BIG);
+    return ElementPointer<ELEMENT_T>(*this, ErrorCode::RECORD_SIZE_TO_BIG);
   }
 
   std::string insert_page_name;
@@ -287,7 +300,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   lock->exit();
 
   if (insert_page_name.length() == 0) {
-    return ElementPointer<ELEMENT_T>(*this, NO_SPACE_TO_INSERT);
+    return ElementPointer<ELEMENT_T>(*this, ErrorCode::NO_SPACE_TO_INSERT);
   }
 
   // now we have page to insert
@@ -296,7 +309,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   SharedMemoryPage<ELEMENT_T>* page = getPageByName(insert_page_name);
 
   if (!page->isAllocated()) {
-    return ElementPointer<ELEMENT_T>(*this, CANT_FIND_PAGE);
+    return ElementPointer<ELEMENT_T>(*this, ErrorCode::CANT_FIND_PAGE);
   }
 
   // copy array of (records_cout) elements to shared memeory
@@ -314,10 +327,16 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
 template <typename ELEMENT_T>
 SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(std::string page_name_to_look) {
   // find page in open pages list
-  typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
-  for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
-    if ((*page)->page_name == page_name_to_look) {
-      return *page;
+  // typename std::vector<SharedMemoryPage<ELEMENT_T>*>::iterator page;
+  // for (page = opened_pages_list.begin(); page != opened_pages_list.end(); ++page) {
+  //   if ((*page)->page_name == page_name_to_look) {
+  //     return *page;
+  //   }
+  // }
+
+  for (auto page : opened_pages_list) {
+    if (page->page_name == page_name_to_look) {
+      return page;
     }
   }
 
@@ -444,7 +463,7 @@ bool SharedMemoryPage<ELEMENT_T>::isAllocated() {
 *-----------------------------------------------------------------*/
 template <typename ELEMENT_T>
 ELEMENT_T* ElementPointer<ELEMENT_T>::get_data() {
-  if (error != NO_ERROR) {
+  if (error != ErrorCode::NO_ERROR) {
     return nullptr;
   }
 

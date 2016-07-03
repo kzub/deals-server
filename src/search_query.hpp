@@ -18,23 +18,6 @@ struct StayInterval {
 
 class SearchQuery {
  public:
-  SearchQuery()
-      : filter_origin(false),
-        filter_destination(false),
-        filter_departure_date(false),
-        filter_return_date(false),
-        filter_timestamp(false),
-        filter_flight_by_stops(false),
-        filter_departure_weekdays(false),
-        filter_return_weekdays(false),
-        filter_stay_days(false),
-        filter_2gds4rt(false),
-        filter_limit(20),
-        query_is_broken(false),
-        filter_price(false),
-        filter_locale(false) {
-  }
-
   void origin(std::string origin);
   void destinations(std::string destinations);
   void departure_dates(std::string departure_date_from, std::string departure_date_to);
@@ -52,47 +35,46 @@ class SearchQuery {
  protected:
   uint8_t weekdays_bitmask(std::string days_of_week);
 
-  bool filter_origin;
+  bool filter_origin = false;
   uint32_t origin_value;
 
-  bool filter_destination;
+  bool filter_destination = false;
   std::vector<uint32_t> destination_values_vector;
 
-  bool filter_departure_date;
+  bool filter_departure_date = false;
   DateInterval departure_date_values;
 
-  bool filter_return_date;
+  bool filter_return_date = false;
   DateInterval return_date_values;
 
-  bool filter_timestamp;
+  bool filter_timestamp = false;
   uint32_t timestamp_value;
 
-  bool filter_flight_by_stops;
+  bool filter_flight_by_stops = false;
   bool direct_flights_flag;
   bool stops_flights_flag;
 
-  bool filter_departure_weekdays;
+  bool filter_departure_weekdays = false;
   uint8_t departure_weekdays_bitmask;
 
-  bool filter_return_weekdays;
+  bool filter_return_weekdays = false;
   uint8_t return_weekdays_bitmask;
 
-  bool filter_stay_days;
+  bool filter_stay_days = false;
   StayInterval stay_days_values;
 
-  bool filter_2gds4rt;
+  bool filter_2gds4rt = false;
 
-  uint16_t filter_limit;
-  uint16_t deals_slots_used;
-  uint16_t max_price_deal;
-  bool query_is_broken;
+  uint16_t filter_limit = 20;
 
-  bool filter_price;
+  bool filter_price = false;
   uint32_t price_from_value;
   uint32_t price_to_value;
 
-  bool filter_locale;
+  bool filter_locale = false;
   uint16_t locale_value;
+
+  bool query_is_broken = false;
 };
 
 bool check_destinations_format(std::string destinations);

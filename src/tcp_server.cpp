@@ -126,7 +126,7 @@ void TCPConnection::close() {
 /*----------------------------------------------------------------------
 * TCPConnection close(response)
 *----------------------------------------------------------------------*/
-void TCPConnection::close(std::string msg) {
+void TCPConnection::close(const std::string msg) {
   write(msg);
   close();
 }
@@ -134,7 +134,7 @@ void TCPConnection::close(std::string msg) {
 /*----------------------------------------------------------------------
 * Connection write
 *----------------------------------------------------------------------*/
-void TCPConnection::write(std::string out) {
+void TCPConnection::write(const std::string out) {
   data_out += out;
 }
 

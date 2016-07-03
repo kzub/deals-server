@@ -115,6 +115,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
   shared_mem::Table<i::DealInfo>& table;
   std::vector<i::DealInfo> matched_deals;
   uint16_t deals_slots_used;
+  uint16_t max_price_deal;
   // this pointers used at search for speed optimization
   // for iterating throught simple values array but not vectors.
   // at exec() function there are local arrays this pointers

@@ -15,10 +15,9 @@ void SearchQuery::destinations(std::string destinations) {
   }
   std::vector<std::string> split_result = ::utils::split_string(destinations);
 
-  for (std::vector<std::string>::iterator dst = split_result.begin(); dst != split_result.end();
-       ++dst) {
-    if (dst->length() == 3) {
-      destination_values_vector.push_back(origin_to_code(*dst));
+  for (auto dst : split_result) {
+    if (dst.length() == 3) {
+      destination_values_vector.push_back(origin_to_code(dst));
     }
   }
 
@@ -206,9 +205,8 @@ bool check_destinations_format(std::string destinations) {
 
   std::vector<std::string> split_result = ::utils::split_string(destinations);
 
-  for (std::vector<std::string>::iterator dst = split_result.begin(); dst != split_result.end();
-       ++dst) {
-    if (dst->length() != 3) {
+  for (auto dst : split_result) {
+    if (dst.length() != 3) {
       return false;
     }
   }
@@ -226,13 +224,12 @@ bool check_weekdays_format(std::string weekdays) {
 
   std::vector<std::string> split_result = ::utils::split_string(weekdays);
 
-  for (std::vector<std::string>::iterator day = split_result.begin(); day != split_result.end();
-       ++day) {
-    if (day->length() != 3) {
+  for (auto day : split_result) {
+    if (day.length() != 3) {
       return false;
     }
 
-    if (::utils::day_of_week_from_str(*day) > 6) {
+    if (::utils::day_of_week_from_str(day) > 6) {
       return false;
     }
   }

@@ -8,8 +8,7 @@ namespace http {
 /*-----------------------------------------------------
   split strings by delimiter and put it into vector
 -----------------------------------------------------*/
-std::vector<std::string> split_string(std::string text,
-                                      std::string delimiter = ",") {
+std::vector<std::string> split_string(std::string text, std::string delimiter = ",") {
   std::vector<std::string> result;
 
   while (text.length()) {
@@ -33,9 +32,8 @@ std::vector<std::string> split_string(std::string text,
 ------------------------------------------------------------------*/
 std::string concat_string(std::vector<std::string> msgs) {
   std::string concated_msg;
-  for (std::vector<std::string>::iterator msg = msgs.begin(); msg != msgs.end();
-       ++msg) {
-    concated_msg += *msg;
+  for (auto msg : msgs) {
+    concated_msg += msg;
   }
   return concated_msg;
 }
@@ -52,10 +50,9 @@ struct Object {
   utils: search by key in object storage
 -----------------------------------------------------*/
 std::string findValueInObjs(std::vector<Object> objs, std::string name) {
-  for (std::vector<Object>::iterator obj = objs.begin(); obj != objs.end();
-       ++obj) {
-    if (obj->name == name) {
-      return obj->value;
+  for (auto obj : objs) {
+    if (obj.name == name) {
+      return obj.value;
     }
   }
   std::string empty;
@@ -80,15 +77,12 @@ class HttpHeaders {
 
     // headers are fully loaded. let we parse it
     std::string http_headers = http_message.substr(0, pos);
-    std::vector<std::string> http_headers_lines =
-        split_string(http_headers, "\r\n");
+    std::vector<std::string> http_headers_lines = split_string(http_headers, "\r\n");
 
     // std::cout << "RequestLine:" << http_headers_lines[0] << std::endl;
 
     // omit first one as it is a request line
-    for (std::vector<std::string>::iterator line =
-             http_headers_lines.begin() + 1;
-         line != http_headers_lines.end(); ++line) {
+    for (auto line = http_headers_lines.begin() + 1; line != http_headers_lines.end(); ++line) {
       // std::cout << "HeaderLine:" << *line << std::endl;
       // split for name & value
       size_t hpos = line->find(":");
@@ -156,20 +150,18 @@ class URIQueryParams {
     path = query_text.substr(0, pos);
 
     // separate params strings by '&' char
-    std::vector<std::string> query_params =
-        split_string(query_text.substr(pos + 1), "&");
+    std::vector<std::string> query_params = split_string(query_text.substr(pos + 1), "&");
 
     // for every param 'param1=value' make an object
-    for (std::vector<std::string>::iterator param = query_params.begin();
-         param != query_params.end(); ++param) {
+    for (auto param : query_params) {
       Object one_param;
       // std::cout << "param;" << *param << std::endl;
-      size_t pos = param->find("=");
+      size_t pos = param.find("=");
       if (pos == -1) {
-        one_param.name = *param;
+        one_param.name = param;
       } else {
-        one_param.name = param->substr(0, pos);
-        one_param.value = param->substr(pos + 1);
+        one_param.name = param.substr(0, pos);
+        one_param.value = param.substr(pos + 1);
       }
 
       params.params_obj.push_back(one_param);
@@ -196,8 +188,7 @@ class HttpRequest {
     }
 
     /* Request-Line   = Method SP Request-URI SP HTTP-Version CRLF */
-    std::vector<std::string> res =
-        split_string(requestline.substr(0, pos), " ");
+    std::vector<std::string> res = split_string(requestline.substr(0, pos), " ");
     if (res.size() != 3) {
       return;
     }
@@ -235,11 +226,14 @@ class HttpParser {
     }
   }
 
-  HttpParser() : headers_written(false), headers_end(0) {}
+  HttpParser() : headers_written(false), headers_end(0) {
+  }
 
   HttpHeaders headers;
   HttpRequest request;
-  std::string get_body() { return concat_string(msgs).substr(headers_end); }
+  std::string get_body() {
+    return concat_string(msgs).substr(headers_end);
+  }
 
   std::string get_headers() {
     return concat_string(msgs).substr(0, headers_end);
@@ -281,8 +275,8 @@ int main() {
       "/Protocols/rfc2616/"
       "rfc2616-sec5.html?test=value&param1=keys&param2=ee&empty=&test=true "
       "HTTP/1.1\r\n",
-      "Host: www.w3.org\r\n", "Connection: keep-alive\r\n",
-      "Pragma: no-cache\r\n", "Cache-Control: no-cache\r\n",
+      "Host: www.w3.org\r\n", "Connection: keep-alive\r\n", "Pragma: no-cache\r\n",
+      "Cache-Control: no-cache\r\n",
       "Accept: "
       "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/"
       "*;q=0.8\r\n",
@@ -291,8 +285,8 @@ int main() {
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 "
       "Safari/537.36\r\n",
       "Referer: https://www.w3.org/Protocols/rfc2616/rfc2616.html\r\n",
-      "Accept-Encoding: gzip, deflate, sdch\r\n",
-      "Accept-Language: en-US,en;q=0.8,ru;q=0.6\r\n", "\r\n",
+      "Accept-Encoding: gzip, deflate, sdch\r\n", "Accept-Language: en-US,en;q=0.8,ru;q=0.6\r\n",
+      "\r\n",
       "<!DOCTYPE html><p>\
        A request message from a client to a server includes, within the\
        first line of that message, the method to be applied to the resource,\

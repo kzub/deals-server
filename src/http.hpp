@@ -9,7 +9,7 @@
 
 namespace http {
 
-enum ParserResult { PARSE_OK = 0, PARSE_AWAIT = 1, PARSE_ERR = -1 };
+enum class ParserResult : int { PARSE_OK = 0, PARSE_AWAIT = 1, PARSE_ERR = -1 };
 
 // ------------------------------------------------------------------
 class HttpHeaders : public utils::ObjectMap {

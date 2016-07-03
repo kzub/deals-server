@@ -12,7 +12,7 @@ namespace shared_mem {
 
 #define MEMPAGE_NAME_MAX_LEN 20
 
-enum ErrorCodes {
+enum class ErrorCode : int {
   NO_ERROR = 0,
   RECORD_SIZE_TO_BIG = 1,
   NO_SPACE_TO_INSERT = 2,
@@ -34,14 +34,14 @@ struct TablePageIndexElement {
 template <typename ELEMENT_T>
 class ElementPointer {
  public:
-  ElementPointer(Table<ELEMENT_T>& table, ErrorCodes error)
+  ElementPointer(Table<ELEMENT_T>& table, ErrorCode error)
       : error(error), page_name(""), index(0), size(0), table(table){};
   ElementPointer(Table<ELEMENT_T>& table, std::string page_name, uint32_t index, uint32_t size)
-      : error(NO_ERROR), page_name(page_name), index(index), size(size), table(table){};
+      : error(ErrorCode::NO_ERROR), page_name(page_name), index(index), size(size), table(table){};
 
   ELEMENT_T* get_data();
 
-  const ErrorCodes error;
+  const ErrorCode error;
   const std::string page_name;
   const uint32_t index;
   const uint32_t size;

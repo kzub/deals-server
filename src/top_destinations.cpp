@@ -54,8 +54,8 @@ bool TopDstDatabase::addDestination(std::string locale, std::string destination,
   // Secondly add deal to index, include data position information
   shared_mem::ElementPointer<i::DstInfo> di_result = db_index->addRecord(&info);
 
-  if (di_result.error) {
-    std::cout << "ERROR addDestination():" << di_result.error << std::endl;
+  if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
+    std::cout << "ERROR addDestination():" << (int)di_result.error << std::endl;
     return false;
   }
 
@@ -78,25 +78,20 @@ std::vector<DstInfo> TopDstDatabase::getLocaleTop(std::string locale,
   return result;
 }
 
-bool DstInfoCmp(const DstInfo& a, const DstInfo& b) {
-  return a.counter > b.counter;
-}
-
 std::vector<DstInfo> TopDstSearchQuery::exec() {
   top_destinations.clear();
 
   table.process(this);
 
-  std::sort(top_destinations.begin(), top_destinations.end(), DstInfoCmp);
+  std::sort(top_destinations.begin(), top_destinations.end(),
+            [](DstInfo& a, DstInfo& b) { return a.counter > b.counter; });
 
   if (top_destinations.size() > filter_limit) {
     top_destinations.resize(filter_limit);
   }
 
-  // for (std::vector<DstInfo>::iterator dst = top_destinations.begin(); dst !=
-  // top_destinations.end();
-  //      ++dst) {
-  //   utils::print(*dst);
+  // for (auto dst : top_destinations) {
+  //   utils::print(dst);
   // }
 
   return top_destinations;
@@ -139,10 +134,9 @@ bool TopDstSearchQuery::process_function(i::DstInfo* elements, uint32_t size) {
     // try to find destination in result array
     // ----------------------------------
     bool found_destination = false;
-    for (std::vector<DstInfo>::iterator dst = top_destinations.begin();
-         dst != top_destinations.end(); ++dst) {
-      if (dst->destination == current_element.destination) {
-        dst->counter++;
+    for (auto& dst : top_destinations) {
+      if (dst.destination == current_element.destination) {
+        dst.counter++;
         found_destination = true;
         break;
       }

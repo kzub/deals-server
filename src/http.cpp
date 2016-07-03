@@ -11,12 +11,12 @@ namespace http {
 // ------------------------------------------------------------------
 ParserResult HttpHeaders::parse(std::string http_message) {
   if (!http_message.length()) {
-    return PARSE_ERR;
+    return ParserResult::PARSE_ERR;
   }
 
   size_t pos = http_message.find("\r\n\r\n");
   if (pos == -1) {
-    return PARSE_AWAIT;
+    return ParserResult::PARSE_AWAIT;
   }
 
   // headers are fully loaded. let we parse it
@@ -26,8 +26,7 @@ ParserResult HttpHeaders::parse(std::string http_message) {
   // std::cout << "RequestLine:" << http_headers_lines[0] << std::endl;
 
   // omit first one as it is a request line
-  for (std::vector<std::string>::iterator line = http_headers_lines.begin() + 1;
-       line != http_headers_lines.end(); ++line) {
+  for (auto line = http_headers_lines.begin() + 1; line != http_headers_lines.end(); ++line) {
     // std::cout << "HeaderLine:" << *line << std::endl;
     // split for name & value
     size_t hpos = line->find(":");
@@ -49,7 +48,7 @@ ParserResult HttpHeaders::parse(std::string http_message) {
     add_object(one_header);
   }
 
-  return PARSE_OK;
+  return ParserResult::PARSE_OK;
 }
 
 //------------------------------------------------------------------
@@ -57,13 +56,13 @@ ParserResult HttpHeaders::parse(std::string http_message) {
 //------------------------------------------------------------------
 ParserResult URIQueryParams::parse(std::string query_text) {
   if (!query_text.length()) {
-    return PARSE_ERR;
+    return ParserResult::PARSE_ERR;
   }
 
   size_t pos = query_text.find("?");
   if (pos == -1) {
     path = query_text;
-    return PARSE_OK;
+    return ParserResult::PARSE_OK;
   }
 
   path = query_text.substr(0, pos);
@@ -72,22 +71,21 @@ ParserResult URIQueryParams::parse(std::string query_text) {
   std::vector<std::string> query_params = utils::split_string(query_text.substr(pos + 1), "&");
 
   // for every param 'param1=value' make an object
-  for (std::vector<std::string>::iterator param = query_params.begin(); param != query_params.end();
-       ++param) {
+  for (auto param : query_params) {
     utils::Object one_param;
     // std::cout << "param;" << *param << std::endl;
-    size_t pos = param->find("=");
+    size_t pos = param.find("=");
     if (pos == -1) {
-      one_param.name = *param;
+      one_param.name = param;
     } else {
-      one_param.name = param->substr(0, pos);
-      one_param.value = param->substr(pos + 1);
+      one_param.name = param.substr(0, pos);
+      one_param.value = param.substr(pos + 1);
     }
 
     params.add_object(one_param);
   }
 
-  return PARSE_OK;
+  return ParserResult::PARSE_OK;
 };
 
 //------------------------------------------------------------------
@@ -95,18 +93,18 @@ ParserResult URIQueryParams::parse(std::string query_text) {
 //------------------------------------------------------------------
 ParserResult HttpRequest::parse(std::string requestline) {
   if (!requestline.length()) {
-    return PARSE_ERR;
+    return ParserResult::PARSE_ERR;
   }
 
   size_t pos = requestline.find("\r\n");
   if (pos == -1) {
-    return PARSE_ERR;
+    return ParserResult::PARSE_ERR;
   }
 
   /* Request-Line   = Method SP Request-URI SP HTTP-Version CRLF */
   std::vector<std::string> res = utils::split_string(requestline.substr(0, pos), " ");
   if (res.size() != 3) {
-    return PARSE_ERR;
+    return ParserResult::PARSE_ERR;
   }
 
   method = res[0];
@@ -161,7 +159,7 @@ void HttpParser::write(std::string msg) {
       return;
     }
 
-    if (headers.parse(concated_msg) != PARSE_OK) {
+    if (headers.parse(concated_msg) != ParserResult::PARSE_OK) {
       return;
     }
 
@@ -241,9 +239,8 @@ HttpResponse::operator std::string() {
   std::string full_result =
       "HTTP/1.0 " + std::to_string(status_code) + " " + reason_phrase + "\r\n";
 
-  for (std::vector<std::string>::iterator header = headers.begin(); header != headers.end();
-       ++header) {
-    full_result += *header;
+  for (auto header : headers) {
+    full_result += header;
   }
   full_result += "\r\n";
 

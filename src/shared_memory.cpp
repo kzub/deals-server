@@ -70,12 +70,12 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval 
     TestInfo test = {numval};
     ElementPointer<TestInfo> result = t->addRecord(&test, 1, lifetime);
 
-    if (result.error) {
-      std::cout << "ERROR:" << result.error << std::endl;
+    if (result.error != ErrorCode::NO_ERROR) {
+      std::cout << "ERROR:" << (int)result.error << std::endl;
     } else {
       // std::cout << "OK:" << result.size << std::endl;
     }
-    assert(result.error == NO_ERROR);
+    assert(result.error == ErrorCode::NO_ERROR);
   }
   // std::cout << "ADDED " << idx << " records" << std::endl;
 }
