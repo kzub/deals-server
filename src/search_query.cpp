@@ -40,6 +40,12 @@ void SearchQuery::departure_dates(std::string departure_date_from, std::string d
     return;
   }
 
+  departure_date_values.length = 0;
+  if (departure_date_from.length() > 0 && departure_date_to.length() > 0) {
+    departure_date_values.length =
+        utils::days_between_dates(departure_date_from, departure_date_to) + 1;
+  }
+
   filter_departure_date = true;
 
   if (departure_date_from.length() == 0) {
@@ -59,9 +65,52 @@ void SearchQuery::departure_dates(std::string departure_date_from, std::string d
   }
 }
 
+// comma separated list of dates to look up
+void SearchQuery::departure_dates(std::string departure_dates) {
+  if (departure_dates.length() == 0) {
+    return;
+  }
+
+  auto dates = ::utils::split_string(departure_dates);
+  for (auto date : dates) {
+    uint32_t date_int = date_to_int(date);
+    if (date_int) {
+      departure_dates_vector.push_back(date_int);
+    }
+  }
+
+  if (departure_dates_vector.size()) {
+    filter_departure_dates = true;
+  }
+}
+
+// comma separated list of dates to look up
+void SearchQuery::return_dates(std::string return_dates) {
+  if (return_dates.length() == 0) {
+    return;
+  }
+
+  auto dates = ::utils::split_string(return_dates);
+  for (auto date : dates) {
+    uint32_t date_int = date_to_int(date);
+    if (date_int) {
+      return_dates_vector.push_back(date_int);
+    }
+  }
+
+  if (return_dates_vector.size()) {
+    filter_return_dates = true;
+  }
+}
+
 void SearchQuery::return_dates(std::string return_date_from, std::string return_date_to) {
   if (return_date_from.length() == 0 && return_date_to.length() == 0) {
     return;
+  }
+
+  return_date_values.length = 0;
+  if (return_date_from.length() > 0 && return_date_to.length() > 0) {
+    return_date_values.length = utils::days_between_dates(return_date_from, return_date_to);
   }
 
   filter_return_date = true;
@@ -195,6 +244,28 @@ void SearchQuery::locale(std::string locale) {
   filter_locale = true;
   locale_value = locale_to_code(locale);
 }
+
+void SearchQuery::apply_filters(std::string _origin, std::string _destinations,
+                                std::string _departure_date_from, std::string _departure_date_to,
+                                std::string _departure_days_of_week, std::string _return_date_from,
+                                std::string _return_date_to, std::string _return_days_of_week,
+                                uint16_t _stay_from, uint16_t _stay_to, bool _direct_flights,
+                                bool _stops_flights, bool _skip_2gds4rt, uint32_t _price_from,
+                                uint32_t _price_to, uint16_t _limit, uint32_t _max_lifetime_sec) {
+  origin(_origin);
+  destinations(_destinations);
+  departure_dates(_departure_date_from, _departure_date_to);
+  return_dates(_return_date_from, _return_date_to);
+  stay_days(_stay_from, _stay_to);
+  direct_flights(_direct_flights, _stops_flights);
+  result_limit(_limit);
+  max_lifetime_sec(_max_lifetime_sec);
+  departure_weekdays(_departure_days_of_week);
+  return_weekdays(_return_days_of_week);
+  skip_2gds4rt(_skip_2gds4rt);
+  price(_price_from, _price_to);
+}
+
 //--------------------------------------------------
 // check_destinations_format
 //--------------------------------------------------

@@ -55,7 +55,7 @@ class TableProcessor {
  protected:
   /* function that will be called for iterating over all not expired pages in
    * table */
-  virtual bool process_function(ELEMENT_T* elements, uint32_t size);
+  virtual bool process_function(ELEMENT_T* elements, uint32_t size) = 0;
 
   template <class T>
   friend class Table;
@@ -71,7 +71,7 @@ class Table {
 
   ElementPointer<ELEMENT_T> addRecord(ELEMENT_T* el, uint32_t size = 1,
                                       uint32_t lifetime_seconds = 0);
-  void process(TableProcessor<ELEMENT_T>* result);
+  void process(TableProcessor<ELEMENT_T>& result);
   void cleanup();
 
  private:

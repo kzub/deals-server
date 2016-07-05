@@ -41,7 +41,7 @@ class TestResult : public TableProcessor<TestInfo> {
   }
 
   void go() {
-    table->process(this);
+    table->process(*this);
   }
 
   Table<TestInfo>* table;

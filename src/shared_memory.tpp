@@ -56,7 +56,7 @@ Table<ELEMENT_T>::~Table() {
 
 // processTablePages ----------------------------------------------
 template <typename ELEMENT_T>
-void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
+void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>& processor) {
   // *** Make a copy to local heap ***
   lock->enter();
 
@@ -158,7 +158,7 @@ void Table<ELEMENT_T>::process(TableProcessor<ELEMENT_T>* processor) {
   for (auto it : records_to_scan) {
     page_to_process = getPageByName(it.page_name);
     // std::cout << "PAGE:" << it - records_to_scan.begin() << std::endl;
-    continue_iteration = processor->process_function(
+    continue_iteration = processor.process_function(
         page_to_process->getElements(), max_elements_in_page - it.page_elements_available);
     if (continue_iteration == false) {
       break;

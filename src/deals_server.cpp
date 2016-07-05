@@ -32,8 +32,9 @@ void DealsServer::on_data(Connection &conn) {
         return;
       }
 
-      if (conn.context.http.request.query.path == "/deals/truncate") {
+      if (conn.context.http.request.query.path == "/truncate") {
         db.truncate();
+        db_dst.truncate();
         http::HttpResponse response(200, "OK", "cleaned\n");
         conn.close(response);
         return;
@@ -55,11 +56,13 @@ void DealsServer::on_data(Connection &conn) {
     // default response:
     conn.close(http::HttpResponse(404, "Not Found", "Method unknown\n"));
 
+  } catch (const char *text) {
+    std::cout << "Request processing error: " << text << std::endl;
+    conn.close(http::HttpResponse(500, "Internal Server Error", text));
   } catch (...) {
-    std::cout << "Request processing error" << std::endl;
+    std::cout << "Request processing error: unknown" << std::endl;
     conn.close(
-        http::HttpResponse(500, "Internal Server Error", "Request broke something inside me...\n"));
-    return;
+        http::HttpResponse(500, "Internal Server Error", "something has broken inside me\n"));
   }
 }
 
@@ -260,12 +263,18 @@ void DealsServer::getTop(Connection &conn) {
     // std::cout << "after destiantions:" << destinations << std::endl;
   }
 
-  // SEARCH
-  //-------------------------
-  std::vector<deals::DealInfo> result = db.searchForCheapestEver(
+  std::vector<deals::DealInfo> result = db.searchForCheapestDayByDay(
       origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
       return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
       skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
+
+  // SEARCH
+  //-------------------------
+  /*std::vector<deals::DealInfo> result = db.searchForCheapestEver(
+      origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
+      return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
+      skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
+*/
 
   // No results
   //-------------------------

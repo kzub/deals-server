@@ -3,7 +3,6 @@
 
 #include "deals.hpp"
 #include "search_query.hpp"
-#include "search_query.hpp"
 #include "shared_memory.hpp"
 #include "utils.hpp"
 

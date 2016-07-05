@@ -66,12 +66,16 @@ struct DealInfo {
 namespace utils {
 void copy(i::DealInfo& dst, const i::DealInfo& src);
 uint16_t get_max_price_in_array(i::DealInfo*& dst, uint16_t size);
+uint16_t get_max_price_in_pointers_array(i::DealInfo* dst[], uint16_t size);
 
 void print(const i::DealInfo& deal);
 void print(const DealInfo& deal);
 std::string sprint(const DealInfo& deal);
 };
 
+//------------------------------------------------------------
+// DealsDatabase
+//------------------------------------------------------------
 class DealsDatabase {
  public:
   DealsDatabase();
@@ -89,40 +93,114 @@ class DealsDatabase {
       bool skip_2gds4rt, uint32_t price_from, uint32_t price_to, uint16_t limit,
       uint32_t max_lifetime_sec);
 
+  std::vector<DealInfo> searchForCheapestDayByDay(
+      std::string origin, std::string destinations, std::string departure_date_from,
+      std::string departure_date_to, std::string departure_days_of_week,
+      std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
+      uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights,
+      bool skip_2gds4rt, uint32_t price_from, uint32_t price_to, uint16_t limit,
+      uint32_t max_lifetime_sec);
+
   void truncate();
 
  private:
+  std::vector<DealInfo> fill_deals_with_data(std::vector<i::DealInfo> i_deals);
+
   shared_mem::Table<i::DealInfo>* db_index;
   shared_mem::Table<i::DealData>* db_data;
 
   friend void unit_test();
 };
 
+//------------------------------------------------------------
+// DealsSearchQuery
+//------------------------------------------------------------
 class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public query::SearchQuery {
  public:
-  DealsSearchQuery(shared_mem::Table<i::DealInfo>& table) : table(table) {
-  }
+  ~DealsSearchQuery();
 
  protected:
-  std::vector<i::DealInfo> exec();
+  DealsSearchQuery(shared_mem::Table<i::DealInfo>& table) : table(table) {
+  }
+  // preparations and actual processing
+  void execute();
 
-  /* function that will be called by TableProcessor
-  *  for iterating over all not expired pages in table */
-  bool process_function(i::DealInfo* elements, uint32_t size);
-  friend class DealsDatabase;
+  // array size will be equal to filter_limit.
+  // used for speed optimization, iteration throught vector is slower
+  uint32_t* destination_values = nullptr;  // <- array
+  uint16_t destination_values_size = 0;
 
  private:
+  // function that will be called by TableProcessor
+  // for iterating over all not expired pages in table */
+  bool process_function(i::DealInfo* elements, uint32_t size);
+
+  // VIRTUAL FUNCTIONS SECTION:
+  virtual bool process_deal(const i::DealInfo& deal) = 0;
+  // if process_function() deside deals worth of processing
+  // process_deal() will be called in parent class
+
+  // before and after processing
+  virtual void pre_search() = 0;
+  virtual void post_search() = 0;
+
   shared_mem::Table<i::DealInfo>& table;
-  std::vector<i::DealInfo> matched_deals;
+  friend class DealsDatabase;
+};
+
+//------------------------------------------------------------
+// DealsCheapestByPeriod
+//------------------------------------------------------------
+class DealsCheapestByPeriod : public DealsSearchQuery {
+ public:
+  DealsCheapestByPeriod(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
+  }
+  ~DealsCheapestByPeriod();
+
+  // implement virtual functions:
+  bool process_deal(const i::DealInfo& deal);
+  void pre_search();
+  void post_search();
+
   uint16_t deals_slots_used;
   uint16_t max_price_deal;
-  // this pointers used at search for speed optimization
+
+  std::vector<i::DealInfo> exec_result;
+  i::DealInfo* result_deals = nullptr;  // size = filter_limit
+  // this pointer used at search for speed optimization
   // for iterating throught simple values array but not vectors.
-  // at exec() function there are local arrays this pointers
+  // at exec() function there be local arrays this pointers
   // will point to
-  uint32_t* destination_values;  // size = filter_limit
-  i::DealInfo* result_deals;     // size = filter_limit
 };
-}
+
+//------------------------------------------------------------
+// DealsCheapestDayByDay
+//------------------------------------------------------------
+class DealsCheapestDayByDay : public DealsSearchQuery {
+ public:
+  DealsCheapestDayByDay(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
+  }
+  ~DealsCheapestDayByDay();
+
+  // implement virtual functions:
+  bool process_deal(const i::DealInfo& deal);
+  void pre_search();
+  void post_search();
+
+  // arrays of by date results:
+  uint16_t deals_slots_used;
+  uint16_t deals_slots_available;
+  // uint16_t max_price_deal;
+
+  // std::vector<std::vector<i::DealInfo>> exec_result;
+  std::vector<i::DealInfo> exec_result;
+  i::DealInfo* result_deals = nullptr;  // size = filter_limit
+  // this pointer used at search for speed optimization
+  // for iterating throught simple values array but not vectors.
+  // at exec() function there be local arrays this pointers
+  // will point to
+};
+
+}  // namespace deals
 
 #endif
