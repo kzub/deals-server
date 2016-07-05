@@ -84,7 +84,7 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
   table.process(*this);
 
   std::sort(top_destinations.begin(), top_destinations.end(),
-            [](DstInfo& a, DstInfo& b) { return a.counter > b.counter; });
+            [](const DstInfo& a, const DstInfo& b) { return a.counter > b.counter; });
 
   if (top_destinations.size() > filter_limit) {
     top_destinations.resize(filter_limit);
