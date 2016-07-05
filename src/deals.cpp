@@ -497,9 +497,9 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
   std::sort(result.begin(), result.end(),
             [](DealInfo &a, DealInfo &b) { return a.departure_date < b.departure_date; });
 
-  for (auto deal : result) {
-    deals::utils::print(deal);
-  }
+  // for (auto deal : result) {
+  //   deals::utils::print(deal);
+  // }
 
   return result;
 }

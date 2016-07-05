@@ -263,18 +263,22 @@ void DealsServer::getTop(Connection &conn) {
     // std::cout << "after destiantions:" << destinations << std::endl;
   }
 
-  std::vector<deals::DealInfo> result = db.searchForCheapestDayByDay(
-      origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-      return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
-      skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
-
   // SEARCH
   //-------------------------
-  /*std::vector<deals::DealInfo> result = db.searchForCheapestEver(
-      origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-      return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
-      skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
-*/
+  std::vector<deals::DealInfo> result;
+
+  if (conn.context.http.request.query.params["day_by_day"] == "true") {
+    result = db.searchForCheapestDayByDay(
+        origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
+        return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
+        skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
+
+  } else {
+    result = db.searchForCheapestEver(
+        origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
+        return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
+        skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
+  }
 
   // No results
   //-------------------------
