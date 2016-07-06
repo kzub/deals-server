@@ -81,7 +81,7 @@ std::vector<DstInfo> TopDstDatabase::getLocaleTop(std::string locale,
 std::vector<DstInfo> TopDstSearchQuery::exec() {
   top_destinations.clear();
 
-  table.process(*this);
+  table.processRecords(*this);
 
   std::sort(top_destinations.begin(), top_destinations.end(),
             [](const DstInfo& a, const DstInfo& b) { return a.counter > b.counter; });

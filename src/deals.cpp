@@ -60,7 +60,7 @@ void DealsSearchQuery::execute() {
   pre_search();
 
   // table processor iterates table pages and call DealsSearchQuery::process_function()
-  table.process(*this);
+  table.processRecords(*this);
 
   // run postsearch in child class context
   post_search();
@@ -262,7 +262,7 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
 
   shared_mem::ElementPointer<i::DealData> result = db_data->addRecord(data_pointer, data_size);
   if (result.error != shared_mem::ErrorCode::NO_ERROR) {
-    std::cout << "ERROR:" << (int)result.error << std::endl;
+    std::cout << "ERROR DealsDatabase::addDeal 1:" << (int)result.error << std::endl;
     return false;
   }
 
@@ -297,7 +297,7 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   // Secondly add deal to index, include data position information
   shared_mem::ElementPointer<i::DealInfo> di_result = db_index->addRecord(&info);
   if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
-    std::cout << "ERROR:" << (int)di_result.error << std::endl;
+    std::cout << "ERROR DealsDatabase::addDeal 2:" << (int)di_result.error << std::endl;
     return false;
   }
 

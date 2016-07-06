@@ -31,27 +31,38 @@ void DealsServer::on_data(Connection &conn) {
         getTop(conn);
         return;
       }
-
-      if (conn.context.http.request.query.path == "/truncate") {
-        db.truncate();
-        db_dst.truncate();
-        http::HttpResponse response(200, "OK", "cleaned\n");
-        conn.close(response);
-        return;
-      }
-
       if (conn.context.http.request.query.path == "/destinations/top") {
         getDestiantionsTop(conn);
         return;
       }
-    }
+
+      if (conn.context.http.request.query.path == "/deals/clear") {
+        db.truncate();
+        http::HttpResponse response(200, "OK", "cleared\n");
+        conn.close(response);
+        return;
+      }
+      if (conn.context.http.request.query.path == "/destinations/clear") {
+        db_dst.truncate();
+        http::HttpResponse response(200, "OK", "cleared\n");
+        conn.close(response);
+        return;
+      }
+      // if (conn.context.http.request.query.path == "/memory/clear") {
+      //   db.release_expired_memory_pages(1);
+      //   // db_dst.maintain_memory_pages();
+      //   http::HttpResponse response(200, "OK", "cleared\n");
+      //   conn.close(response);
+      //   return;
+      // }
+    }  // -------------------  GET END ----------------------
 
     else if (conn.context.http.request.method == "POST") {
       if (conn.context.http.request.query.path == "/deals/add") {
         addDeal(conn);
         return;
       }
-    }
+    }  // -------------------  POST END ----------------------
 
     // default response:
     conn.close(http::HttpResponse(404, "Not Found", "Method unknown\n"));
@@ -495,12 +506,19 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
   conn.close(rq_result);
 }
 
-}  // deals_srv namespace
+}  // namespace deals_srv
 
 // ----------------------------------------------------------
 int main(int argc, char *argv[]) {
   if (argc > 1 && std::string(argv[1]) == "test") {
     std::cout << "running autotests..." << std::endl;
+
+    locks::CriticalSection lock1("DealsInfo");
+    locks::CriticalSection lock2("DealsData");
+    locks::CriticalSection lock3("TopDst");
+    lock1.reset_not_for_production();
+    lock2.reset_not_for_production();
+    lock3.reset_not_for_production();
 
     http::unit_test();
     deals::unit_test();

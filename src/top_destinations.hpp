@@ -11,7 +11,7 @@ namespace top {
 #define TOPDST_EXPIRES DEALS_EXPIRES
 
 #define TOPDST_TABLENAME "TopDst"
-#define TOPDST_PAGES 1000
+#define TOPDST_PAGES 5000
 #define TOPDST_ELEMENTS 10000
 
 void unit_test();

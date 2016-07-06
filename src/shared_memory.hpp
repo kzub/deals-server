@@ -11,6 +11,8 @@
 namespace shared_mem {
 
 #define MEMPAGE_NAME_MAX_LEN 20
+#define MEMPAGE_REMOVE_EXPIRED_PAGES_AT_ONCE 5
+#define MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC 1
 
 enum class ErrorCode : int {
   NO_ERROR = 0,
@@ -71,13 +73,15 @@ class Table {
 
   ElementPointer<ELEMENT_T> addRecord(ELEMENT_T* el, uint32_t size = 1,
                                       uint32_t lifetime_seconds = 0);
-  void process(TableProcessor<ELEMENT_T>& result);
+  void processRecords(TableProcessor<ELEMENT_T>& result);
   void cleanup();
 
  private:
   SharedMemoryPage<ELEMENT_T>* localGetPageByName(std::string page_name_to_look);
   SharedMemoryPage<ELEMENT_T>* getPageByName(std::string page_name_to_look);
   void release_open_pages();
+  void clear_index_record(TablePageIndexElement& record);
+  void release_expired_memory_pages();
 
   locks::CriticalSection* lock;
   uint16_t table_max_pages;
@@ -86,6 +90,7 @@ class Table {
   std::vector<SharedMemoryPage<ELEMENT_T>*> opened_pages_list;
   SharedMemoryPage<TablePageIndexElement>* table_index;
   uint32_t record_expire_seconds;
+  uint32_t time_to_check_page_expire = 0;
 
   template <class T>
   friend class SharedMemoryPage;
@@ -128,7 +133,8 @@ class SharedMemoryPage {
   template <class T>
   friend class Table;
 };
-}
+
+}  // namespace shared_mem
 
 // template implementation...
 #include "shared_memory.tpp"

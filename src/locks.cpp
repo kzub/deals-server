@@ -77,7 +77,7 @@ void CriticalSection::reset_not_for_production() {
     sem_post(lock);
   }
   sem_post(lock);
-  std::cout << "reset_not_for_production() done" << std::endl;
+  std::cout << "reset_not_for_production(" << name << ") done" << std::endl;
 }
 
 //-----------------------------------------------
@@ -99,7 +99,7 @@ void CriticalSection::semaphore_release(bool nothrow) {
 //-----------------------------------------------
 void CriticalSection::check() {
   if (!initialized) {
-    std::cout << "Error: not initialized" << std::endl;
+    std::cerr << "ERROR: CriticalSection::check not initialized" << std::endl;
     throw "check(): uninitialized";
   }
 }

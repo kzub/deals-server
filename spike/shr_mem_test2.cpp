@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include <iostream>
 
 #define MEMNAME "mytest5"
 
@@ -20,16 +21,47 @@ long getms() {
   return time_in_mill;
 }
 
-// #define MEMSIZE ((long)1*1024*1024)
-void test_read_write() {
-  int fd = shm_open(MEMNAME, O_RDWR | O_CREAT | O_EXCL, (mode_t)0666);
-  if (fd == -1) {
-    perror("shm_open1\n");
+void test_read_write(bool write) {
+  int MEMSIZE = 10000;
+
+  int fd;
+  if (write) {
+    fd = shm_open(MEMNAME, O_RDWR | O_CREAT | O_EXCL, (mode_t)0666);
+  } else {
+    fd = shm_open(MEMNAME, O_RDWR | O_CREAT | O_EXCL, (mode_t)0666);
   }
+
+  if (fd == -1) {
+    perror("shm_open1");
+    return;
+  }
+
+  // if (write) {
+  int res = ftruncate(fd, MEMSIZE);
+  if (res == -1) {
+    perror("TRUNC");
+    return;
+  }
+  printf("NEW: mem truncated:%u bytes\n", MEMSIZE);
+  // }
+
+  int* map = (int*)mmap(NULL, MEMSIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+  if (write) {
+    map[0] = 22;
+    map[1] = 33;
+    map[2] = 44;
+  }
+
+  std::cout << map[0] << map[1] << map[2] << std::endl;
+
+  munmap(map, MEMSIZE);
+  shm_unlink(MEMNAME);
 }
 
 int main() {
-  test_read_write();
+  shm_unlink(MEMNAME);
+  test_read_write(true);
+  test_read_write(false);
   return 0;
 
   uint32_t MEMSIZE = 2 * 1000 * 1000 * 1000 & ~(sysconf(_SC_PAGE_SIZE) - 1);

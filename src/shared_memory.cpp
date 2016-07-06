@@ -41,7 +41,7 @@ class TestResult : public TableProcessor<TestInfo> {
   }
 
   void go() {
-    table->process(*this);
+    table->processRecords(*this);
   }
 
   Table<TestInfo>* table;
@@ -71,7 +71,7 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval 
     ElementPointer<TestInfo> result = t->addRecord(&test, 1, lifetime);
 
     if (result.error != ErrorCode::NO_ERROR) {
-      std::cout << "ERROR:" << (int)result.error << std::endl;
+      std::cout << "ERROR testAddMultipleRecords:" << (int)result.error << std::endl;
     } else {
       // std::cout << "OK:" << result.size << std::endl;
     }

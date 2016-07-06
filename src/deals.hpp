@@ -11,7 +11,7 @@ namespace deals {
 #define DEALS_EXPIRES 43200
 
 #define DEALINFO_TABLENAME "DealsInfo"
-#define DEALINFO_PAGES 1000
+#define DEALINFO_PAGES 5000
 #define DEALINFO_ELEMENTS 10000
 
 #define DEALDATA_TABLENAME "DealsData"

@@ -58,8 +58,6 @@ class TCPConnection {
  public:
   ~TCPConnection();
 
-  // static bool is_dead(TCPConnection* conn);
-
   void close();
   void close(const std::string);
   void write(const std::string);
