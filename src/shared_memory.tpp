@@ -42,13 +42,13 @@ Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
 
   clear_index_record(table_index->shared_elements[0]);
   lock = new locks::CriticalSection(table_name);
-  std::cout << "Table::Table OK" << std::endl;
+  std::cout << "Table::Table (" << table_name << ") OK" << std::endl;
 }
 
 // Table Destructor ----------------------------------------------
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::~Table() {
-  std::cout << "TABLE destructor... ";
+  std::cout << "TABLE (" << table_name << ") destructor... ";
   // cleanup all shared memory mappings on exit
   release_open_pages();
 
