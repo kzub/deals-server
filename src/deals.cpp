@@ -51,7 +51,7 @@ void DealsSearchQuery::execute() {
   // -------------------------------------------
   if (filter_destination) {
     uint16_t counter = 0;
-    for (auto dst : destination_values_vector) {
+    for (auto &dst : destination_values_vector) {
       destination_values[counter++] = dst;
     }
   }
@@ -318,7 +318,7 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
   // so lets transform internal format to external <DealInfo>
   std::vector<DealInfo> result;
 
-  for (auto deal : i_deals) {
+  for (auto &deal : i_deals) {
     // std::cout << "DEAL> page:(" << deal->page_name << " " << deal->index << "
     // " << deal->size << ")" << std::endl;
     shared_mem::ElementPointer<i::DealData> deal_data(*db_data, deal.page_name, deal.index,
@@ -499,7 +499,7 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
     return a.departure_date < b.departure_date;
   });
 
-  // for (auto deal : result) {
+  // for (auto& deal : result) {
   //   deals::utils::print(deal);
   // }
 
@@ -810,7 +810,7 @@ void unit_test() {
       "MOW", "AAA,PAR,BER,MAD", "", "", "", "", "", "", 0, 0, true, true, false, 0, 0, 0, 10);
   timer.tick("test1");
 
-  for (auto deal : result) {
+  for (auto &deal : result) {
     deals::utils::print(deal);
   }
 
@@ -866,7 +866,7 @@ void unit_test() {
 
   timer.tick("test2");
 
-  for (auto deal : result) {
+  for (auto &deal : result) {
     deals::utils::print(deal);
   }
 
@@ -927,7 +927,7 @@ void unit_test() {
   timer.tick("test3");
   std::cout << "search 3 result size:" << result.size() << std::endl;
 
-  for (auto deal : result) {
+  for (auto &deal : result) {
     deals::utils::print(deal);
   }
 

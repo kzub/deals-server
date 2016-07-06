@@ -71,7 +71,7 @@ ParserResult URIQueryParams::parse(std::string query_text) {
   std::vector<std::string> query_params = utils::split_string(query_text.substr(pos + 1), "&");
 
   // for every param 'param1=value' make an object
-  for (auto param : query_params) {
+  for (auto& param : query_params) {
     utils::Object one_param;
     // std::cout << "param;" << *param << std::endl;
     size_t pos = param.find("=");
@@ -239,7 +239,7 @@ HttpResponse::operator std::string() {
   std::string full_result =
       "HTTP/1.0 " + std::to_string(status_code) + " " + reason_phrase + "\r\n";
 
-  for (auto header : headers) {
+  for (auto& header : headers) {
     full_result += header;
   }
   full_result += "\r\n";

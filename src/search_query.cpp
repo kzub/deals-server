@@ -15,7 +15,7 @@ void SearchQuery::destinations(std::string destinations) {
   }
   std::vector<std::string> split_result = ::utils::split_string(destinations);
 
-  for (auto dst : split_result) {
+  for (auto& dst : split_result) {
     if (dst.length() == 3) {
       destination_values_vector.push_back(origin_to_code(dst));
     }
@@ -72,7 +72,7 @@ void SearchQuery::departure_dates(std::string departure_dates) {
   }
 
   auto dates = ::utils::split_string(departure_dates);
-  for (auto date : dates) {
+  for (auto& date : dates) {
     uint32_t date_int = date_to_int(date);
     if (date_int) {
       departure_dates_vector.push_back(date_int);
@@ -91,7 +91,7 @@ void SearchQuery::return_dates(std::string return_dates) {
   }
 
   auto dates = ::utils::split_string(return_dates);
-  for (auto date : dates) {
+  for (auto& date : dates) {
     uint32_t date_int = date_to_int(date);
     if (date_int) {
       return_dates_vector.push_back(date_int);
@@ -276,7 +276,7 @@ bool check_destinations_format(std::string destinations) {
 
   std::vector<std::string> split_result = ::utils::split_string(destinations);
 
-  for (auto dst : split_result) {
+  for (auto& dst : split_result) {
     if (dst.length() != 3) {
       return false;
     }
@@ -295,7 +295,7 @@ bool check_weekdays_format(std::string weekdays) {
 
   std::vector<std::string> split_result = ::utils::split_string(weekdays);
 
-  for (auto day : split_result) {
+  for (auto& day : split_result) {
     if (day.length() != 3) {
       return false;
     }

@@ -265,7 +265,7 @@ void DealsServer::getTop(Connection &conn) {
         db_dst.getLocaleTop(locale, departure_date_from, departure_date_to, limit);
 
     // std::cout << "before destiantions:" << destinations << std::endl;
-    for (auto dst : result) {
+    for (auto &dst : result) {
       if (destinations.length() != 0) {
         destinations += ",";
       }
@@ -308,7 +308,7 @@ void DealsServer::getTop(Connection &conn) {
   //    ↑   ↑   ↑  ↑  each data block length
   std::string sizes = "";
 
-  for (auto deal : result) {
+  for (auto &deal : result) {
     sizes += std::to_string(deal.data.size()) + ";";
   }
 
@@ -329,7 +329,7 @@ void DealsServer::getTop(Connection &conn) {
 
   // write to response deals data
   //-------------------------
-  for (auto deal : result) {
+  for (auto &deal : result) {
     response += deal.data;
   }
 
@@ -495,7 +495,7 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
   std::string response;
   // write to response  data
   //-------------------------
-  for (auto elm : result) {
+  for (auto &elm : result) {
     response += query::code_to_origin(elm.destination) + ";" + std::to_string(elm.counter) + "\n";
   }
 

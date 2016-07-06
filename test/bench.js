@@ -77,10 +77,10 @@ function httpsend(mode, params, postData, callback){
 	}
 
 	var options = {
-	  // hostname: '139.162.233.244',
-	  // port: 8090,
-	  hostname: '127.0.0.1',
-	  port: 5000,
+	  hostname: '139.162.233.244',
+	  port: 8090,
+	  // hostname: '127.0.0.1',
+	  // port: 5000,
 	  // hostname: '192.168.170.20',
 	  // port: 8090,
 	  path: modes[mode].path + qs,
@@ -234,8 +234,8 @@ if(skipget){
 
 var pconn = [];
 
-var ticks = 250;
-var parallel = 25;
+var ticks = 50;
+var parallel = 50;
 
 async.until(
 	function test() {

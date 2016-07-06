@@ -32,7 +32,7 @@ std::vector<std::string> split_string(std::string text, std::string delimiter = 
 ------------------------------------------------------------------*/
 std::string concat_string(std::vector<std::string> msgs) {
   std::string concated_msg;
-  for (auto msg : msgs) {
+  for (auto& msg : msgs) {
     concated_msg += msg;
   }
   return concated_msg;
@@ -50,7 +50,7 @@ struct Object {
   utils: search by key in object storage
 -----------------------------------------------------*/
 std::string findValueInObjs(std::vector<Object> objs, std::string name) {
-  for (auto obj : objs) {
+  for (auto& obj : objs) {
     if (obj.name == name) {
       return obj.value;
     }
@@ -82,7 +82,7 @@ class HttpHeaders {
     // std::cout << "RequestLine:" << http_headers_lines[0] << std::endl;
 
     // omit first one as it is a request line
-    for (auto line = http_headers_lines.begin() + 1; line != http_headers_lines.end(); ++line) {
+    for (auto& line = http_headers_lines.begin() + 1; line != http_headers_lines.end(); ++line) {
       // std::cout << "HeaderLine:" << *line << std::endl;
       // split for name & value
       size_t hpos = line->find(":");
@@ -153,7 +153,7 @@ class URIQueryParams {
     std::vector<std::string> query_params = split_string(query_text.substr(pos + 1), "&");
 
     // for every param 'param1=value' make an object
-    for (auto param : query_params) {
+    for (auto& param : query_params) {
       Object one_param;
       // std::cout << "param;" << *param << std::endl;
       size_t pos = param.find("=");

@@ -42,7 +42,7 @@ std::vector<std::string> split_string(std::string text, const std::string delimi
 ------------------------------------------------------------------*/
 std::string concat_string(const std::vector<std::string> msgs) {
   std::string concated_msg;
-  for (auto msg : msgs) {
+  for (auto& msg : msgs) {
     // std::cout << msg << " " << msg.size() << std::endl;
     concated_msg += msg;
   }
@@ -71,7 +71,7 @@ std::string toUpperCase(std::string text) {
   utils: search by key in object storage
 -----------------------------------------------------*/
 std::string findValueInObjs(const std::vector<Object> objs, const std::string name) {
-  for (auto obj : objs) {
+  for (auto& obj : objs) {
     if (obj.name == name) {
       return obj.value;
     }

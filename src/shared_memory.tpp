@@ -113,7 +113,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   lock->exit();
 
   bool continue_iteration;
-  for (auto record : records_to_scan) {
+  for (auto& record : records_to_scan) {
     // call table processor routine
     SharedMemoryPage<ELEMENT_T>* page = getPageByName(record.page_name);
     if (page == nullptr) {
