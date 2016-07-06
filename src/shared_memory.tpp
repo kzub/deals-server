@@ -48,7 +48,7 @@ Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
 // Table Destructor ----------------------------------------------
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::~Table() {
-  std::cout << "TABLE (" << table_name << ") destructor... ";
+  std::cout << "TABLE (" << table_index->page_name << ") destructor... ";
   // cleanup all shared memory mappings on exit
   release_open_pages();
 
