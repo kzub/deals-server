@@ -26,4 +26,7 @@ fi
 if [[ $1 = "stop" ]]; then
  killall deals-server
  echo "stopped"
+ exit
 fi
+
+echo "no params specified"
