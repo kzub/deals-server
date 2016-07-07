@@ -3,7 +3,7 @@ var async = require('async');
 
 var response_body_example = '43;120;120;120;120;120;121;121;121;120;121;{"origin":"MOW","departure_date":"2016-08-23","destination":"MAD","return_date":"2016-03-19","direct":true,"price":7133}{"origin":"MOW","departure_date":"2016-03-19","destination":"LON","return_date":"2016-07-02","direct":true,"price":8389}{"origin":"MOW","departure_date":"2016-09-09","destination":"JFK","return_date":"2016-08-22","direct":true,"price":8659}{"origin":"MOW","departure_date":"2016-06-12","destination":"PAR","return_date":"2016-07-27","direct":true,"price":9739}{"origin":"MOW","departure_date":"2016-07-13","destination":"AER","return_date":"2016-10-19","direct":true,"price":7205}{"origin":"MOW","departure_date":"2016-05-10","destination":"FRA","return_date":"2016-11-15","direct":true,"price":11042}{"origin":"MOW","departure_date":"2016-09-14","destination":"LAX","return_date":"2016-08-09","direct":false,"price":8334}{"origin":"MOW","departure_date":"2016-03-19","destination":"OVB","return_date":"2016-11-14","direct":false,"price":7001}{"origin":"MOW","departure_date":"2016-09-26","destination":"BAR","return_date":"2016-07-08","direct":true,"price":6871}{"origin":"MOW","departure_date":"2016-03-09","destination":"BER","return_date":"2016-06-20","direct":true,"price":10290}';
 var cities = ['MOW', 'MAD', 'BER', 'BAR', 'FRA', 'PAR', 'AER', 'OVB', 'LON', 'JFK', 'LAX', 'XAZ','YZS','TEK','EUX','URJ','ROT','HUU','JST','HGH','QWF','TRD','YXJ','YGV','GNB','LDY','YGH','YZR','LTQ','KIX','FUN','LIT','XDM','PHL','INC','URT','DJB','SVB','ATQ','DLM','RKT','DBA','WBQ','DAT','MAM','NOC','BKG','CIH','NAH','UTT','AGA','EAT','KYP','SVI','IKT','TRV','QQH','TKV','YZZ','HGD','WJU','ZYW','HBZ','CME','PLJ','ATM','TIJ','JIM','YRF','LUO','XVC','LBB','CVM','YHZ','XFD','PZU','YHB','AEX','SYZ','ABE','OSU','AEG','DYU','QXB','ASB','HLN','DAC','XWS','MCW','BRI','LKH','XPT','YGK','NSI'];
-    cities = ['MOW', 'MAD', 'BER', 'PAR', 'LAX'];
+    // cities = ['MOW', 'MAD', 'BER', 'PAR', 'LAX'];
 
 function parseAnswer(response_body){
 	var pos = 0;
@@ -77,10 +77,10 @@ function httpsend(mode, params, postData, callback){
 	}
 
 	var options = {
-	  hostname: '139.162.233.244',
-	  port: 8090,
-	  // hostname: '127.0.0.1',
-	  // port: 5000,
+	  // hostname: '139.162.233.244',
+	  // port: 8090,
+	  hostname: '127.0.0.1',
+	  port: 5000,
 	  // hostname: '192.168.170.20',
 	  // port: 8090,
 	  path: modes[mode].path + qs,
@@ -190,15 +190,16 @@ var counter1 = testcount;
 var timer2 = Date.now();
 var counter2 = 0;
 
+var ticks = 250;
+var parallel = 25;
 
 var stop = false;
 if(process.argv[3] != "noset"){
 async.until(
 		function test(){
 			testcount--;
-			if(testcount % 500 === 0){
+			if(testcount % ticks === 0){
 				var timeframe = Date.now() - timer1;
-				var ticks = counter1 - testcount;
 				var rate = 1000 * ticks / timeframe;
 				timer1 = Date.now();
 				counter1 = testcount;
@@ -234,8 +235,6 @@ if(skipget){
 
 var pconn = [];
 
-var ticks = 50;
-var parallel = 50;
 
 async.until(
 	function test() {

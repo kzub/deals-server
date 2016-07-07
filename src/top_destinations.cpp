@@ -79,9 +79,16 @@ std::vector<DstInfo> TopDstDatabase::getLocaleTop(std::string locale,
 }
 
 std::vector<DstInfo> TopDstSearchQuery::exec() {
-  top_destinations.clear();
+  grouped_destinations.clear();
 
   table.processRecords(*this);
+
+  // convert result
+  std::vector<DstInfo> top_destinations;
+
+  for (auto& v : grouped_destinations) {
+    top_destinations.push_back({v.first, v.second});
+  }
 
   std::sort(top_destinations.begin(), top_destinations.end(),
             [](const DstInfo& a, const DstInfo& b) { return a.counter > b.counter; });
@@ -127,29 +134,10 @@ bool TopDstSearchQuery::process_function(i::DstInfo* elements, uint32_t size) {
     }
 
     // **********************************************************************
-    // SEARCHING FOR CHEAPEST DEAL AREA
+    // BUILD DESTINATIONS HASH AREA
     // **********************************************************************
 
-    // ----------------------------------
-    // try to find destination in result array
-    // ----------------------------------
-    bool found_destination = false;
-    for (auto& dst : top_destinations) {
-      if (dst.destination == current_element.destination) {
-        dst.counter++;
-        found_destination = true;
-        break;
-      }
-    }
-
-    // ----------------------------------
-    // there was found destination, so goto the next deal element
-    if (found_destination) {
-      continue;
-    }
-
-    DstInfo new_element = {current_element.destination, 1};
-    top_destinations.push_back(new_element);
+    grouped_destinations[current_element.destination]++;
   }
 
   // true - means continue to iterate
