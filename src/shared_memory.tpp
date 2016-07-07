@@ -40,7 +40,6 @@ Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
     throw "CANNOT_ALLOCATE_TABLE_INDEX";
   }
 
-  clear_index_record(table_index->shared_elements[0]);
   lock = new locks::CriticalSection(table_name);
   std::cout << "Table::Table (" << table_name << ") OK" << std::endl;
 }
