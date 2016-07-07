@@ -77,10 +77,10 @@ function httpsend(mode, params, postData, callback){
 	}
 
 	var options = {
-	  // hostname: '139.162.233.244',
-	  // port: 8090,
-	  hostname: '127.0.0.1',
-	  port: 5000,
+	  hostname: '139.162.233.244',
+	  port: 8090,
+	  // hostname: '127.0.0.1',
+	  // port: 5000,
 	  // hostname: '192.168.170.20',
 	  // port: 8090,
 	  path: modes[mode].path + qs,
@@ -191,7 +191,7 @@ var timer2 = Date.now();
 var counter2 = 0;
 
 var ticks = 250;
-var parallel = 25;
+var parallel = 50;
 
 var stop = false;
 if(process.argv[3] != "noset"){

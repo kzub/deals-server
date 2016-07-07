@@ -16,7 +16,7 @@ namespace deals {
 
 #define DEALDATA_TABLENAME "DealsData"
 #define DEALDATA_PAGES 10000
-#define DEALDATA_ELEMENTS 3200000
+#define DEALDATA_ELEMENTS 50000000
 
 #define IN_USE 1
 #define NOT_IN_USE 0
