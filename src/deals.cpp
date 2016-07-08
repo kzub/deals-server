@@ -359,6 +359,12 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
 
   query.execute();
 
+  if (limit > 0 && limit < query.exec_result.size()) {
+    std::sort(query.exec_result.begin(), query.exec_result.end(),
+              [](const i::DealInfo &a, const i::DealInfo &b) { return a.price < b.price; });
+    query.exec_result.resize(limit);
+  }
+
   std::vector<DealInfo> result = fill_deals_with_data(query.exec_result);
 
   return result;
