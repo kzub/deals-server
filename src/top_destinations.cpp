@@ -107,7 +107,7 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
 /* function that will be called by TableProcessor
       *  for iterating over all not expired pages in table */
 bool TopDstSearchQuery::process_function(i::DstInfo* elements, uint32_t size) {
-  for (uint32_t idx = 0; idx < size; idx++) {
+  for (uint32_t idx = 0; idx < size; ++idx) {
     const i::DstInfo& current_element = elements[idx];
 
     // ******************************************************************

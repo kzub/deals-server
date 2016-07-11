@@ -72,7 +72,7 @@ void DealsSearchQuery::execute() {
 // for iterating over all not expired pages in table
 //----------------------------------------------------------------
 bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
-  for (uint32_t idx = 0; idx < size; idx++) {
+  for (uint32_t idx = 0; idx < size; ++idx) {
     const i::DealInfo &deal = elements[idx];
 
     // if origin is provided let's look only for this origin
@@ -91,7 +91,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     // --------------------------------
     if (filter_destination) {
       bool condition_matched = false;
-      for (uint16_t dst_idx = 0; dst_idx < destination_values_size; dst_idx++) {
+      for (uint16_t dst_idx = 0; dst_idx < destination_values_size; ++dst_idx) {
         if (destination_values[dst_idx] == deal.destination) {
           condition_matched = true;
           break;
@@ -391,7 +391,7 @@ bool DealsCheapestByPeriod::process_deal(const i::DealInfo &deal) {
   // ----------------------------------
   // try to find deal by destination in result array
   // ----------------------------------
-  for (uint16_t fidx = 0; fidx < deals_slots_used; fidx++) {
+  for (uint16_t fidx = 0; fidx < deals_slots_used; ++fidx) {
     i::DealInfo &result_deal = result_deals[fidx];
 
     if (deal.destination != result_deal.destination) {
@@ -544,7 +544,7 @@ bool DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
   uint16_t deals_with_current_date_count = 0;
   i::DealInfo *deals_with_current_date[destination_values_size];
 
-  for (uint16_t fidx = 0; fidx < deals_slots_used; fidx++) {
+  for (uint16_t fidx = 0; fidx < deals_slots_used; ++fidx) {
     i::DealInfo &result_deal = result_deals[fidx];
 
     if (deal.departure_date != result_deal.departure_date) {
@@ -647,7 +647,7 @@ uint16_t get_max_price_in_array(i::DealInfo *&dst, uint16_t size) {
   uint16_t max = 0;
   uint16_t pos = 0;
 
-  for (uint16_t i = 0; i < size; i++) {
+  for (uint16_t i = 0; i < size; ++i) {
     if (max < dst[i].price) {
       max = dst[i].price;
       pos = i;
@@ -665,7 +665,7 @@ uint16_t get_max_price_in_pointers_array(i::DealInfo *dst[], uint16_t size) {
   uint16_t max = 0;
   uint16_t pos = 0;
 
-  for (uint16_t i = 0; i < size; i++) {
+  for (uint16_t i = 0; i < size; ++i) {
     if (max < dst[i]->price) {
       max = dst[i]->price;
       pos = i;
@@ -724,7 +724,7 @@ void convertertionsTest() {
   std::cout << "Origin encoder/decoder" << std::endl;
   std::string origins[10] = {"MOW", "MAD", "BER", "PAR", "LON", "FRA", "VKO", "JFK", "LAX", "MEX"};
 
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 10; ++i) {
     uint32_t code = query::origin_to_code(origins[i]);
     std::string decode = query::code_to_origin(code);
     assert(origins[i] == decode);
@@ -733,7 +733,7 @@ void convertertionsTest() {
   std::cout << "Locale encoder/decoder" << std::endl;
   std::string locales[] = {"ru", "de", "uk", "ua", "us"};
 
-  for (int i = 0; i < sizeof(locales) / sizeof(locales[0]); i++) {
+  for (int i = 0; i < sizeof(locales) / sizeof(locales[0]); ++i) {
     uint32_t code = query::locale_to_code(locales[i]);
     std::string decode = query::code_to_locale(code);
     assert(locales[i] == decode);
@@ -823,7 +823,7 @@ void unit_test() {
   assert(result.size() == 3);
   int city_count[3] = {0, 0, 0};
 
-  for (int i = 0; i < result.size(); i++) {
+  for (int i = 0; i < result.size(); ++i) {
     if (result[i].destination == "MAD") {
       city_count[0]++;
       if (result[i].flags.overriden) {
@@ -879,7 +879,7 @@ void unit_test() {
   assert(result.size() <= 3);
   int city_count2[3] = {0, 0, 0};
 
-  for (int i = 0; i < result.size(); i++) {
+  for (int i = 0; i < result.size(); ++i) {
     assert(query::date_to_int(result[i].departure_date) >= query::date_to_int("2016-06-01"));
     assert(query::date_to_int(result[i].departure_date) <= query::date_to_int("2016-06-23"));
     assert(query::date_to_int(result[i].return_date) >= query::date_to_int("2016-06-10"));
@@ -937,7 +937,7 @@ void unit_test() {
     deals::utils::print(deal);
   }
 
-  for (int i = 0; i < result.size(); i++) {
+  for (int i = 0; i < result.size(); ++i) {
     assert(result[i].price >= 9100);
     assert(result[i].price <= 19200);
     assert(result[i].stay_days >= 4 && result[i].stay_days <= 18);

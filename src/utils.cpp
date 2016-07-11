@@ -130,7 +130,7 @@ uint8_t day_of_week_from_date(const std::string date) {
 //-----------------------------------------------------------
 uint8_t day_of_week_from_str(const std::string _weekday) {
   std::string weekday = toLowerCase(_weekday);
-  for (uint8_t i = 0; i <= 6; i++) {
+  for (uint8_t i = 0; i <= 6; ++i) {
     if (days[i] == weekday) {
       return i;
     }

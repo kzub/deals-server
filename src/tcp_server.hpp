@@ -248,7 +248,7 @@ void TCPServer<Context>::process() {
   // ------------------------------------------------------
   // somebody need to be procesed. let's search this one
   // i == 0 => main socket listening for new connections
-  for (i = 1; i < nfds; i++) {
+  for (i = 1; i < nfds; ++i) {
     if (pfd[i].revents & POLLIN) {
       // fill input buffers with data
       p_connections[i]->network_read();

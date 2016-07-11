@@ -23,7 +23,7 @@ class TestResult : public TableProcessor<TestInfo> {
   bool process_function(TestInfo* elements, uint32_t size) {
     // std::cout << "size:" << size << std::endl;
     uint32_t idx;
-    for (idx = 0; idx < size; idx++) {
+    for (idx = 0; idx < size; ++idx) {
       if (found.size() <= elements[idx].value) {
         for (uint32_t todo = elements[idx].value - found.size() + 1; todo > 0; todo--) {
           // std::cout << "PUSHBACK size:" << found.size() << " value:" <<
@@ -54,7 +54,7 @@ std::vector<uint32_t> check(Table<TestInfo>& index) {
   scan_result.go();
 
   std::cout << "RESULT(" << scan_result.found.size() << "): ";
-  for (uint32_t idx = 0; idx < scan_result.found.size(); idx++) {
+  for (uint32_t idx = 0; idx < scan_result.found.size(); ++idx) {
     std::cout << scan_result.found[idx] << " ";
   }
   std::cout << std::endl;
@@ -66,7 +66,7 @@ std::vector<uint32_t> check(Table<TestInfo>& index) {
 void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval = 0,
                             uint32_t lifetime = 0) {
   uint32_t idx;
-  for (idx = 0; idx < number; idx++) {
+  for (idx = 0; idx < number; ++idx) {
     TestInfo test = {numval};
     ElementPointer<TestInfo> result = t->addRecord(&test, 1, lifetime);
 

@@ -84,7 +84,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   TablePageIndexElement* index_current;
 
   // search for pages to scan (not expired)
-  for (idx = 0; idx < table_max_pages; idx++) {
+  for (idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     index_current = index_first + idx;
 
@@ -139,7 +139,7 @@ void Table<ELEMENT_T>::cleanup() {
   TablePageIndexElement* index_current;
 
   // search for free space in pages
-  for (idx = 0; idx < table_max_pages; idx++) {
+  for (idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     index_current = index_first + idx;
     // if page not empty and not expired
@@ -202,7 +202,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   lock->enter();
 
   // search for free space in pages
-  for (idx = 0; idx < table_max_pages; idx++) {
+  for (idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     index_record = &table_index->shared_elements[idx];
     // std::cout << "===> " << table_index->page_name + ":" +
@@ -362,7 +362,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   lock->enter();
 
   // search for free space in pages
-  for (idx = 0; idx < table_max_pages; idx++) {
+  for (idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     const TablePageIndexElement& index_record = table_index->shared_elements[idx];
 
