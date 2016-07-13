@@ -138,9 +138,10 @@ TCPServer<Context>::TCPServer(const uint16_t port) {
   serv_addr.sin_port = htons(port);
 
   /* Now bind the host address using bind() call.*/
-  if (bind(srv_sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+  while (bind(srv_sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
     perror("ERROR on binding");
-    exit(-1);
+    // exit(-1);
+    sleep(5);
   }
 
   int res = listen(srv_sockfd, ACCEPT_QUEUE_LENGTH);
