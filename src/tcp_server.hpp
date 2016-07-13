@@ -12,6 +12,7 @@
 
 #include <fcntl.h>
 #include <poll.h>
+#include <unistd.h>
 
 #include "timing.hpp"
 
