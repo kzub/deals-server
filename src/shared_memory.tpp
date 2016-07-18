@@ -104,8 +104,6 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
     } else {
       // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
       //   ^        ^              ^              ^        ^        ^        ^
-      // or if page expired add it to list
-      // unlinked_records.push_back(*index_current);
     }
   }
 
@@ -347,8 +345,6 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(std::string page_na
 //------------------------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_expired_memory_pages() {
-  // MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC
-  // uint16_t clear_limit = MEMPAGE_REMOVE_EXPIRED_PAGES_AT_ONCE;
   uint32_t current_time = timing::getTimestampSec();
   uint16_t idx = 0;
   uint16_t last_data_idx = 0;
@@ -419,7 +415,8 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       new_pages_list.push_back(page);
     }
   }
-  opened_pages_list = new_pages_list;
+
+  opened_pages_list = std::move(new_pages_list);
 }
 
 /*-----------------------------------------------------------------
