@@ -517,14 +517,14 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
 //----------------------------------------------------------------
 void DealsCheapestDayByDay::pre_search() {
   // init values
-  if (!filter_departure_date || !departure_date_values.length) {
+  if (!filter_departure_date || !departure_date_values.duration) {
     std::cout << "no departure_date range" << std::endl;
     throw "zero interval. departure date interval must be specified";
   }
 
-  deals_slots_available = destination_values_size * departure_date_values.length;
+  deals_slots_available = destination_values_size * departure_date_values.duration;
   // std::cout << "destination_values_size:" << destination_values_size << std::endl;
-  // std::cout << "departure_date_values.length:" << departure_date_values.length << std::endl;
+  // std::cout << "departure_date_values.duration:" << departure_date_values.duration << std::endl;
   // std::cout << "deals_slots_available:" << deals_slots_available << std::endl;
 
   if (result_deals != nullptr) {
@@ -604,7 +604,7 @@ bool DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
             << " deals_slots_available:" << deals_slots_available
             << " deals_with_current_date_count:" << deals_with_current_date_count
             << " destination_values_size:" << destination_values_size
-            << " departure_date_values.length:" << departure_date_values.length
+            << " departure_date_values.duration:" << departure_date_values.duration
             << " very strange place. there will be exacly days*destinations deals,"
             << " no more. but it seems we found something extra?" << std::endl;
 

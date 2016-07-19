@@ -9,7 +9,7 @@ namespace query {
 struct DateInterval {
   uint32_t from;
   uint32_t to;
-  uint32_t length;
+  uint32_t duration;
 };
 
 struct StayInterval {

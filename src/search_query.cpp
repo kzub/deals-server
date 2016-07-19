@@ -40,9 +40,9 @@ void SearchQuery::departure_dates(std::string departure_date_from, std::string d
     return;
   }
 
-  departure_date_values.length = 0;
+  departure_date_values.duration = 0;
   if (departure_date_from.length() > 0 && departure_date_to.length() > 0) {
-    departure_date_values.length =
+    departure_date_values.duration =
         utils::days_between_dates(departure_date_from, departure_date_to) + 1;
   }
 
@@ -108,9 +108,9 @@ void SearchQuery::return_dates(std::string return_date_from, std::string return_
     return;
   }
 
-  return_date_values.length = 0;
+  return_date_values.duration = 0;
   if (return_date_from.length() > 0 && return_date_to.length() > 0) {
-    return_date_values.length = utils::days_between_dates(return_date_from, return_date_to);
+    return_date_values.duration = utils::days_between_dates(return_date_from, return_date_to);
   }
 
   filter_return_date = true;
