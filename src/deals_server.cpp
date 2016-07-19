@@ -62,6 +62,7 @@ void DealsServer::on_data(Connection &conn) {
       // 1) stop accepting new connections and quit after all connections are served
       // 2) logger with date/time
       // 3) stat info: records count, open pages
+      // 4) rewrite sym waiting func
     }  // -------------------  'GET' END ----------------------
     else if (conn.context.http.request.method == "POST") {
       // -------------------  'POST' BEGIN ----------------------
