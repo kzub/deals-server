@@ -27,10 +27,12 @@ void DealsServer::on_data(Connection &conn) {
 
   try {
     if (conn.context.http.request.method == "GET") {
+      // -------------------  'GET' BEGIN ----------------------
       if (conn.context.http.request.query.path == "/deals/top") {
         getTop(conn);
         return;
       }
+
       if (conn.context.http.request.query.path == "/destinations/top") {
         getDestiantionsTop(conn);
         return;
@@ -42,27 +44,32 @@ void DealsServer::on_data(Connection &conn) {
         conn.close(response);
         return;
       }
+
       if (conn.context.http.request.query.path == "/destinations/clear") {
         db_dst.truncate();
         http::HttpResponse response(200, "OK", "cleared\n");
         conn.close(response);
         return;
       }
-      // if (conn.context.http.request.query.path == "/memory/clear") {
-      //   db.release_expired_memory_pages(1);
-      //   // db_dst.maintain_memory_pages();
-      //   http::HttpResponse response(200, "OK", "cleared\n");
-      //   conn.close(response);
-      //   return;
-      // }
-    }  // -------------------  GET END ----------------------
 
+      if (conn.context.http.request.query.path == "/ping") {
+        http::HttpResponse response(200, "OK", "pong\n");
+        conn.close(response);
+        return;
+      }
+
+      // TODO
+      // 1) stop accepting new connections and quit after all connections are served
+      // 2) logger with date/time
+      // 3) stat info: records count, open pages
+    }  // -------------------  'GET' END ----------------------
     else if (conn.context.http.request.method == "POST") {
+      // -------------------  'POST' BEGIN ----------------------
       if (conn.context.http.request.query.path == "/deals/add") {
         addDeal(conn);
         return;
       }
-    }  // -------------------  POST END ----------------------
+    }  // -------------------  'POST' END ----------------------
 
     // default response:
     conn.close(http::HttpResponse(404, "Not Found", "Method unknown\n"));
