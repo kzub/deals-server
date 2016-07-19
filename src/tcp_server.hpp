@@ -127,7 +127,7 @@ TCPServer<Context>::TCPServer(const uint16_t port) {
   srv_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (srv_sockfd == -1) {
-    perror("ERROR opening socket");
+    std::cout << "ERROR opening socket:" << errno << std::endl;
     exit(-1);
   }
 
@@ -140,15 +140,14 @@ TCPServer<Context>::TCPServer(const uint16_t port) {
 
   /* Now bind the host address using bind() call.*/
   while (bind(srv_sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-    perror("ERROR on binding");
-    // exit(-1);
+    std::cout << "ERROR on binding:" << errno << std::endl;
     sleep(5);
   }
 
   int res = listen(srv_sockfd, ACCEPT_QUEUE_LENGTH);
 
   if (res != 0) {
-    perror("ERROR on listening");
+    std::cout << "ERROR on listening" << errno << std::endl;
     exit(-1);
   }
 

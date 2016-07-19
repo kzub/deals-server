@@ -17,12 +17,11 @@ TCPConnection::TCPConnection(const int accept_sockfd)
 
   if (sockfd == -1) {
     if (errno == EAGAIN) {
-      std::cout << "EAGIN (no incoming connection)" << std::endl;
+      std::cout << "ERROR EAGIN (no incoming connection)" << std::endl;
       return;
     }
 
-    perror("ERROR on accept");
-
+    std::cout << "ERROR on accept:" << errno << std::endl;
     return;
   }
 
@@ -170,7 +169,7 @@ std::string inet_addr_to_string(struct sockaddr_in &hostaddr) {
     return std::string(buf) + ":" + std::to_string(htons(hostaddr.sin_port));
   }
 
-  perror("inet_addr_to_string() cant resolve ip address\n");
+  std::cout << "ERROR inet_addr_to_string() cant resolve ip address:" << errno << std::endl;
   return "-";
 }
 }
