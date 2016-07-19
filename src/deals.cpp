@@ -181,12 +181,6 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       }
     }
 
-    // skip 2gds4rt deals
-    // --------------------------------
-    if (filter_2gds4rt && deal.flags.is2gds4rt == true) {
-      continue;
-    }
-
     // **********************************************************************
     // Deal match for selected filters -> process it @ child class
     // **********************************************************************
@@ -237,7 +231,7 @@ void DealsDatabase::truncate() {
 //---------------------------------------------------------
 bool DealsDatabase::addDeal(std::string origin, std::string destination, std::string departure_date,
                             std::string return_date, bool direct_flight, uint32_t price,
-                            bool is2gds4rt, std::string data) {
+                            std::string data) {
   if (origin.length() != 3) {
     std::cout << "wrong origin length:" << origin << std::endl;
     return false;
@@ -281,7 +275,6 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   info.flags.direct = direct_flight;
   info.flags.departure_day_of_week = ::utils::day_of_week_from_date(departure_date);
   info.flags.return_day_of_week = ::utils::day_of_week_from_date(return_date);
-  info.flags.is2gds4rt = is2gds4rt;
   info.price = price;
   strncpy(info.page_name, result.page_name.c_str(), MEMPAGE_NAME_MAX_LEN);
   info.index = result.index;
@@ -346,16 +339,16 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, bool direct_flights, bool stops_flights, bool skip_2gds4rt,
-    uint32_t price_from, uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec)
+    uint16_t stay_to, bool direct_flights, bool stops_flights, uint32_t price_from,
+    uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec)
 
 {
   DealsCheapestByPeriod query(*db_index);
 
   query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
                       departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
-                      stay_from, stay_to, direct_flights, stops_flights, skip_2gds4rt, price_from,
-                      price_to, limit, max_lifetime_sec);
+                      stay_from, stay_to, direct_flights, stops_flights, price_from, price_to,
+                      limit, max_lifetime_sec);
 
   query.execute();
 
@@ -487,15 +480,15 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, bool direct_flights, bool stops_flights, bool skip_2gds4rt,
-    uint32_t price_from, uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec) {
+    uint16_t stay_to, bool direct_flights, bool stops_flights, uint32_t price_from,
+    uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec) {
   //
   DealsCheapestDayByDay query(*db_index);
 
   query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
                       departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
-                      stay_from, stay_to, direct_flights, stops_flights, skip_2gds4rt, price_from,
-                      price_to, limit, max_lifetime_sec);
+                      stay_from, stay_to, direct_flights, stops_flights, price_from, price_to,
+                      limit, max_lifetime_sec);
 
   query.execute();
 
@@ -518,11 +511,16 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
 void DealsCheapestDayByDay::pre_search() {
   // init values
   if (!filter_departure_date || !departure_date_values.duration) {
-    std::cout << "no departure_date range" << std::endl;
+    std::cout << "ERROR no departure_date range" << std::endl;
     throw "zero interval. departure date interval must be specified";
   }
 
   deals_slots_available = destination_values_size * departure_date_values.duration;
+
+  if (deals_slots_available > 1000) {
+    std::cout << "ERROR deals_slots_available > 1000" << std::endl;
+    throw "too much deals count requested, reduce";
+  }
   // std::cout << "destination_values_size:" << destination_values_size << std::endl;
   // std::cout << "departure_date_values.duration:" << departure_date_values.duration << std::endl;
   // std::cout << "deals_slots_available:" << deals_slots_available << std::endl;
@@ -777,11 +775,11 @@ void unit_test() {
   // add some data, that will be outdated
   for (int i = 0; i < TEST_ELEMENTS_COUNT; ++i) {
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
-               getRandomPrice(1000), false, dumb);
+               getRandomPrice(1000), dumb);
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
-               getRandomPrice(2000), false, dumb);
+               getRandomPrice(2000), dumb);
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
-               getRandomPrice(3000), false, dumb);
+               getRandomPrice(3000), dumb);
   }
 
   // go to the feature (+1000 seconds)
@@ -789,31 +787,31 @@ void unit_test() {
   time += 1000;
 
   // add data we will expect
-  db.addDeal("MOW", "MAD", "2016-05-01", "2016-05-21", true, 5000, false, check);
-  db.addDeal("MOW", "BER", "2016-06-01", "2016-06-11", true, 6000, false, check);
-  db.addDeal("MOW", "PAR", "2016-07-01", "2016-07-15", true, 7000, false, check);
+  db.addDeal("MOW", "MAD", "2016-05-01", "2016-05-21", true, 5000, check);
+  db.addDeal("MOW", "BER", "2016-06-01", "2016-06-11", true, 6000, check);
+  db.addDeal("MOW", "PAR", "2016-07-01", "2016-07-15", true, 7000, check);
 
   time += 5;
 
   // add some good
   for (int i = 0; i < TEST_ELEMENTS_COUNT; ++i) {
     db.addDeal(getRandomOrigin(), "MAD", getRandomDate(2015), getRandomDate(2015), true,
-               getRandomPrice(5100), false, dumb);
+               getRandomPrice(5100), dumb);
     db.addDeal(getRandomOrigin(), "BER", getRandomDate(), getRandomDate(), true,
-               getRandomPrice(6200), false, dumb);
+               getRandomPrice(6200), dumb);
     db.addDeal(getRandomOrigin(), "PAR", getRandomDate(), getRandomDate(), true,
-               getRandomPrice(7200), false, dumb);
+               getRandomPrice(7200), dumb);
 
     // MAD will be 2016 here: and > 8000 price
-    db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), false,
-               getRandomPrice(8000), false, dumb);
+    db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomDate(), getRandomDate(), true,
+               getRandomPrice(8000), dumb);
   }
 
   timer.tick("before test1");
   // 1st test ----------------------------
   // *********************************************************
-  std::vector<DealInfo> result = db.searchForCheapestEver(
-      "MOW", "AAA,PAR,BER,MAD", "", "", "", "", "", "", 0, 0, true, true, false, 0, 0, 0, 10);
+  std::vector<DealInfo> result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "", "", "", "",
+                                                          "", "", 0, 0, true, true, 0, 0, 0, 10);
   timer.tick("test1");
 
   for (auto &deal : result) {
@@ -867,8 +865,7 @@ void unit_test() {
   // 2nd test -------------------------------
   // *********************************************************
   result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "2016-06-01", "2016-06-23", "",
-                                    "2016-06-10", "2016-06-22", "", 0, 0, true, true, false, 0, 0,
-                                    0, 10);
+                                    "2016-06-10", "2016-06-22", "", 0, 0, true, true, 0, 0, 0, 10);
 
   timer.tick("test2");
 
@@ -929,7 +926,7 @@ void unit_test() {
   // *********************************************************
   timer.tick("before test3");
   result = db.searchForCheapestEver("MOW", "", "", "", "fri,sat,sun", "", "", "sat,sun,mon", 4, 18,
-                                    false, true, false, 9100, 19200, 0, 2000);
+                                    false, true, 9100, 19200, 0, 2000);
   timer.tick("test3");
   std::cout << "search 3 result size:" << result.size() << std::endl;
 

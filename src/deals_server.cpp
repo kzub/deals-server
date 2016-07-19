@@ -231,15 +231,6 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // check departure dates < return dates
-  //-------------------------
-  std::string skip_2gds4rt = conn.context.http.request.query.params["skip_2gds4rt"];
-  if (skip_2gds4rt.length() && skip_2gds4rt != "true" && skip_2gds4rt != "false") {
-    conn.close(http::HttpResponse(400, "Bad skip_2gds4rt", "Bad skip_2gds4rt\n"));
-    return;
-  }
-  bool skip_2gds4rt_bool = skip_2gds4rt == "true";
-
   // check price_from filter
   //-------------------------
   uint32_t price_from = 0;
@@ -291,14 +282,14 @@ void DealsServer::getTop(Connection &conn) {
   if (conn.context.http.request.query.params["day_by_day"] == "true") {
     result = db.searchForCheapestDayByDay(
         origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-        return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
-        skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
+        return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights, price_from,
+        price_to, limit, max_lifetime_sec);
 
   } else {
-    result = db.searchForCheapestEver(
-        origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-        return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights,
-        skip_2gds4rt_bool, price_from, price_to, limit, max_lifetime_sec);
+    result = db.searchForCheapestEver(origin, destinations, departure_date_from, departure_date_to,
+                                      dweekdays, return_date_from, return_date_to, rweekdays,
+                                      stay_from, stay_to, direct_flights, stops_flights, price_from,
+                                      price_to, limit, max_lifetime_sec);
   }
 
   // No results
@@ -411,16 +402,15 @@ void DealsServer::addDeal(Connection &conn) {
     return;
   }
 
-  bool is2gds4rt = conn.context.http.request.query.params["is2gds4rt"] == "true";
-
   std::string data = conn.context.http.get_body();
 
   // std::cout << "(add) dep:" << departure_date << " from:" << origin
   //           << " to:" << destination << " ret:" << return_date
   //           << " price:" << price << std::endl;
 
-  bool good = db.addDeal(origin, destination, departure_date, return_date, direct_flight, price,
-                         is2gds4rt, data);
+  bool good =
+      db.addDeal(origin, destination, departure_date, return_date, direct_flight, price, data);
+
   if (!good) {
     conn.close(http::HttpResponse(500, "Could not addDeal", "Could not addDeal\n"));
     return;

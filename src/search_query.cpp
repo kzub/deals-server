@@ -221,10 +221,6 @@ void SearchQuery::result_limit(uint16_t _filter_limit) {
   }
 }
 
-void SearchQuery::skip_2gds4rt(bool skip) {
-  filter_2gds4rt = skip;
-}
-
 void SearchQuery::price(uint32_t price_from, uint32_t price_to) {
   if (price_from == 0 && price_to == 0) {
     // no filter applied
@@ -250,8 +246,8 @@ void SearchQuery::apply_filters(std::string _origin, std::string _destinations,
                                 std::string _departure_days_of_week, std::string _return_date_from,
                                 std::string _return_date_to, std::string _return_days_of_week,
                                 uint16_t _stay_from, uint16_t _stay_to, bool _direct_flights,
-                                bool _stops_flights, bool _skip_2gds4rt, uint32_t _price_from,
-                                uint32_t _price_to, uint16_t _limit, uint32_t _max_lifetime_sec) {
+                                bool _stops_flights, uint32_t _price_from, uint32_t _price_to,
+                                uint16_t _limit, uint32_t _max_lifetime_sec) {
   origin(_origin);
   destinations(_destinations);
   departure_dates(_departure_date_from, _departure_date_to);
@@ -262,7 +258,6 @@ void SearchQuery::apply_filters(std::string _origin, std::string _destinations,
   max_lifetime_sec(_max_lifetime_sec);
   departure_weekdays(_departure_days_of_week);
   return_weekdays(_return_days_of_week);
-  skip_2gds4rt(_skip_2gds4rt);
   price(_price_from, _price_to);
 }
 

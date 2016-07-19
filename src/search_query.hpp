@@ -31,7 +31,6 @@ class SearchQuery {
   void stay_days(uint16_t stay_from, uint16_t stay_to);
   void departure_weekdays(std::string days_of_week);
   void return_weekdays(std::string days_of_week);
-  void skip_2gds4rt(bool skip);
   void price(uint32_t price_from, uint32_t price_to);
   void locale(std::string locale);
 
@@ -39,9 +38,8 @@ class SearchQuery {
                      std::string departure_date_to, std::string departure_days_of_week,
                      std::string return_date_from, std::string return_date_to,
                      std::string return_days_of_week, uint16_t stay_from, uint16_t stay_to,
-                     bool direct_flights, bool stops_flights, bool skip_2gds4rt,
-                     uint32_t price_from, uint32_t price_to, uint16_t limit,
-                     uint32_t max_lifetime_sec);
+                     bool direct_flights, bool stops_flights, uint32_t price_from,
+                     uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec);
 
  protected:
   uint8_t weekdays_bitmask(std::string days_of_week);
@@ -81,8 +79,6 @@ class SearchQuery {
 
   bool filter_stay_days = false;
   StayInterval stay_days_values;
-
-  bool filter_2gds4rt = false;
 
   uint16_t filter_limit = 20;
 

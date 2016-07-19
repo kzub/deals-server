@@ -31,7 +31,6 @@ struct Flags {
   bool overriden : 1;
   uint8_t departure_day_of_week : 4;
   uint8_t return_day_of_week : 4;
-  bool is2gds4rt : 1;
 };
 
 namespace i {
@@ -82,24 +81,21 @@ class DealsDatabase {
   ~DealsDatabase();
 
   bool addDeal(std::string origin, std::string destination, std::string departure_date,
-               std::string return_date, bool direct_flight, uint32_t price, bool is2gds4rt,
-               std::string data);
+               std::string return_date, bool direct_flight, uint32_t price, std::string data);
 
   std::vector<DealInfo> searchForCheapestEver(
       std::string origin, std::string destinations, std::string departure_date_from,
       std::string departure_date_to, std::string departure_days_of_week,
       std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
       uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights,
-      bool skip_2gds4rt, uint32_t price_from, uint32_t price_to, uint16_t limit,
-      uint32_t max_lifetime_sec);
+      uint32_t price_from, uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec);
 
   std::vector<DealInfo> searchForCheapestDayByDay(
       std::string origin, std::string destinations, std::string departure_date_from,
       std::string departure_date_to, std::string departure_days_of_week,
       std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
       uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights,
-      bool skip_2gds4rt, uint32_t price_from, uint32_t price_to, uint16_t limit,
-      uint32_t max_lifetime_sec);
+      uint32_t price_from, uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec);
 
   void truncate();
 
