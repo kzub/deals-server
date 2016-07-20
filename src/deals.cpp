@@ -137,16 +137,27 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     // direct & flight with stops
     // --------------------------------
     if (filter_flight_by_stops) {
-      // hide direct flights
-      if (direct_flights_flag == false && deal.flags.direct == true) {
-        // std::cout << "filter_flight_by_stops1" << std::endl;
+      if (direct_flights_flag != deal.flags.direct) {
+        // std::cout << "filter_flight_by_stops" << std::endl;
         continue;
       }
+    }
 
-      // hide stops flights
-      if (stops_flights_flag == false && deal.flags.direct == false) {
-        // std::cout << "filter_flight_by_stops2" << std::endl;
-        continue;
+    // roundtrips
+    // --------------------------------
+    if (filter_flight_by_roundtrip) {
+      if (roundtrip_flight_flag == true) {
+        if (deal.return_date == 0) {
+          // std::cout << "filter_flight_by_roundtrip (this is ow)" << roundtrip_flight_flag << " "
+          // << deal.return_date << std::endl;
+          continue;
+        }
+      } else {
+        if (deal.return_date != 0) {
+          // std::cout << "filter_flight_by_roundtrip (this is rt)" << roundtrip_flight_flag << " "
+          // << deal.return_date << std::endl;
+          continue;
+        }
       }
     }
 
@@ -339,16 +350,16 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, bool direct_flights, bool stops_flights, uint32_t price_from,
-    uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec)
+    uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from, uint32_t price_to,
+    uint16_t limit, uint32_t max_lifetime_sec, ::utils::Threelean roundtrip_flights)
 
 {
   DealsCheapestByPeriod query(*db_index);
 
   query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
                       departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
-                      stay_from, stay_to, direct_flights, stops_flights, price_from, price_to,
-                      limit, max_lifetime_sec);
+                      stay_from, stay_to, direct_flights, price_from, price_to, limit,
+                      max_lifetime_sec, roundtrip_flights);
 
   query.execute();
 
@@ -480,15 +491,15 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, bool direct_flights, bool stops_flights, uint32_t price_from,
-    uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec) {
+    uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from, uint32_t price_to,
+    uint16_t limit, uint32_t max_lifetime_sec, ::utils::Threelean roundtrip_flights) {
   //
   DealsCheapestDayByDay query(*db_index);
 
   query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
                       departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
-                      stay_from, stay_to, direct_flights, stops_flights, price_from, price_to,
-                      limit, max_lifetime_sec);
+                      stay_from, stay_to, direct_flights, price_from, price_to, limit,
+                      max_lifetime_sec, roundtrip_flights);
 
   query.execute();
 
@@ -603,7 +614,7 @@ bool DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
             << " deals_with_current_date_count:" << deals_with_current_date_count
             << " destination_values_size:" << destination_values_size
             << " departure_date_values.duration:" << departure_date_values.duration
-            << " very strange place. there will be exacly days*destinations deals,"
+            << " ERROR very strange place. there will be exacly days*destinations deals,"
             << " no more. but it seems we found something extra?" << std::endl;
 
   return true;
@@ -810,8 +821,9 @@ void unit_test() {
   timer.tick("before test1");
   // 1st test ----------------------------
   // *********************************************************
-  std::vector<DealInfo> result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "", "", "", "",
-                                                          "", "", 0, 0, true, true, 0, 0, 0, 10);
+  std::vector<DealInfo> result = db.searchForCheapestEver(
+      "MOW", "AAA,PAR,BER,MAD", "", "", "", "", "", "", 0, 0, ::utils::Threelean::Undefined, 0, 0,
+      0, 10, ::utils::Threelean::Undefined);
   timer.tick("test1");
 
   for (auto &deal : result) {
@@ -864,8 +876,9 @@ void unit_test() {
   timer.tick("before test2");
   // 2nd test -------------------------------
   // *********************************************************
-  result = db.searchForCheapestEver("MOW", "AAA,PAR,BER,MAD", "2016-06-01", "2016-06-23", "",
-                                    "2016-06-10", "2016-06-22", "", 0, 0, true, true, 0, 0, 0, 10);
+  result = db.searchForCheapestEver(
+      "MOW", "AAA,PAR,BER,MAD", "2016-06-01", "2016-06-23", "", "2016-06-10", "2016-06-22", "", 0,
+      0, ::utils::Threelean::Undefined, 0, 0, 0, 10, ::utils::Threelean::Undefined);
 
   timer.tick("test2");
 
@@ -926,7 +939,8 @@ void unit_test() {
   // *********************************************************
   timer.tick("before test3");
   result = db.searchForCheapestEver("MOW", "", "", "", "fri,sat,sun", "", "", "sat,sun,mon", 4, 18,
-                                    false, true, 9100, 19200, 0, 2000);
+                                    ::utils::Threelean::False, 9100, 19200, 0, 2000,
+                                    ::utils::Threelean::Undefined);
   timer.tick("test3");
   std::cout << "search 3 result size:" << result.size() << std::endl;
 

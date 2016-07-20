@@ -4,18 +4,24 @@ APPFILE=/home/zubkov/deals-server/bin/deals-server
 
 
 if [[ $1 = "start" ]]; then
+
 	if [[ -z $2 ]]; then
-		echo "server count needed"
+		echo "server start count neededexample: deals.sh start 0 7"
 		exit
 	fi
 
-	PORT=5000
+	if [[ -z $3 ]]; then
+		echo "server end count needed. example: deals.sh start 0 7"
+		exit
+	fi
 
-	for i in `seq 1 $2`;
+	PORT=$((5000+$2))
+
+	for i in `seq $2 $3`;
 	do
 		RUN="chpst -o 8000 -P -u zubkov $APPFILE $PORT"
-		# echo $RUN
-		$RUN >> $LOGFILE &
+		echo $RUN
+		# $RUN >> $LOGFILE 2>&1 &
 		PORT=$((1+$PORT))
 	done
 

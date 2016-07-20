@@ -73,14 +73,17 @@ function httpsend(mode, params, postData, callback){
 	var qs = '?';
 
 	for(key in params){
+		if(params[key] === undefined || params[key] === null){
+			continue;
+		}
 		qs += key + '=' + params[key] + '&';
 	}
 
 	var options = {
-	  hostname: '139.162.233.244',
-	  port: 8090,
-	  // hostname: '127.0.0.1',
-	  // port: 5000,
+	  // hostname: '139.162.233.244',
+	  // port: 8090,
+	  hostname: '127.0.0.1',
+	  port: 5000,
 	  // hostname: '192.168.170.20',
 	  // port: 8090,
 	  path: modes[mode].path + qs,
@@ -97,9 +100,10 @@ function httpsend(mode, params, postData, callback){
 	var data = '';
 	var req = http.request(options, function(res) {
 	  if(res.statusCode !== 200 && res.statusCode !== 204) {
-	  	// console.log('STATUS:' + res.statusCode + res.statusMessage);
+	  	console.log(options.path)
+	  	console.log('STATUS:' + res.statusCode + " " + res.statusMessage);
 	  	// console.log(options.path);
-	  	callback('STATUS:' + res.statusCode);
+	  	// callback('STATUS:' + res.statusCode);
 	  	return;
 	  }
 	  // console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
@@ -210,6 +214,11 @@ async.until(
 		function iter(cb) {
 				var pair = getRandomCityPair();
 				var dates = getRandomDatesPair();
+
+				// ow ->
+				if(Math.random() > 0.6){
+					dates[1] = undefined;
+				}
 
 				var params = {
 					origin: pair[0],

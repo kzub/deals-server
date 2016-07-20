@@ -5,6 +5,9 @@
 #include <vector>
 
 namespace utils {
+
+enum class Threelean : int { True = 1, False = 0, Undefined = -1 };
+
 /*-----------------------------------------------------
   key value storage for internal use
 -----------------------------------------------------*/

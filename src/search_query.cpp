@@ -200,18 +200,22 @@ uint8_t SearchQuery::weekdays_bitmask(std::string days_of_week) {
   return result;
 }
 
-void SearchQuery::direct_flights(bool direct_flights, bool stops_flights) {
-  if (direct_flights == true && stops_flights == true) {
+void SearchQuery::direct_flights(utils::Threelean direct_flights) {
+  if (direct_flights == utils::Threelean::Undefined) {
     return;
   }
 
   filter_flight_by_stops = true;
-  direct_flights_flag = direct_flights;
-  stops_flights_flag = stops_flights;
+  direct_flights_flag = (direct_flights == utils::Threelean::True ? true : false);
+}
 
-  if (direct_flights_flag == false && stops_flights_flag == false) {
-    query_is_broken = true;
+void SearchQuery::roundtrip_flights(utils::Threelean roundtrip) {
+  if (roundtrip == utils::Threelean::Undefined) {
+    return;
   }
+
+  filter_flight_by_roundtrip = true;
+  roundtrip_flight_flag = (roundtrip == utils::Threelean::True ? true : false);
 }
 
 void SearchQuery::result_limit(uint16_t _filter_limit) {
@@ -245,15 +249,17 @@ void SearchQuery::apply_filters(std::string _origin, std::string _destinations,
                                 std::string _departure_date_from, std::string _departure_date_to,
                                 std::string _departure_days_of_week, std::string _return_date_from,
                                 std::string _return_date_to, std::string _return_days_of_week,
-                                uint16_t _stay_from, uint16_t _stay_to, bool _direct_flights,
-                                bool _stops_flights, uint32_t _price_from, uint32_t _price_to,
-                                uint16_t _limit, uint32_t _max_lifetime_sec) {
+                                uint16_t _stay_from, uint16_t _stay_to,
+                                utils::Threelean _direct_flights, uint32_t _price_from,
+                                uint32_t _price_to, uint16_t _limit, uint32_t _max_lifetime_sec,
+                                utils::Threelean _roundtrip_flights) {
   origin(_origin);
   destinations(_destinations);
   departure_dates(_departure_date_from, _departure_date_to);
   return_dates(_return_date_from, _return_date_to);
   stay_days(_stay_from, _stay_to);
-  direct_flights(_direct_flights, _stops_flights);
+  direct_flights(_direct_flights);
+  roundtrip_flights(_roundtrip_flights);
   result_limit(_limit);
   max_lifetime_sec(_max_lifetime_sec);
   departure_weekdays(_departure_days_of_week);

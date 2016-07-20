@@ -87,15 +87,17 @@ class DealsDatabase {
       std::string origin, std::string destinations, std::string departure_date_from,
       std::string departure_date_to, std::string departure_days_of_week,
       std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
-      uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights,
-      uint32_t price_from, uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec);
+      uint16_t stay_from, uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from,
+      uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec,
+      ::utils::Threelean roundtrip_flights);
 
   std::vector<DealInfo> searchForCheapestDayByDay(
       std::string origin, std::string destinations, std::string departure_date_from,
       std::string departure_date_to, std::string departure_days_of_week,
       std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
-      uint16_t stay_from, uint16_t stay_to, bool direct_flights, bool stops_flights,
-      uint32_t price_from, uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec);
+      uint16_t stay_from, uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from,
+      uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec,
+      ::utils::Threelean roundtrip_flights);
 
   void truncate();
 

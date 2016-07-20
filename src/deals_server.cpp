@@ -59,12 +59,15 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       // TODO
-      // 1) OW
-      // 1) month calendar
-      // 1) stop accepting new connections and quit after all connections are served
-      // 2) logger with date/time
-      // 3) stat info: connections, records count, open pages
-      // 4) (done) rewrite sym waiting func
+      // *) OW filter
+      // *) Deals By Aircompany
+      // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
+      // *) rewrite to std::map grouping (month calendar)
+      // *) increase expire time to 2 days. but search for deals just for 8 hours by default
+      // *) stop accepting new connections and quit after all connections are served
+      // *) logger with date/time
+      // *) stat info: connections, records count (used/expired/total), opened pages
+      // *) (done) rewrite sym waiting func
     }  // -------------------  'GET' END ----------------------
     else if (conn.context.http.request.method == "POST") {
       // -------------------  'POST' BEGIN ----------------------
@@ -109,19 +112,29 @@ void DealsServer::getTop(Connection &conn) {
 
   // direct and flights with stops
   //-------------------------
-  bool direct_flights = false;
-  bool stops_flights = false;
-  std::string direct = utils::toLowerCase(conn.context.http.request.query.params["direct_flights"]);
+  utils::Threelean direct_flights = utils::Threelean::Undefined;
 
-  if (direct == "") {
-    direct_flights = true;
-    stops_flights = true;
-  } else if (direct == "true") {
-    direct_flights = true;
+  std::string direct = utils::toLowerCase(conn.context.http.request.query.params["direct_flights"]);
+  if (direct == "true") {
+    direct_flights = utils::Threelean::True;
   } else if (direct == "false") {
-    stops_flights = true;
-  } else {
+    direct_flights = utils::Threelean::False;
+  } else if (direct != "") {
     conn.close(http::HttpResponse(400, "Bad direct_flights", "Bad direct_flights\n"));
+    return;
+  }
+
+  // roundtrips
+  //-------------------------
+  utils::Threelean roundtrip_flights = utils::Threelean::Undefined;
+
+  std::string rt = utils::toLowerCase(conn.context.http.request.query.params["roundtrip_flights"]);
+  if (rt == "true") {
+    roundtrip_flights = utils::Threelean::True;
+  } else if (rt == "false") {
+    roundtrip_flights = utils::Threelean::False;
+  } else if (rt != "") {
+    conn.close(http::HttpResponse(400, "Bad roundtrip_flights", "Bad roundtrip_flights\n"));
     return;
   }
 
@@ -282,14 +295,14 @@ void DealsServer::getTop(Connection &conn) {
   if (conn.context.http.request.query.params["day_by_day"] == "true") {
     result = db.searchForCheapestDayByDay(
         origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-        return_date_to, rweekdays, stay_from, stay_to, direct_flights, stops_flights, price_from,
-        price_to, limit, max_lifetime_sec);
+        return_date_to, rweekdays, stay_from, stay_to, direct_flights, price_from, price_to, limit,
+        max_lifetime_sec, roundtrip_flights);
 
   } else {
     result = db.searchForCheapestEver(origin, destinations, departure_date_from, departure_date_to,
                                       dweekdays, return_date_from, return_date_to, rweekdays,
-                                      stay_from, stay_to, direct_flights, stops_flights, price_from,
-                                      price_to, limit, max_lifetime_sec);
+                                      stay_from, stay_to, direct_flights, price_from, price_to,
+                                      limit, max_lifetime_sec, roundtrip_flights);
   }
 
   // No results

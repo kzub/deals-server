@@ -415,8 +415,8 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       new_pages_list.push_back(page);
     }
   }
-
-  opened_pages_list = std::move(new_pages_list);
+  // TODO: use std::move()
+  opened_pages_list = new_pages_list;
 }
 
 /*-----------------------------------------------------------------

@@ -25,7 +25,7 @@ class SearchQuery {
   void departure_dates(std::string departure_dates);
   void return_dates(std::string return_date_from, std::string return_date_to);
   void return_dates(std::string return_dates);
-  void direct_flights(bool direct_flights, bool stops_flights);
+  void direct_flights(utils::Threelean direct_flights);
   void max_lifetime_sec(uint32_t max_lifetime);
   void result_limit(uint16_t limit);
   void stay_days(uint16_t stay_from, uint16_t stay_to);
@@ -33,13 +33,14 @@ class SearchQuery {
   void return_weekdays(std::string days_of_week);
   void price(uint32_t price_from, uint32_t price_to);
   void locale(std::string locale);
+  void roundtrip_flights(utils::Threelean roundtrip);
 
   void apply_filters(std::string origin, std::string destinations, std::string departure_date_from,
                      std::string departure_date_to, std::string departure_days_of_week,
                      std::string return_date_from, std::string return_date_to,
                      std::string return_days_of_week, uint16_t stay_from, uint16_t stay_to,
-                     bool direct_flights, bool stops_flights, uint32_t price_from,
-                     uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec);
+                     utils::Threelean direct_flights, uint32_t price_from, uint32_t price_to,
+                     uint16_t limit, uint32_t max_lifetime_sec, utils::Threelean roundtrip);
 
  protected:
   uint8_t weekdays_bitmask(std::string days_of_week);
@@ -69,7 +70,9 @@ class SearchQuery {
 
   bool filter_flight_by_stops = false;
   bool direct_flights_flag;
-  bool stops_flights_flag;
+
+  bool filter_flight_by_roundtrip = false;
+  bool roundtrip_flight_flag;
 
   bool filter_departure_weekdays = false;
   uint8_t departure_weekdays_bitmask;
