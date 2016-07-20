@@ -72,6 +72,17 @@ void DealsSearchQuery::execute() {
 // for iterating over all not expired pages in table
 //----------------------------------------------------------------
 bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
+  if (size == 0) {
+    std::cout << "ERROR DealsSearchQuery::process_function size == 0" << std::endl;
+    return false;
+  }
+
+  const i::DealInfo &lastdeal = elements[size - 1];
+  if (filter_timestamp && timestamp_value > lastdeal.timestamp) {
+    // std::cout << "whole page is expired" << std::endl;
+    return true;
+  }
+
   for (uint32_t idx = 0; idx < size; ++idx) {
     const i::DealInfo &deal = elements[idx];
 

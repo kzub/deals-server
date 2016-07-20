@@ -119,6 +119,10 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
       continue;
     }
 
+    if (max_elements_in_page == record.page_elements_available) {
+      continue;
+    }
+
     continue_iteration = processor.process_function(
         page->getElements(), max_elements_in_page - record.page_elements_available);
 
