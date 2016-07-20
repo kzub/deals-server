@@ -21,7 +21,7 @@ if [[ $1 = "start" ]]; then
 	do
 		RUN="chpst -o 8000 -P -u zubkov $APPFILE $PORT"
 		echo $RUN
-		# $RUN >> $LOGFILE 2>&1 &
+		$RUN >> $LOGFILE 2>&1 &
 		PORT=$((1+$PORT))
 	done
 
