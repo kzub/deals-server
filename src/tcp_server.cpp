@@ -1,6 +1,7 @@
 #include "tcp_server.hpp"
 #include <arpa/inet.h>
 #include <strings.h>
+#include <sys/ioctl.h>
 
 namespace srv {
 
@@ -43,10 +44,15 @@ TCPConnection::~TCPConnection() {
 * TCPConnection Read
 *----------------------------------------------------------------------*/
 void TCPConnection::network_read() {
-  size_t len = NET_PACKET_SIZE;
-  char buf[len];
+  int count;
+  ioctl(sockfd, FIONREAD, &count);
+  if (count == 0) {
+    // std::cout << "ERROR count = 0." << std::endl; // sometimes happends
+    return;
+  }
 
-  int res = recv(sockfd, &buf, len, 0);
+  char buf[count];
+  int res = recv(sockfd, &buf, count, 0);
 
   if (res == -1 || res == 0) {
     close();  // close connection
@@ -72,10 +78,33 @@ void TCPConnection::network_write() {
     return;
   }
 
-  // std::string chunk = data_out.substr(0, NET_PACKET_SIZE);
-  // ssize_t res = send(sockfd, chunk.c_str(), chunk.length(), 0);
+#ifdef NET_MAX_PACKET_SIZE
+  // send data by chunks
+  // currently dont know which variant is better
+  std::string chunk = data_out.substr(0, NET_MAX_PACKET_SIZE);
+  ssize_t res = send(sockfd, chunk.c_str(), chunk.length(), 0);
 
-  // test:
+  if (res == -1 || res == 0) {
+    std::cout << "ERROR on send network_write()" << std::endl;
+    data_out.clear();  // mark connection as nothing to send
+    close();           // mark connections as dead
+    return;
+  }
+
+  if (msg_length > NET_MAX_PACKET_SIZE) {
+    // std::cout << "shrink data_out" << std::endl;
+    // std::string new_data = data_out.substr(NET_MAX_PACKET_SIZE);
+    // data_out.swap(new_data);
+    data_out = data_out.substr(NET_MAX_PACKET_SIZE);
+    ;
+  } else {
+    // we are finished with transmitting response
+    // dont closing connection here cause it could be a dialog...
+    //  read - write - read - write - read - write - close
+    data_out.clear();
+  }
+#else
+  // send data without chunking
   ssize_t res = send(sockfd, data_out.c_str(), data_out.length(), 0);
 
   if (res == -1 || res == 0) {
@@ -86,19 +115,7 @@ void TCPConnection::network_write() {
   }
 
   data_out.clear();
-  /*
-  if (msg_length > NET_PACKET_SIZE) {
-    // std::cout << "shrink data_out" << std::endl;
-    // std::string new_data = data_out.substr(NET_PACKET_SIZE);
-    // data_out.swap(new_data);
-    data_out = data_out.substr(NET_PACKET_SIZE);
-    ;
-  } else {
-    // we are finished with transmitting response
-    // dont closing connection here cause it could be a dialog...
-    //  read - write - read - write - read - write - close
-    data_out.clear();
-  }*/
+#endif
 }
 
 /*----------------------------------------------------------------------
