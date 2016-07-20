@@ -39,7 +39,7 @@ Connection has activity attribute and could be close on inactivity
 io_handlers updates connection activity attribute
 io_handler close() do nothing, if all io_handkers closed -> connection->close()
 */
-#define NET_PACKET_SIZE 5000
+#define NET_PACKET_SIZE 25000
 #define ACCEPT_QUEUE_LENGTH 100
 #define MAX_CONNECTION_LIFETIME_SEC 5
 #define POLL_TIMEOUT_MS 5000

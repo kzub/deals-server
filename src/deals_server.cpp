@@ -58,6 +58,12 @@ void DealsServer::on_data(Connection &conn) {
         return;
       }
 
+      if (conn.context.http.request.query.path == "/quit") {
+        std::cerr << "ERROR got request to quit" << std::endl;
+        exit(-1);
+        return;
+      }
+
       // TODO
       // *) OW filter
       // *) Deals By Aircompany
