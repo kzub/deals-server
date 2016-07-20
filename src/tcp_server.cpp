@@ -72,8 +72,11 @@ void TCPConnection::network_write() {
     return;
   }
 
-  std::string chunk = data_out.substr(0, NET_PACKET_SIZE);
-  ssize_t res = send(sockfd, chunk.c_str(), chunk.length(), 0);
+  // std::string chunk = data_out.substr(0, NET_PACKET_SIZE);
+  // ssize_t res = send(sockfd, chunk.c_str(), chunk.length(), 0);
+
+  // test:
+  ssize_t res = send(sockfd, data_out.c_str(), data_out.length(), 0);
 
   if (res == -1 || res == 0) {
     std::cout << "ERROR on send network_write()" << std::endl;
@@ -82,6 +85,8 @@ void TCPConnection::network_write() {
     return;
   }
 
+  data_out.clear();
+  /*
   if (msg_length > NET_PACKET_SIZE) {
     // std::cout << "shrink data_out" << std::endl;
     // std::string new_data = data_out.substr(NET_PACKET_SIZE);
@@ -93,7 +98,7 @@ void TCPConnection::network_write() {
     // dont closing connection here cause it could be a dialog...
     //  read - write - read - write - read - write - close
     data_out.clear();
-  }
+  }*/
 }
 
 /*----------------------------------------------------------------------
