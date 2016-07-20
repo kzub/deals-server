@@ -47,7 +47,7 @@ void TCPConnection::network_read() {
   int count;
   ioctl(sockfd, FIONREAD, &count);
   if (count == 0) {
-    // std::cout << "ERROR count = 0." << std::endl; // sometimes happends
+    close();  // close connection
     return;
   }
 

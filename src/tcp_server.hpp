@@ -224,7 +224,7 @@ void TCPServer<Context>::process() {
     }
 
     if (current_time - conn->created_time > MAX_CONNECTION_LIFETIME_SEC) {
-      std::cerr << "MAX_CONNECTION_LIFETIME_SEC:" << MAX_CONNECTION_LIFETIME_SEC << std::endl;
+      std::cerr << "ERROR MAX_CONNECTION_LIFETIME_SEC:" << MAX_CONNECTION_LIFETIME_SEC << std::endl;
       conn->close();
     }
     i++;
