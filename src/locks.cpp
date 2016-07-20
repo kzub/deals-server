@@ -59,7 +59,7 @@ void CriticalSection::semaphore_accuire() {
       wait_retries++;
 
       if (wait_retries * SLEEP_BETWEEN_TRIES_USEC / 1000 > WAIT_FOR_LOCK_MSEC) {
-        std::cout << "semaphore wait timeout errorcode:" << errno << std::endl;
+        std::cout << "ERROR semaphore wait timeout errorcode:" << errno << std::endl;
         throw "cant unlock";
       }
 
