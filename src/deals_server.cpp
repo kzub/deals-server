@@ -558,7 +558,11 @@ int main(int argc, char *argv[]) {
   deals_srv::DealsServer srv(port);
 
   while (1) {
-    srv.process();
+    try {
+      srv.process();
+    } catch (...) {
+      std::cout << "ERROR ROOT CYCLE:" << errno << std::endl;
+    }
   }
 
   return 0;
