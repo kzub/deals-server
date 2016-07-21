@@ -216,7 +216,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
     // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
     //   ^        ^              ^              ^        ^        ^        ^
     if (index_record->expire_at > 0 && index_record->expire_at < current_time) {
-      index_record->expire_at = 0;
+      // index_record->expire_at = 0;
       clear_index_record(*index_record);
       current_record_was_cleared = true;
     }
@@ -384,9 +384,11 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   // mark as unlinked, release this pages locally and unlink
   // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
   //                   last_data_idx ---^     ^        ^        ^        ^        ^--- idx
+  std::cout << "idx:" << idx << " last_data_idx:" << last_data_idx << std::endl;
   if (idx > 0 && last_data_idx < --idx) {
     for (; last_data_idx < idx; idx--) {
       TablePageIndexElement& index_record = table_index->shared_elements[idx];
+      std::cout << "try to CLEAR page memory:" << index_record.page_name << std::endl;
       SharedMemoryPage<ELEMENT_T>* page = getPageByName(index_record.page_name);
 
       if (page == nullptr) {
@@ -395,7 +397,6 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
         continue;
       }
 
-      // std::cout << "CLEARING page memory:" << index_record.page_name << std::endl;
       page->shared_pageinfo->unlinked = true;
       SharedMemoryPage<ELEMENT_T>::unlink(page->page_name);
 

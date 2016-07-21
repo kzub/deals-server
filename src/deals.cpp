@@ -77,10 +77,13 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     return false;
   }
 
-  const i::DealInfo &lastdeal = elements[size - 1];
-  if (filter_timestamp && timestamp_value > lastdeal.timestamp) {
-    // std::cout << "whole page is expired" << std::endl;
-    return true;
+  if (filter_timestamp) {
+    const i::DealInfo &lastdeal = elements[size - 1];
+
+    if (timestamp_value > lastdeal.timestamp) {
+      // std::cout << "whole page is expired" << std::endl;
+      return true;
+    }
   }
 
   for (uint32_t idx = 0; idx < size; ++idx) {

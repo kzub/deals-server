@@ -40,14 +40,22 @@ void DealsServer::on_data(Connection &conn) {
 
       if (conn.context.http.request.query.path == "/deals/clear") {
         db.truncate();
-        http::HttpResponse response(200, "OK", "cleared\n");
+        http::HttpResponse response(200, "OK", "deals cleared\n");
         conn.close(response);
         return;
       }
 
       if (conn.context.http.request.query.path == "/destinations/clear") {
         db_dst.truncate();
-        http::HttpResponse response(200, "OK", "cleared\n");
+        http::HttpResponse response(200, "OK", "destinations cleared\n");
+        conn.close(response);
+        return;
+      }
+
+      if (conn.context.http.request.query.path == "/clear") {
+        db.truncate();
+        db_dst.truncate();
+        http::HttpResponse response(200, "OK", "ALL cleared\n");
         conn.close(response);
         return;
       }
@@ -65,6 +73,7 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       // TODO
+      // *) calc amount of space left on dev/shm
       // *) OW filter
       // *) Deals By Aircompany
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
@@ -558,11 +567,7 @@ int main(int argc, char *argv[]) {
   deals_srv::DealsServer srv(port);
 
   while (1) {
-    try {
-      srv.process();
-    } catch (...) {
-      std::cout << "ERROR ROOT CYCLE:" << errno << std::endl;
-    }
+    srv.process();
   }
 
   return 0;
