@@ -29,11 +29,11 @@ INC := -I include
 $(TARGET_DIR)/$(TARGET_FILE): $(OBJECTS)
 	@mkdir -p $(TARGET_DIR)
 	@echo " Linking..."
-	@echo " $(CC) $^ -o $(TARGET_DIR)/$(TARGET_FILE) -arch x86_64 $(LIB)"; $(CC) $^ -o $(TARGET_DIR)/$(TARGET_FILE) -arch x86_64 $(LIB)
+	@echo " $(CC) $^ -o $(TARGET_DIR)/$(TARGET_FILE)  $(LIB)"; $(CC) $^ -o $(TARGET_DIR)/$(TARGET_FILE)  $(LIB)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(BUILDDIR)
-	@echo " $(CC) $(CFLAGS) $(INC) -arch x86_64 -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -arch x86_64 -c -o $@ $<
+	@echo " $(CC) $(CFLAGS) $(INC)  -c -o $@ $<"; $(CC) $(CFLAGS) $(INC)  -c -o $@ $<
 run:
 	$(TARGET_DIR)/$(TARGET_FILE)
 
