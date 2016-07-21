@@ -14,6 +14,8 @@ namespace shared_mem {
 #define MEMPAGE_REMOVE_EXPIRED_PAGES_AT_ONCE 5
 #define MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC 5
 
+bool checkSharedMemAvailability();
+
 enum class ErrorCode : int {
   NO_ERROR = 0,
   RECORD_SIZE_TO_BIG = 1,

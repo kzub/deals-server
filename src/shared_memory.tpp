@@ -463,6 +463,11 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
 
     std::cout << "OPENED:" << page_name << std::endl;
   } else {
+    if (!checkSharedMemAvailability()) {
+      std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage LOW SHARED MEMORY" << std::endl;
+      close(fd);
+      return;
+    }
     // if new setup page size
     int res = ftruncate(fd, page_memory_size);
     if (res == -1) {

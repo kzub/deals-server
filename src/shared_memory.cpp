@@ -1,9 +1,29 @@
 #include <cassert>
 
+#include <stdio.h>
+#include <sys/statvfs.h>
 #include "shared_memory.hpp"
 #include "timing.hpp"
-
 namespace shared_mem {
+
+//-----------------------------------------------------------
+// Check system has free shared memory
+//-----------------------------------------------------------
+bool checkSharedMemAvailability() {
+  struct statvfs res;
+  statvfs("/dev/shm/", &res);
+
+  uint32_t freemem = (100 * res.f_bavail / res.f_blocks);
+
+  if (freemem <= 5) {
+    std::cout << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
+  }
+  std::cout << "MEMORY:" << freemem << "%" << std::endl;
+
+  // pages will not allocated by 'new SharedMemory()'
+  return freemem > 3;
+}
+
 /* ----------------------------------------------------------
 **  TESTING......
 ** ----------------------------------------------------------*/

@@ -74,7 +74,6 @@ void DealsServer::on_data(Connection &conn) {
 
       // TODO
       // *) calc amount of space left on dev/shm
-      // *) OW filter
       // *) Deals By Aircompany
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
       // *) rewrite to std::map grouping (month calendar)
@@ -82,7 +81,8 @@ void DealsServer::on_data(Connection &conn) {
       // *) stop accepting new connections and quit after all connections are served
       // *) logger with date/time
       // *) stat info: connections, records count (used/expired/total), opened pages
-      // *) (done) rewrite sym waiting func
+      // *) (+) OW filter
+      // *) (+) rewrite sym waiting func
     }  // -------------------  'GET' END ----------------------
     else if (conn.context.http.request.method == "POST") {
       // -------------------  'POST' BEGIN ----------------------
