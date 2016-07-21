@@ -304,16 +304,16 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
               sizeof(ELEMENT_T) * records_cout);
 
   // std::cout << "COPY :" << insert_page_name << " idx:" << insert_element_idx
-  // << " cout:" << records_cout <<	" size:" << sizeof(ELEMENT_T)*records_cout << std::endl;
+  // << " cout:" << records_cout << " size:" << sizeof(ELEMENT_T)*records_cout << std::endl;
   return ElementPointer<ELEMENT_T>(*this, insert_page_name, insert_element_idx, records_cout);
 }
 
 // Table localGetPageByName -------------------------------------
 template <typename ELEMENT_T>
-SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(std::string page_name_to_look) {
+SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(const std::string& page_to_look) {
   // find page in open pages list
-  for (auto page : opened_pages_list) {
-    if (page->page_name == page_name_to_look) {
+  for (auto& page : opened_pages_list) {
+    if (page->page_name == page_to_look) {
       return page;
     }
   }
@@ -323,13 +323,13 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(std::string pa
 
 // Table getPageByName -------------------------------------------
 template <typename ELEMENT_T>
-SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(std::string page_name_to_look) {
+SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& page_to_look) {
   // let's look for page now in local heap
-  SharedMemoryPage<ELEMENT_T>* page = localGetPageByName(page_name_to_look);
+  SharedMemoryPage<ELEMENT_T>* page = localGetPageByName(page_to_look);
 
   // if not already open or created -> do it
   if (page == nullptr || !page->isAllocated()) {
-    page = new SharedMemoryPage<ELEMENT_T>(page_name_to_look, max_elements_in_page);
+    page = new SharedMemoryPage<ELEMENT_T>(page_to_look, max_elements_in_page);
 
     if (!page->isAllocated()) {
       std::cerr << "ERROR SharedMemoryPage::getPageByName page not allocated" << std::endl;
@@ -350,60 +350,67 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(std::string page_na
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_expired_memory_pages() {
   uint32_t current_time = timing::getTimestampSec();
-  uint16_t idx = 0;
-  uint16_t last_data_idx = 0;
 
+  // check local timer
   if (time_to_check_page_expire > current_time) {
-    // std::cout << "to ealry (release_expired_memory_pages)" << std::endl;
     return;
   }
   time_to_check_page_expire = current_time + MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC;
 
   lock->enter();
+  // check shared timer
+  // only one process should perform maintenance
+  if (table_index->shared_pageinfo->expiration_check <= current_time) {
+    uint16_t idx = 0;
+    uint16_t last_data_idx = 0;
 
-  // search for free space in pages
-  for (idx = 0; idx < table_max_pages; ++idx) {
-    // current page row (pointer to shared memory)
-    const TablePageIndexElement& index_record = table_index->shared_elements[idx];
+    // update shared data
+    table_index->shared_pageinfo->expiration_check = time_to_check_page_expire;
 
-    // page expired -> make it empty and use it to save records
-    // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
-    //                     ^              ^
-    if (index_record.expire_at > 0 && index_record.expire_at >= current_time) {
-      last_data_idx = idx;
-    }
+    // search for free space in all table pages
+    for (idx = 0; idx < table_max_pages; ++idx) {
+      // current page row (pointer to shared memory)
+      const TablePageIndexElement& index_record = table_index->shared_elements[idx];
 
-    // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
-    //                                                                              ^
-    if (index_record.expire_at == 0) {
-      break;
-    }
-  }
-
-  uint16_t cleared_counter = 0;
-  // mark as unlinked, release this pages locally and unlink
-  // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
-  //                   last_data_idx ---^     ^        ^        ^        ^        ^--- idx
-  std::cout << "idx:" << idx << " last_data_idx:" << last_data_idx << std::endl;
-  if (idx > 0 && last_data_idx < --idx) {
-    for (; last_data_idx < idx; idx--) {
-      TablePageIndexElement& index_record = table_index->shared_elements[idx];
-      // std::cout << "try to CLEAR page memory:" << index_record.page_name << std::endl;
-      SharedMemoryPage<ELEMENT_T>* page = getPageByName(index_record.page_name);
-
-      if (page == nullptr) {
-        std::cerr << "ERROR Table::release_expired_memory_pages cannot acquire page:"
-                  << index_record.page_name << std::endl;
-        continue;
+      // page expired -> make it empty and use it to save records
+      // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
+      //                     ^              ^
+      if (index_record.expire_at > 0 && index_record.expire_at >= current_time) {
+        last_data_idx = idx;
       }
 
-      page->shared_pageinfo->unlinked = true;
-      SharedMemoryPage<ELEMENT_T>::unlink(page->page_name);
-
-      clear_index_record(index_record);
-      // clear only certain portion per time;
-      if (MEMPAGE_REMOVE_EXPIRED_PAGES_AT_ONCE <= ++cleared_counter) {
+      // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
+      //                                                                              ^
+      if (index_record.expire_at == 0) {
         break;
+      }
+    }
+
+    uint16_t cleared_counter = 0;
+    // std::cout << "idx:" << idx << " last_data_idx:" << last_data_idx << std::endl;
+    // mark as unlinked, release this pages locally and unlink
+    // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
+    //                   last_data_idx ---^     ^        ^        ^        ^        ^--- idx
+    if (idx > 0 && last_data_idx < --idx) {
+      for (; last_data_idx < idx; idx--) {
+        TablePageIndexElement& index_record = table_index->shared_elements[idx];
+        // std::cout << "try to CLEAR page memory:" << index_record.page_name << std::endl;
+        SharedMemoryPage<ELEMENT_T>* page = getPageByName(index_record.page_name);
+
+        if (page == nullptr) {
+          std::cerr << "ERROR Table::release_expired_memory_pages cannot acquire page:"
+                    << index_record.page_name << std::endl;
+          continue;
+        }
+
+        page->shared_pageinfo->unlinked = true;
+        SharedMemoryPage<ELEMENT_T>::unlink(page->page_name);
+
+        clear_index_record(index_record);
+        // clear only certain portion per time;
+        if (MEMPAGE_REMOVE_EXPIRED_PAGES_AT_ONCE <= ++cleared_counter) {
+          break;
+        }
       }
     }
   }
@@ -411,16 +418,16 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   lock->exit();
 
   // clear opened_pages_list from unlinked items
+  // all processes must do that
   std::vector<SharedMemoryPage<ELEMENT_T>*> new_pages_list;
   for (auto page : opened_pages_list) {
     if (page->shared_pageinfo->unlinked) {
-      // std::cout << "RELEASING local page:" << page->page_name << std::endl;
+      std::cout << "RELEASING unlinked page:" << page->page_name << std::endl;
       delete page;
     } else {
       new_pages_list.push_back(page);
     }
   }
-  // TODO: use std::move()
   opened_pages_list = std::move(new_pages_list);
 }
 
@@ -437,7 +444,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     return;
   }
 
-  page_memory_size = sizeof(page_information) + sizeof(ELEMENT_T) * elements;
+  page_memory_size = sizeof(Page_information) + sizeof(ELEMENT_T) * elements;
 
   // try to create page
   bool new_memory_allocated = false;
@@ -483,14 +490,15 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
   }
 
   shared_memory = map;
-  shared_pageinfo = (page_information*)shared_memory;
-  shared_elements = (ELEMENT_T*)((uint8_t*)shared_memory + sizeof(page_information));
+  shared_pageinfo = (Page_information*)shared_memory;
+  shared_elements = (ELEMENT_T*)((uint8_t*)shared_memory + sizeof(Page_information));
 
   if (new_memory_allocated) {
     // cleanup info structure & first element
-    memset(shared_memory, 0, sizeof(page_information) + sizeof(ELEMENT_T));
+    memset(shared_memory, 0, sizeof(Page_information) + sizeof(ELEMENT_T));
     shared_pageinfo->unlinked = false;
-    // std::cout << "MEMSET:" << page_name << " bytes:" << sizeof(page_information) +
+    shared_pageinfo->expiration_check = 0;
+    // std::cout << "MEMSET:" << page_name << " bytes:" << sizeof(Page_information) +
     // sizeof(ELEMENT_T) << std::endl;
   }
   // std::cout << "MAKE PAGE: " << page_name <<  "(" << page_memory_size << ") " << std::endl;

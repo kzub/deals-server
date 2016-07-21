@@ -8,7 +8,8 @@
 namespace deals {
 
 //                    12h
-#define DEALS_EXPIRES 43200
+// #define DEALS_EXPIRES 43200
+#define DEALS_EXPIRES 3600
 
 #define DEALINFO_TABLENAME "DealsInfo"
 #define DEALINFO_PAGES 5000

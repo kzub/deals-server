@@ -12,7 +12,7 @@ namespace shared_mem {
 
 #define MEMPAGE_NAME_MAX_LEN 20
 #define MEMPAGE_REMOVE_EXPIRED_PAGES_AT_ONCE 5
-#define MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC 1
+#define MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC 5
 
 enum class ErrorCode : int {
   NO_ERROR = 0,
@@ -77,8 +77,8 @@ class Table {
   void cleanup();
 
  private:
-  SharedMemoryPage<ELEMENT_T>* localGetPageByName(std::string page_name_to_look);
-  SharedMemoryPage<ELEMENT_T>* getPageByName(std::string page_name_to_look);
+  SharedMemoryPage<ELEMENT_T>* localGetPageByName(const std::string& page_name_to_look);
+  SharedMemoryPage<ELEMENT_T>* getPageByName(const std::string& page_name_to_look);
   void release_open_pages();
   void clear_index_record(TablePageIndexElement& record);
   void release_expired_memory_pages();
@@ -107,8 +107,9 @@ class SharedMemoryPage {
   ~SharedMemoryPage();
 
  private:
-  struct page_information {
+  struct Page_information {
     bool unlinked;
+    uint32_t expiration_check;
   };
 
   SharedMemoryPage(std::string page_name, uint32_t elements);
@@ -119,7 +120,7 @@ class SharedMemoryPage {
   // look to shared memeory
   void* shared_memory;
   ELEMENT_T* shared_elements;
-  page_information* shared_pageinfo;
+  Page_information* shared_pageinfo;
 
   static void unlink(std::string page_name) {
     std::cout << "UNLINK: " << page_name << std::endl;
