@@ -73,14 +73,14 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       // TODO
-      // *) calc amount of space left on dev/shm
-      // *) Deals By Aircompany
+      // *) ? Deals By Aircompany
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
       // *) rewrite to std::map grouping (month calendar)
       // *) increase expire time to 2 days. but search for deals just for 8 hours by default
       // *) stop accepting new connections and quit after all connections are served
       // *) logger with date/time
       // *) stat info: connections, records count (used/expired/total), opened pages
+      // *) (+) calc amount of space left on dev/shm
       // *) (+) OW filter
       // *) (+) rewrite sym waiting func
     }  // -------------------  'GET' END ----------------------
