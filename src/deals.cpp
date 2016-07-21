@@ -101,6 +101,24 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       continue;
     }
 
+    // roundtrips
+    // --------------------------------
+    if (filter_flight_by_roundtrip) {
+      if (roundtrip_flight_flag == true) {
+        if (deal.return_date == 0) {
+          // std::cout << "filter_flight_by_roundtrip (this is ow)" << roundtrip_flight_flag << " "
+          // << deal.return_date << std::endl;
+          continue;
+        }
+      } else {
+        if (deal.return_date != 0) {
+          // std::cout << "filter_flight_by_roundtrip (this is rt)" << roundtrip_flight_flag << " "
+          // << deal.return_date << std::endl;
+          continue;
+        }
+      }
+    }
+
     // if destanations are provided let's look only for this destinations
     // --------------------------------
     if (filter_destination) {
@@ -154,24 +172,6 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
       if (direct_flights_flag != deal.flags.direct) {
         // std::cout << "filter_flight_by_stops" << std::endl;
         continue;
-      }
-    }
-
-    // roundtrips
-    // --------------------------------
-    if (filter_flight_by_roundtrip) {
-      if (roundtrip_flight_flag == true) {
-        if (deal.return_date == 0) {
-          // std::cout << "filter_flight_by_roundtrip (this is ow)" << roundtrip_flight_flag << " "
-          // << deal.return_date << std::endl;
-          continue;
-        }
-      } else {
-        if (deal.return_date != 0) {
-          // std::cout << "filter_flight_by_roundtrip (this is rt)" << roundtrip_flight_flag << " "
-          // << deal.return_date << std::endl;
-          continue;
-        }
       }
     }
 
