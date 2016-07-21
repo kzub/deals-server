@@ -11,7 +11,7 @@
 
 namespace locks {
 
-// #define WAIT_INFINITY_TIME TRUE //BUS ERROR?
+#define WAIT_INFINITY_TIME TRUE
 #define SLEEP_BETWEEN_TRIES_USEC 10
 #define WAIT_FOR_LOCK_MSEC 5000
 

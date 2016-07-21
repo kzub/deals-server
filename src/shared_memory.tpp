@@ -388,7 +388,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   if (idx > 0 && last_data_idx < --idx) {
     for (; last_data_idx < idx; idx--) {
       TablePageIndexElement& index_record = table_index->shared_elements[idx];
-      std::cout << "try to CLEAR page memory:" << index_record.page_name << std::endl;
+      // std::cout << "try to CLEAR page memory:" << index_record.page_name << std::endl;
       SharedMemoryPage<ELEMENT_T>* page = getPageByName(index_record.page_name);
 
       if (page == nullptr) {

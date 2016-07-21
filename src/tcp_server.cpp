@@ -47,6 +47,7 @@ void TCPConnection::network_read() {
   int count;
   ioctl(sockfd, FIONREAD, &count);
   if (count == 0) {
+    // TODO: understand why it may happend
     close();  // close connection
     return;
   }
@@ -96,7 +97,6 @@ void TCPConnection::network_write() {
     // std::string new_data = data_out.substr(NET_MAX_PACKET_SIZE);
     // data_out.swap(new_data);
     data_out = data_out.substr(NET_MAX_PACKET_SIZE);
-    ;
   } else {
     // we are finished with transmitting response
     // dont closing connection here cause it could be a dialog...
