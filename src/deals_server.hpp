@@ -17,6 +17,8 @@ class DealsServer : public srv::TCPServer<Context> {
  public:
   DealsServer(uint16_t port) : srv::TCPServer<Context>(port) {
   }
+  void process();
+  void quit();
 
  private:
   void on_connect(Connection& conn);
@@ -28,6 +30,8 @@ class DealsServer : public srv::TCPServer<Context> {
 
   deals::DealsDatabase db;
   top::TopDstDatabase db_dst;
+
+  bool quit_request = false;
 };
 }
 

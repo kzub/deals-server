@@ -1,7 +1,8 @@
-#include "deals_server.hpp"
+#include <csignal>
 #include <fstream>
 
 #include "deals.hpp"
+#include "deals_server.hpp"
 #include "http.hpp"
 #include "locks.hpp"
 #include "timing.hpp"
@@ -16,9 +17,52 @@ void DealsServer::on_connect(Connection &conn) {
 }
 
 /* --------------------------------------------------------
+* DealsServer quit request inside application
+*----------------------------------------------------------*/
+void DealsServer::quit() {
+  std::cout << "WARNING DealsServer::quit()" << std::endl;
+  quit_request = true;
+}
+
+// ----------------------------------------------------------
+bool gotQuitSignal = false;
+void signalHandler(int signal) {
+  gotQuitSignal = true;
+  std::cout << "GOT signal:" << signal << std::endl;
+}
+
+/* --------------------------------------------------------
+* DealsServer process in child class
+*----------------------------------------------------------*/
+void DealsServer::process() {
+  uint16_t connections = srv::TCPServer<Context>::process();
+
+  // quit after all connections are closed
+  if (gotQuitSignal) {
+    gotQuitSignal = false;
+    quit();
+  }
+
+  if (quit_request) {
+    std::cout << "Waiting for connections... " << connections << std::endl;
+    if (connections == 0) {
+      std::cout << "No active connections -> quit!" << std::endl;
+      exit(0);
+    }
+  }
+}
+
+/* --------------------------------------------------------
 * DealsServer on data
 *----------------------------------------------------------*/
 void DealsServer::on_data(Connection &conn) {
+  // gracefull restart
+  if (quit_request) {
+    http::HttpResponse response(503, "Service unavailable", "Service unavailable\n");
+    conn.close(response);
+    return;
+  }
+
   conn.context.http.write(conn.get_data());
 
   if (!conn.context.http.is_request_complete()) {
@@ -67,8 +111,9 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       if (conn.context.http.request.query.path == "/quit") {
-        std::cerr << "ERROR got request to quit" << std::endl;
-        exit(-1);
+        quit();
+        http::HttpResponse response(200, "OK", "quiting...\n");
+        conn.close(response);
         return;
       }
 
@@ -536,7 +581,7 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
 
 }  // namespace deals_srv
 
-// ----------------------------------------------------------
+// ------------------------------------------------
 int main(int argc, char *argv[]) {
   if (argc > 1 && std::string(argv[1]) == "test") {
     std::cout << "running autotests..." << std::endl;
@@ -562,8 +607,10 @@ int main(int argc, char *argv[]) {
     return -1;
   }
 
-  uint16_t port = std::stol(argv[1]);
+  std::signal(SIGINT, deals_srv::signalHandler);
+  std::signal(SIGTERM, deals_srv::signalHandler);
 
+  uint16_t port = std::stol(argv[1]);
   deals_srv::DealsServer srv(port);
 
   while (1) {

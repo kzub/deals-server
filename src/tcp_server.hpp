@@ -87,6 +87,8 @@ class TCPConnection {
   bool connection_alive;
 };
 
+template <typename Context>
+class TCPServer;
 /*----------------------------------------------------------------------
 * TCPServer
 *----------------------------------------------------------------------*/
@@ -103,8 +105,10 @@ class TCPServer {
   TCPServer(const uint16_t port);
 
  public:
-  void process();
+  uint16_t process();  // return number of active connections
   std::string get_server_address();
+  std::list<Connection*> get_alive_connections();
+
   virtual void on_data(Connection& conn) = 0;
   virtual void on_connect(Connection& conn) = 0;
 
@@ -180,40 +184,42 @@ void TCPServer<Context>::accept_new_connection() {
 * TCPServer process tick
 *----------------------------------------------------------------------*/
 template <typename Context>
-void TCPServer<Context>::process() {
-  uint32_t current_time = timing::getTimestampSec();
-
-  // ------------------------------------------------------
-  // remove all destroyed handlers from polling cycle
+std::list<typename TCPServer<Context>::Connection*> TCPServer<Context>::get_alive_connections() {
   std::list<Connection*> alive_connections;
 
-  for (auto conn : connections) {
+  for (auto& conn : connections) {
     if (!conn->is_alive()) {
       delete conn;
     } else {
       alive_connections.push_back(conn);
     }
   }
-  // update live connections list
-  connections = alive_connections;
+
+  return alive_connections;
+}
+
+/*----------------------------------------------------------------------
+* TCPServer process tick
+*----------------------------------------------------------------------*/
+template <typename Context>
+uint16_t TCPServer<Context>::process() {
+  uint32_t current_time = timing::getTimestampSec();
 
   // ------------------------------------------------------
   // setup descriptors we will be looking for
   nfds_t nfds = connections.size() + 1;
   pollfd pfd[nfds];
+  pollfd* pfd_main_socket = &pfd[0];
   Connection* p_connections[nfds];  // pointer for fast access
 
   // listening for incoming connection socket
-  pfd[0].fd = srv_sockfd;
-  pfd[0].events = POLLIN;
+  pfd_main_socket->fd = srv_sockfd;
+  pfd_main_socket->events = POLLIN;
 
   // and all reading/writing sockets
   int i = 1;
 
-  // for (typename std::list<Connection *>::iterator conn_it = connections.begin();
-  //      conn_it != connections.end(); ++conn_it, ++i) {
-  //   Connection* conn = *conn_it;
-  for (auto conn : connections) {
+  for (auto& conn : connections) {
     p_connections[i] = conn;
 
     pfd[i].fd = conn->get_socket();
@@ -229,7 +235,6 @@ void TCPServer<Context>::process() {
     }
     i++;
   }
-  // std::cout << "connections length:" << i << std::endl;
 
   // ------------------------------------------------------
   // wait for incoming event
@@ -237,13 +242,15 @@ void TCPServer<Context>::process() {
   // std::cout << "poll res:" << retval << std::endl;
 
   if (retval == -1) {
-    std::cout << "poll() error";
-    return;
+    if (errno != EINTR) {  // if not a signal
+      std::cout << "poll() error retval == -1, errno:" << errno << std::endl;
+    }
+    return connections.size();
   }
 
   if (retval == 0) {
     // std::cout << "No data within (n) seconds. length:" << connections.size() << std::endl;
-    return;
+    return connections.size();
   }
 
   // ------------------------------------------------------
@@ -271,9 +278,17 @@ void TCPServer<Context>::process() {
   // if there are new connections -> accept them
   // do it after read/write processing because
   // accept new connection will add nec connection to the std::list<Connection>
-  if (pfd[0].revents & POLLIN) {
+  if (pfd_main_socket->revents & POLLIN) {
     accept_new_connection();
   }
+
+  // ------------------------------------------------------
+  // remove all destroyed handlers from polling cycle
+  // should be done after processing
+  // update live connections list
+  connections = std::move(get_alive_connections());
+
+  return connections.size();
 }
 
 /*----------------------------------------------------------------------
