@@ -107,6 +107,14 @@ class DealsDatabase {
       uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec,
       ::utils::Threelean roundtrip_flights);
 
+  std::vector<DealInfo> searchForCheapest2DayByDay(
+      std::string origin, std::string destinations, std::string departure_date_from,
+      std::string departure_date_to, std::string departure_days_of_week,
+      std::string return_date_from, std::string return_date_to, std::string return_days_of_week,
+      uint16_t stay_from, uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from,
+      uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec,
+      ::utils::Threelean roundtrip_flights);
+
   void truncate();
 
  private:
@@ -208,13 +216,13 @@ class DealsCheapestDayByDay : public DealsSearchQuery {
 };
 
 //------------------------------------------------------------
-// DealsCheapestByDates
+// DealsCheapestByDatesSimple (Simple version of DealsCheapestByPeriod)
 //------------------------------------------------------------
-class DealsCheapestByDates : public DealsSearchQuery {
+class DealsCheapestByDatesSimple : public DealsSearchQuery {
  public:
-  DealsCheapestByDates(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
+  DealsCheapestByDatesSimple(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
   }
-  ~DealsCheapestByDates();
+  ~DealsCheapestByDatesSimple();
 
   // implement virtual functions:
   bool process_deal(const i::DealInfo& deal);
@@ -223,6 +231,36 @@ class DealsCheapestByDates : public DealsSearchQuery {
 
   std::map<uint32_t, i::DealInfo> grouped_destinations;
   std::vector<i::DealInfo> exec_result;
+};
+
+//------------------------------------------------------------
+// DealsCheapest2DayByDay
+//------------------------------------------------------------
+class DealsCheapest2DayByDay : public DealsSearchQuery {
+ public:
+  DealsCheapest2DayByDay(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
+  }
+  ~DealsCheapest2DayByDay();
+
+  // implement virtual functions:
+  bool process_deal(const i::DealInfo& deal);
+  void pre_search();
+  void post_search();
+
+  std::map<uint32_t, std::map<uint32_t, i::DealInfo>> grouped_destinations_and_dates;
+
+  // arrays of by date results:
+  uint16_t deals_slots_used;
+  uint16_t deals_slots_available;
+  // uint16_t max_price_deal;
+
+  // std::vector<std::vector<i::DealInfo>> exec_result;
+  std::vector<i::DealInfo> exec_result;
+  i::DealInfo* result_deals = nullptr;  // size = filter_limit
+  // this pointer used at search for speed optimization
+  // for iterating throught simple values array but not vectors.
+  // at exec() function there be local arrays this pointers
+  // will point to
 };
 
 }  // namespace deals
