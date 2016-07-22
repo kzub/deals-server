@@ -13,15 +13,6 @@ namespace deals {
 //                   Deals search base class
 //      ***************************************************
 
-//-------------------------------------------------------
-// DealsSearchQuery destructor
-//-------------------------------------------------------
-DealsSearchQuery::~DealsSearchQuery() {
-  if (destination_values != nullptr) {
-    delete destination_values;
-  }
-}
-
 /* ----------------------------------------------------------
 **  execute search process
 ** ----------------------------------------------------------*/
@@ -29,31 +20,16 @@ void DealsSearchQuery::execute() {
   // if there was bad parameters -> no processing required
   if (query_is_broken) {
     std::cout << "ERROR: query has inconsistent parameters" << std::endl;
+    throw "something wrong with request parameters";
     return;
   }
 
   // define destinations count we will look for
   // -------------------------------------------
   if (filter_destination) {
-    destination_values_size = destination_values_vector.size();
+    result_destinations_count = destination_values_set.size();
   } else {
-    destination_values_size = filter_limit;
-  }
-
-  // release mem if multiple execute() called per instance
-  // --------------------------------------------
-  if (destination_values != nullptr) {
-    delete destination_values;
-  }
-  destination_values = new uint32_t[destination_values_size];
-
-  // fill destination array
-  // -------------------------------------------
-  if (filter_destination) {
-    uint16_t counter = 0;
-    for (auto &dst : destination_values_vector) {
-      destination_values[counter++] = dst;
-    }
+    result_destinations_count = filter_limit;
   }
 
   // run presearch in child class context
@@ -72,14 +48,9 @@ void DealsSearchQuery::execute() {
 // for iterating over all not expired pages in table
 //----------------------------------------------------------------
 bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
-  if (size == 0) {
-    std::cout << "ERROR DealsSearchQuery::process_function size == 0" << std::endl;
-    return false;
-  }
-
+  // skip whole page if expired
   if (filter_timestamp) {
     const i::DealInfo &lastdeal = elements[size - 1];
-
     if (timestamp_value > lastdeal.timestamp) {
       // std::cout << "whole page is expired" << std::endl;
       return true;
@@ -122,16 +93,9 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     // if destanations are provided let's look only for this destinations
     // --------------------------------
     if (filter_destination) {
-      bool condition_matched = false;
-      for (uint16_t dst_idx = 0; dst_idx < destination_values_size; ++dst_idx) {
-        if (destination_values[dst_idx] == deal.destination) {
-          condition_matched = true;
-          break;
-        }
-      }
-
-      if (!condition_matched) {
-        // std::cout << "filter_destination !condition_matched" << std::endl;
+      auto search = destination_values_set.find(deal.destination);
+      if (search == destination_values_set.end()) {
+        // std::cout << "filter_destination not found" << std::endl;
         continue;
       }
     }
@@ -151,8 +115,7 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     if (filter_return_date) {
       if (deal.return_date < return_date_values.from || deal.return_date > return_date_values.to) {
         // std::cout << "filter_return_date" << return_date_values.from << " " <<
-        // return_date_values.to
-        //           << std::endl;
+        // return_date_values.to << std::endl;
         continue;
       }
     }
@@ -178,12 +141,8 @@ bool DealsSearchQuery::process_function(i::DealInfo *elements, uint32_t size) {
     // filter deal price
     // ----------------------------------------
     if (filter_price) {
-      if (deal.price < price_from_value) {
-        // std::cout << "filter_price_from:" << deal.price << std::endl;
-        continue;
-      }
-      if (deal.price > price_to_value) {
-        // std::cout << "filter_price_to:" << deal.price << std::endl;
+      if (deal.price < price_from_value || deal.price > price_to_value) {
+        // std::cout << "filter by price:" << deal.price << std::endl;
         continue;
       }
     }
@@ -333,7 +292,7 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
 std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInfo> i_deals) {
   // internal <i::DealInfo> contain shared memory page name and
   // information offsets. It's not useful anywhere outside
-  // so lets transform internal format to external <DealInfo>
+  // let's transform internal format to external <DealInfo>
   std::vector<DealInfo> result;
 
   for (auto &deal : i_deals) {
@@ -354,320 +313,13 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
 }
 
 //      ***************************************************
-//                   CHEAPEST BY PERIOD
-//      ***************************************************
-
-/*---------------------------------------------------------
-* DealsDatabase  searchForCheapestEver
-*---------------------------------------------------------*/
-std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
-    std::string origin, std::string destinations, std::string departure_date_from,
-    std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
-    std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from, uint32_t price_to,
-    uint16_t limit, uint32_t max_lifetime_sec, ::utils::Threelean roundtrip_flights)
-
-{
-  DealsCheapestByPeriod query(*db_index);  // <- table processed by search class
-
-  // short for of applying all filters
-  query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
-                      departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
-                      stay_from, stay_to, direct_flights, price_from, price_to, limit,
-                      max_lifetime_sec, roundtrip_flights);
-
-  query.execute();
-
-  // sort by price DESC if result greater than limit
-  if (limit > 0 && limit < query.exec_result.size()) {
-    std::sort(query.exec_result.begin(), query.exec_result.end(),
-              [](const i::DealInfo &a, const i::DealInfo &b) { return a.price < b.price; });
-    query.exec_result.resize(limit);
-  }
-
-  // load deals data from data pages (DealData shared memory pagers)
-  std::vector<DealInfo> result = fill_deals_with_data(query.exec_result);
-
-  return result;
-}
-
-//----------------------------------------------------------------
-// DealsCheapestByPeriod PRESEARCH
-//----------------------------------------------------------------
-void DealsCheapestByPeriod::pre_search() {
-  // free if was allocated before
-  if (result_deals != nullptr) {
-    delete result_deals;
-  }
-  // allocare space for result
-  result_deals = new i::DealInfo[destination_values_size];
-  // init first element
-  max_price_deal = 0;
-  deals_slots_used = 0;
-  result_deals[0].price = 0;
-}
-
-//---------------------------------------------------------
-// Process selected deal and decide go next or stop here
-//---------------------------------------------------------
-bool DealsCheapestByPeriod::process_deal(const i::DealInfo &deal) {
-  // ----------------------------------
-  // try to find deal by destination in result array
-  // ----------------------------------
-  for (uint16_t fidx = 0; fidx < deals_slots_used; ++fidx) {
-    i::DealInfo &result_deal = result_deals[fidx];
-
-    if (deal.destination != result_deal.destination) {
-      continue;
-    }
-
-    // we already have this destination, let's check for price
-    if (deal.price < result_deal.price) {
-      bool overriden = result_deal.flags.overriden;
-      deals::utils::copy(result_deal, deal);
-      result_deal.flags.overriden = overriden;
-      // evaluate it here but not every compare itearation
-      max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
-    }
-    // if  not cheaper but same dates, replace with
-    // newer results
-    else if (deal.departure_date == result_deal.departure_date &&
-             deal.return_date == result_deal.return_date) {
-      deals::utils::copy(result_deal, deal);
-      result_deal.flags.overriden = true;
-      // evaluate it here but not every compare itearation
-      max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
-    }
-
-    // we was found destination, so goto the next deal element
-    return true;
-  }
-
-  // ----------------------------------
-  // no destinations are found in result
-  // if there are unUsed slots -> fill them
-  if (deals_slots_used < destination_values_size) {
-    // deals::utils::print(deal);
-    deals::utils::copy(result_deals[deals_slots_used], deal);
-    deals_slots_used++;
-    // evaluate it here but not every compare itearation
-    max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
-    return true;
-  }
-
-  if (filter_destination) {
-    // not possible situation
-    std::cout << "filter destination exist but not found and all slots are used. but how?"
-              << std::endl;
-    throw "DealsCheapestByPeriod::process_deal.deals_slots_used.full";
-  }
-
-  // ----------------------------------
-  // if all slots are used, but current deals
-  // is cheaper than deals in result -> let replace most expensive with new
-  // one (new destiantion is not in result_deals)
-  if (deal.price < result_deals[max_price_deal].price) {
-    deals::utils::copy(result_deals[max_price_deal], deal);
-    // evaluate it here but not every compare itearation
-    max_price_deal = deals::utils::get_max_price_in_array(result_deals, deals_slots_used);
-    return true;
-  }
-
-  // result_deals are full by "limit"
-  // and current deal price is more than any price in result vector
-  // (result_deals)
-  // so just skip it
-  return true;
-}
-
-//----------------------------------------------------------------
-// DealsCheapestByPeriod POSTSEARCH
-//----------------------------------------------------------------
-void DealsCheapestByPeriod::post_search() {
-  // process results
-  for (int i = 0; i < deals_slots_used; ++i) {
-    exec_result.push_back(result_deals[i]);
-  }
-}
-
-//----------------------------------------------------------------
-// DealsCheapestByPeriod destructor
-//----------------------------------------------------------------
-DealsCheapestByPeriod::~DealsCheapestByPeriod() {
-  if (result_deals != nullptr) {
-    delete result_deals;
-  }
-}
-
-//      ***************************************************
-//                   CHEAPEST DAY BY DAY
-//      ***************************************************
-
-/*---------------------------------------------------------
-* DealsDatabase  searchForCheapestDayByDay
-*---------------------------------------------------------*/
-std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
-    std::string origin, std::string destinations, std::string departure_date_from,
-    std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
-    std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
-    uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from, uint32_t price_to,
-    uint16_t limit, uint32_t max_lifetime_sec, ::utils::Threelean roundtrip_flights) {
-  //
-  DealsCheapestDayByDay query(*db_index);
-
-  query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
-                      departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
-                      stay_from, stay_to, direct_flights, price_from, price_to, limit,
-                      max_lifetime_sec, roundtrip_flights);
-
-  query.execute();
-
-  std::vector<DealInfo> result = fill_deals_with_data(query.exec_result);
-
-  std::sort(result.begin(), result.end(), [](const DealInfo &a, const DealInfo &b) {
-    return a.departure_date < b.departure_date;
-  });
-
-  // for (auto& deal : result) {
-  //   deals::utils::print(deal);
-  // }
-
-  return result;
-}
-
-//----------------------------------------------------------------
-// DealsCheapestDayByDay PRESEARCH
-//----------------------------------------------------------------
-void DealsCheapestDayByDay::pre_search() {
-  // init values
-  if (!filter_departure_date || !departure_date_values.duration) {
-    std::cout << "ERROR no departure_date range" << std::endl;
-    throw "zero interval. departure date interval must be specified";
-  }
-
-  deals_slots_available = destination_values_size * departure_date_values.duration;
-
-  if (deals_slots_available > 1000) {
-    std::cout << "ERROR deals_slots_available > 1000" << std::endl;
-    throw "too much deals count requested, reduce";
-  }
-  // std::cout << "destination_values_size:" << destination_values_size << std::endl;
-  // std::cout << "departure_date_values.duration:" << departure_date_values.duration << std::endl;
-  // std::cout << "deals_slots_available:" << deals_slots_available << std::endl;
-
-  if (result_deals != nullptr) {
-    delete result_deals;
-  }
-  result_deals = new i::DealInfo[deals_slots_available];
-  deals_slots_used = 0;
-}
-
-//---------------------------------------------------------
-// Process selected deal and decide go next or stop here
-//---------------------------------------------------------
-bool DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
-  // ----------------------------------
-  // try to find deal by date and destination in result array
-  // ----------------------------------
-  uint16_t deals_with_current_date_count = 0;
-  i::DealInfo *deals_with_current_date[destination_values_size];
-
-  for (uint16_t fidx = 0; fidx < deals_slots_used; ++fidx) {
-    i::DealInfo &result_deal = result_deals[fidx];
-
-    if (deal.departure_date != result_deal.departure_date) {
-      continue;
-    }
-
-    if (deals_with_current_date_count < destination_values_size) {
-      // save pointer to deals with departure_date equal to processed one
-      deals_with_current_date[deals_with_current_date_count++] = &result_deal;
-    }
-
-    if (deal.destination != result_deal.destination) {
-      // below we check only date+destination already have been in top
-      // so if it's new -> skip it
-      continue;
-    }
-
-    // we already have this destination, let's check for price
-    if (deal.price < result_deal.price) {
-      bool overriden = result_deal.flags.overriden;
-      deals::utils::copy(result_deal, deal);
-      result_deal.flags.overriden = overriden;
-    }
-    // if price not cheaper but same dates, replace with
-    // newer results
-    else if (deal.departure_date == result_deal.departure_date &&
-             deal.return_date == result_deal.return_date) {
-      deals::utils::copy(result_deal, deal);
-      result_deal.flags.overriden = true;
-    }
-
-    // we was found destination, so goto the next deal element
-    return true;
-  }
-
-  if (deals_with_current_date_count >= destination_values_size) {
-    // limit reached for this date. need to replace something
-    uint16_t idx_max = deals::utils::get_max_price_in_pointers_array(deals_with_current_date,
-                                                                     deals_with_current_date_count);
-    if (deal.price < deals_with_current_date[idx_max]->price) {
-      deals::utils::copy(*deals_with_current_date[idx_max], deal);
-    }
-    return true;
-  }
-
-  // ----------------------------------
-  // no destinations are found in result
-  // if there are unUsed slots -> fill them
-  if (deals_slots_used < deals_slots_available) {
-    // deals::utils::print(deal);
-    deals::utils::copy(result_deals[deals_slots_used], deal);
-    deals_slots_used++;
-    return true;
-  }
-
-  std::cout << "\ndeals_slots_used:" << deals_slots_used
-            << " deals_slots_available:" << deals_slots_available
-            << " deals_with_current_date_count:" << deals_with_current_date_count
-            << " destination_values_size:" << destination_values_size
-            << " departure_date_values.duration:" << departure_date_values.duration
-            << " ERROR very strange place. there will be exacly days*destinations deals,"
-            << " no more. but it seems we found something extra?" << std::endl;
-
-  return true;
-}
-
-//----------------------------------------------------------------
-// DealsCheapestDayByDay POSTSEARCH
-//----------------------------------------------------------------
-void DealsCheapestDayByDay::post_search() {
-  // process results
-  for (int i = 0; i < deals_slots_used; ++i) {
-    if (result_deals[i].price > 0) {
-      exec_result.push_back(result_deals[i]);
-    }
-  }
-}
-
-//----------------------------------------------------------------
-// DealsCheapestDayByDay destructor
-//----------------------------------------------------------------
-DealsCheapestDayByDay::~DealsCheapestDayByDay() {
-  if (result_deals != nullptr) {
-    delete result_deals;
-  }
-}
-
-//      ***************************************************
 //          CHEAPEST BY DATES (simple std::map version)
 //      ***************************************************
 
 /*---------------------------------------------------------
-* DealsDatabase  searchForCheapestEver
+* DealsDatabase  searchForCheapest
 *---------------------------------------------------------*/
-std::vector<DealInfo> DealsDatabase::searchForCheapest2(
+std::vector<DealInfo> DealsDatabase::searchForCheapest(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
@@ -728,15 +380,9 @@ void DealsCheapestByDatesSimple::post_search() {
   std::sort(exec_result.begin(), exec_result.end(),
             [](const i::DealInfo &a, const i::DealInfo &b) { return a.price < b.price; });
 
-  if (exec_result.size() > destination_values_size) {
-    exec_result.resize(destination_values_size);
+  if (exec_result.size() > result_destinations_count) {
+    exec_result.resize(result_destinations_count);
   }
-}
-
-//----------------------------------------------------------------
-// DealsCheapestByDatesSimple destructor
-//----------------------------------------------------------------
-DealsCheapestByDatesSimple::~DealsCheapestByDatesSimple() {
 }
 
 //      ***************************************************
@@ -744,16 +390,16 @@ DealsCheapestByDatesSimple::~DealsCheapestByDatesSimple() {
 //      ***************************************************
 
 /*---------------------------------------------------------
-* DealsDatabase  searchForCheapest2DayByDay
+* DealsDatabase  searchForCheapestDayByDay
 *---------------------------------------------------------*/
-std::vector<DealInfo> DealsDatabase::searchForCheapest2DayByDay(
+std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
     std::string origin, std::string destinations, std::string departure_date_from,
     std::string departure_date_to, std::string departure_days_of_week, std::string return_date_from,
     std::string return_date_to, std::string return_days_of_week, uint16_t stay_from,
     uint16_t stay_to, ::utils::Threelean direct_flights, uint32_t price_from, uint32_t price_to,
     uint16_t limit, uint32_t max_lifetime_sec, ::utils::Threelean roundtrip_flights) {
   //
-  DealsCheapest2DayByDay query(*db_index);
+  DealsCheapestDayByDay query(*db_index);
 
   query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
                       departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
@@ -763,30 +409,22 @@ std::vector<DealInfo> DealsDatabase::searchForCheapest2DayByDay(
   query.execute();
 
   std::vector<DealInfo> result = fill_deals_with_data(query.exec_result);
-
-  std::sort(result.begin(), result.end(), [](const DealInfo &a, const DealInfo &b) {
-    return a.departure_date < b.departure_date;
-  });
-
-  // for (auto& deal : result) {
-  //   deals::utils::print(deal);
-  // }
-
+  // for (auto& deal : result) { deals::utils::print(deal); }
   return result;
 }
 
 //----------------------------------------------------------------
-// DealsCheapest2DayByDay PRESEARCH
+// DealsCheapestDayByDay PRESEARCH
 //----------------------------------------------------------------
-void DealsCheapest2DayByDay::pre_search() {
+void DealsCheapestDayByDay::pre_search() {
   // init values
   if (!filter_departure_date || !departure_date_values.duration) {
     std::cout << "ERROR no departure_date range" << std::endl;
     throw "departure dates interval must be specified";
   }
 
-  if (destination_values_size * departure_date_values.duration > 1098) {
-    std::cout << "ERROR destination_values_size * departure_date_values.duration > 1098"
+  if (result_destinations_count * departure_date_values.duration > 1098) {
+    std::cout << "ERROR result_destinations_count * departure_date_values.duration > 1098"
               << std::endl;
     throw "too much deals count requested, reduce destinations or dates range";
   }
@@ -795,7 +433,7 @@ void DealsCheapest2DayByDay::pre_search() {
 //---------------------------------------------------------
 // Process selected deal and decide go next or stop here
 //---------------------------------------------------------
-bool DealsCheapest2DayByDay::process_deal(const i::DealInfo &deal) {
+bool DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
   auto &dst_dates = grouped_destinations_and_dates[deal.destination];
   auto &dst_deal = dst_dates[deal.departure_date];
 
@@ -813,10 +451,9 @@ bool DealsCheapest2DayByDay::process_deal(const i::DealInfo &deal) {
 }
 
 //----------------------------------------------------------------
-// DealsCheapest2DayByDay POSTSEARCH
+// DealsCheapestDayByDay POSTSEARCH
 //----------------------------------------------------------------
-void DealsCheapest2DayByDay::post_search() {
-  // process results
+void DealsCheapestDayByDay::post_search() {
   // process results
   for (auto &dates : grouped_destinations_and_dates) {
     for (auto &deal : dates.second) {
@@ -829,58 +466,10 @@ void DealsCheapest2DayByDay::post_search() {
   });
 }
 
-//----------------------------------------------------------------
-// DealsCheapest2DayByDay destructor
-//----------------------------------------------------------------
-DealsCheapest2DayByDay::~DealsCheapest2DayByDay() {
-}
-
 //***********************************************************
 //                   UTILS
 //***********************************************************
 namespace utils {
-
-void copy(i::DealInfo &dst, const i::DealInfo &src) {
-  memcpy(&dst, &src, sizeof(i::DealInfo));
-}
-
-uint16_t get_max_price_in_array(i::DealInfo *&dst, uint16_t size) {
-  // assert(size > 0);
-  uint16_t max = 0;
-  uint16_t pos = 0;
-
-  for (uint16_t i = 0; i < size; ++i) {
-    if (max < dst[i].price) {
-      max = dst[i].price;
-      pos = i;
-    }
-  }
-
-  if (max == 0) {
-    throw "get_max_price_in_array.max_not_found";
-  }
-
-  return pos;
-}
-
-uint16_t get_max_price_in_pointers_array(i::DealInfo *dst[], uint16_t size) {
-  uint16_t max = 0;
-  uint16_t pos = 0;
-
-  for (uint16_t i = 0; i < size; ++i) {
-    if (max < dst[i]->price) {
-      max = dst[i]->price;
-      pos = i;
-    }
-  }
-
-  if (max == 0) {
-    throw "get_max_price_in_pointers_array.max_not_found";
-  }
-
-  return pos;
-}
-
 void print(const i::DealInfo &deal) {
   std::cout << "i::DEAL: (" << query::int_to_date(deal.departure_date) << ")"
             << query::code_to_origin(deal.origin) << "-" << query::code_to_origin(deal.destination)
@@ -1014,9 +603,9 @@ void unit_test() {
   timer.tick("before test1");
   // 1st test ----------------------------
   // *********************************************************
-  std::vector<DealInfo> result = db.searchForCheapestEver(
-      "MOW", "AAA,PAR,BER,MAD", "", "", "", "", "", "", 0, 0, ::utils::Threelean::Undefined, 0, 0,
-      0, 10, ::utils::Threelean::Undefined);
+  std::vector<DealInfo> result = db.searchForCheapest("MOW", "AAA,PAR,BER,MAD", "", "", "", "", "",
+                                                      "", 0, 0, ::utils::Threelean::Undefined, 0, 0,
+                                                      0, 10, ::utils::Threelean::Undefined);
   timer.tick("test1");
 
   for (auto &deal : result) {
@@ -1069,9 +658,9 @@ void unit_test() {
   timer.tick("before test2");
   // 2nd test -------------------------------
   // *********************************************************
-  result = db.searchForCheapestEver(
-      "MOW", "AAA,PAR,BER,MAD", "2016-06-01", "2016-06-23", "", "2016-06-10", "2016-06-22", "", 0,
-      0, ::utils::Threelean::Undefined, 0, 0, 0, 10, ::utils::Threelean::Undefined);
+  result = db.searchForCheapest("MOW", "AAA,PAR,BER,MAD", "2016-06-01", "2016-06-23", "",
+                                "2016-06-10", "2016-06-22", "", 0, 0, ::utils::Threelean::Undefined,
+                                0, 0, 0, 10, ::utils::Threelean::Undefined);
 
   timer.tick("test2");
 
@@ -1131,9 +720,9 @@ void unit_test() {
   // 3rd test -------------------------------
   // *********************************************************
   timer.tick("before test3");
-  result = db.searchForCheapestEver("MOW", "", "", "", "fri,sat,sun", "", "", "sat,sun,mon", 4, 18,
-                                    ::utils::Threelean::False, 9100, 19200, 0, 2000,
-                                    ::utils::Threelean::Undefined);
+  result = db.searchForCheapest("MOW", "", "", "", "fri,sat,sun", "", "", "sat,sun,mon", 4, 18,
+                                ::utils::Threelean::False, 9100, 19200, 0, 2000,
+                                ::utils::Threelean::Undefined);
   timer.tick("test3");
   std::cout << "search 3 result size:" << result.size() << std::endl;
 

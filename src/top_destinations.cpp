@@ -97,10 +97,7 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
     top_destinations.resize(filter_limit);
   }
 
-  // for (auto dst : top_destinations) {
-  //   utils::print(dst);
-  // }
-
+  // for (auto dst : top_destinations) { utils::print(dst); }
   return top_destinations;
 }
 
@@ -145,10 +142,6 @@ bool TopDstSearchQuery::process_function(i::DstInfo* elements, uint32_t size) {
 }
 
 namespace utils {
-void copy(i::DstInfo& dst, const i::DstInfo& src) {
-  memcpy(&dst, &src, sizeof(i::DstInfo));
-}
-
 void print(const i::DstInfo& deal) {
   std::cout << "i::DEAL: " << query::code_to_locale(deal.locale) << " "
             << query::code_to_origin(deal.destination) << " "

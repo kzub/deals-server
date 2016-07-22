@@ -12,7 +12,9 @@ namespace shared_mem {
 bool checkSharedMemAvailability() {
   struct statvfs res;
   statvfs("/dev/shm/", &res);
-
+#ifdef __APPLE__
+  return true;
+#endif
   uint32_t freemem = (100 * res.f_bavail / res.f_blocks);
 
   if (freemem <= 3) {

@@ -31,7 +31,6 @@ struct DstInfo {
 };
 
 namespace utils {
-void copy(i::DstInfo& dst, const i::DstInfo& src);
 void print(const i::DstInfo& deal);
 void print(const DstInfo& deal);
 };

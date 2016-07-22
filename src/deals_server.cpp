@@ -373,29 +373,15 @@ void DealsServer::getTop(Connection &conn) {
   std::vector<deals::DealInfo> result;
 
   if (conn.context.http.request.query.params["day_by_day"] == "true") {
-    if (conn.context.http.request.query.params["v"] == "2") {
-      result = db.searchForCheapest2DayByDay(
-          origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-          return_date_to, rweekdays, stay_from, stay_to, direct_flights, price_from, price_to,
-          limit, max_lifetime_sec, roundtrip_flights);
-    } else {
-      result = db.searchForCheapestDayByDay(
-          origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-          return_date_to, rweekdays, stay_from, stay_to, direct_flights, price_from, price_to,
-          limit, max_lifetime_sec, roundtrip_flights);
-    }
+    result = db.searchForCheapestDayByDay(
+        origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
+        return_date_to, rweekdays, stay_from, stay_to, direct_flights, price_from, price_to, limit,
+        max_lifetime_sec, roundtrip_flights);
   } else {
-    if (conn.context.http.request.query.params["v"] == "2") {
-      result = db.searchForCheapest2(origin, destinations, departure_date_from, departure_date_to,
-                                     dweekdays, return_date_from, return_date_to, rweekdays,
-                                     stay_from, stay_to, direct_flights, price_from, price_to,
-                                     limit, max_lifetime_sec, roundtrip_flights);
-    } else {
-      result = db.searchForCheapestEver(
-          origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from,
-          return_date_to, rweekdays, stay_from, stay_to, direct_flights, price_from, price_to,
-          limit, max_lifetime_sec, roundtrip_flights);
-    }
+    result = db.searchForCheapest(origin, destinations, departure_date_from, departure_date_to,
+                                  dweekdays, return_date_from, return_date_to, rweekdays, stay_from,
+                                  stay_to, direct_flights, price_from, price_to, limit,
+                                  max_lifetime_sec, roundtrip_flights);
   }
 
   // No results

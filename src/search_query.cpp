@@ -17,11 +17,11 @@ void SearchQuery::destinations(std::string destinations) {
 
   for (auto& dst : split_result) {
     if (dst.length() == 3) {
-      destination_values_vector.push_back(origin_to_code(dst));
+      destination_values_set.insert(origin_to_code(dst));
     }
   }
 
-  if (destination_values_vector.size()) {
+  if (destination_values_set.size()) {
     filter_destination = true;
   }
 }
