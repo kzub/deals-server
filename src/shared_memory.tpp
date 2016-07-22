@@ -475,7 +475,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
   } else {
     if (!checkSharedMemAvailability()) {
       std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage LOW SHARED MEMORY" << std::endl;
-      shm_unlink(page_name.c_str());
+      // dont remove file!!! shm_unlink(page_name.c_str());
       close(fd);
       return;
     }
