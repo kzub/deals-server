@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <fcntl.h> /* For O_* constants */
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "shared_memory.hpp"
@@ -490,6 +492,18 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     std::cout << "CREATE:" << page_name << " size:" << page_memory_size << std::endl;
   }
 
+  // fd = fileno(f); //if you have a stream (e.g. from fopen), not a file descriptor.
+  struct stat buf;
+  fstat(fd, &buf);
+  int size = buf.st_size;
+
+  if (size != page_memory_size) {
+    std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage size != page_memory_size (" << page_name
+              << ") " << size << " != " << page_memory_size << std::endl;
+    shm_unlink(page_name.c_str());
+    close(fd);
+    return;
+  }
   // std::cout << "MAPPING:" << page_name << " size:" << page_memory_size << std::endl;
   void* map = mmap(nullptr, page_memory_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
