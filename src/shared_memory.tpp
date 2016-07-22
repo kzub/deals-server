@@ -483,7 +483,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     int res = ftruncate(fd, page_memory_size);
     if (res == -1) {
       std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage cant truncate:" << errno << " "
-                << page_name << std::endl;
+                << page_name << " REMOVING..." << std::endl;
       shm_unlink(page_name.c_str());
       close(fd);
       return;
@@ -499,7 +499,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
 
   if (size != page_memory_size) {
     std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage size != page_memory_size (" << page_name
-              << ") " << size << " != " << page_memory_size << std::endl;
+              << ") " << size << " != " << page_memory_size << " REMOVING..." << std::endl;
     shm_unlink(page_name.c_str());
     close(fd);
     return;
