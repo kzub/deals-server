@@ -488,6 +488,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     std::cout << "CREATE:" << page_name << " size:" << page_memory_size << std::endl;
   }
 
+  // std::cout << "MAPPING:" << page_name << " size:" << page_memory_size << std::endl;
   void* map = mmap(nullptr, page_memory_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
   // After a call to mmap(2) the file descriptor may be closed without affecting

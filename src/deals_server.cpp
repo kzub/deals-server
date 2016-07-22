@@ -142,6 +142,7 @@ void DealsServer::on_data(Connection &conn) {
       // *) increase expire time to 2 days. but search for deals just for 8 hours by default
       // *) logger with date/time
       // *) stat info: connections, records count (used/expired/total), opened pages
+      // *) nginx cache for requests
       // *) (+) stop accepting new connections and quit after all connections are served
       // *) (+) calc amount of space left on dev/shm
       // *) (+) OW filter
@@ -377,6 +378,12 @@ void DealsServer::getTop(Connection &conn) {
         return_date_to, rweekdays, stay_from, stay_to, direct_flights, price_from, price_to, limit,
         max_lifetime_sec, roundtrip_flights);
 
+  } else if (conn.context.http.request.query.params["v"] == "2") {
+    std::cout << "!!!!!!!!! v2 !!!!!!!!!!!!!" << std::endl;
+    result = db.searchForCheapest2(origin, destinations, departure_date_from, departure_date_to,
+                                   dweekdays, return_date_from, return_date_to, rweekdays,
+                                   stay_from, stay_to, direct_flights, price_from, price_to, limit,
+                                   max_lifetime_sec, roundtrip_flights);
   } else {
     result = db.searchForCheapestEver(origin, destinations, departure_date_from, departure_date_to,
                                       dweekdays, return_date_from, return_date_to, rweekdays,

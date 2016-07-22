@@ -15,7 +15,10 @@ bool checkSharedMemAvailability() {
 
   uint32_t freemem = (100 * res.f_bavail / res.f_blocks);
 
-  if (freemem <= 5) {
+  if (freemem <= 3) {
+    std::cout << "ERROR VERY LOW MEMORY:" << freemem << "%"
+              << " f_bavail:" << res.f_bavail << " f_blocks:" << res.f_blocks << std::endl;
+  } else if (freemem <= 5) {
     std::cout << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
   }
   std::cout << "MEMORY:" << freemem << "%" << std::endl;
