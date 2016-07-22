@@ -27,8 +27,27 @@ void DealsServer::quit() {
 // ----------------------------------------------------------
 bool gotQuitSignal = false;
 void signalHandler(int signal) {
+  std::string sig;
+  switch (signal) {
+    case SIGINT:
+      sig = "SIGINT";
+      break;
+    case SIGTERM:
+      sig = "SIGTERM";
+      break;
+    case SIGBUS:
+      sig = "SIGBUS";
+      break;
+    default:
+      sig = std::to_string(signal);
+      break;
+  }
+  std::cout << "GOT signal:" << sig << std::endl;
+  if (gotQuitSignal) {
+    std::cout << "SECOND TIME signal:" << sig << " exiting..." << std::endl;
+    exit(-1);
+  }
   gotQuitSignal = true;
-  std::cout << "GOT signal:" << signal << std::endl;
 }
 
 /* --------------------------------------------------------
@@ -118,16 +137,16 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       // TODO
-      // *) ? Deals By Aircompany
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
       // *) rewrite to std::map grouping (month calendar)
       // *) increase expire time to 2 days. but search for deals just for 8 hours by default
-      // *) stop accepting new connections and quit after all connections are served
       // *) logger with date/time
       // *) stat info: connections, records count (used/expired/total), opened pages
+      // *) (+) stop accepting new connections and quit after all connections are served
       // *) (+) calc amount of space left on dev/shm
       // *) (+) OW filter
       // *) (+) rewrite sym waiting func
+      // *) ? Deals By Aircompany
     }  // -------------------  'GET' END ----------------------
     else if (conn.context.http.request.method == "POST") {
       // -------------------  'POST' BEGIN ----------------------
@@ -609,6 +628,7 @@ int main(int argc, char *argv[]) {
 
   std::signal(SIGINT, deals_srv::signalHandler);
   std::signal(SIGTERM, deals_srv::signalHandler);
+  std::signal(SIGBUS, deals_srv::signalHandler);
 
   uint16_t port = std::stol(argv[1]);
   deals_srv::DealsServer srv(port);

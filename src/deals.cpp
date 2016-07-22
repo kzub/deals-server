@@ -368,8 +368,9 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
     uint16_t limit, uint32_t max_lifetime_sec, ::utils::Threelean roundtrip_flights)
 
 {
-  DealsCheapestByPeriod query(*db_index);
+  DealsCheapestByPeriod query(*db_index);  // <- table processed by search class
 
+  // short for of applying all filters
   query.apply_filters(origin, destinations, departure_date_from, departure_date_to,
                       departure_days_of_week, return_date_from, return_date_to, return_days_of_week,
                       stay_from, stay_to, direct_flights, price_from, price_to, limit,
@@ -377,12 +378,14 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
 
   query.execute();
 
+  // sort by price DESC if result greater than limit
   if (limit > 0 && limit < query.exec_result.size()) {
     std::sort(query.exec_result.begin(), query.exec_result.end(),
               [](const i::DealInfo &a, const i::DealInfo &b) { return a.price < b.price; });
     query.exec_result.resize(limit);
   }
 
+  // load deals data from data pages (DealData shared memory pagers)
   std::vector<DealInfo> result = fill_deals_with_data(query.exec_result);
 
   return result;
@@ -392,11 +395,13 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestEver(
 // DealsCheapestByPeriod PRESEARCH
 //----------------------------------------------------------------
 void DealsCheapestByPeriod::pre_search() {
-  // init values
+  // free if was allocated before
   if (result_deals != nullptr) {
     delete result_deals;
   }
+  // allocare space for result
   result_deals = new i::DealInfo[destination_values_size];
+  // init first element
   max_price_deal = 0;
   deals_slots_used = 0;
   result_deals[0].price = 0;
@@ -655,10 +660,9 @@ DealsCheapestDayByDay::~DealsCheapestDayByDay() {
   }
 }
 
-//      ***************************************************
+//***********************************************************
 //                   UTILS
-//      ***************************************************
-
+//***********************************************************
 namespace utils {
 
 void copy(i::DealInfo &dst, const i::DealInfo &src) {

@@ -33,7 +33,10 @@ Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
   }
 
   // open existed index or make new one
+  std::cout << "T::SharedMemoryPage::Enter " << table_name << std::endl;
   table_index = new SharedMemoryPage<TablePageIndexElement>(table_name, table_max_pages);
+  std::cout << "T::SharedMemoryPage::Exit " << table_name << std::endl;
+
   if (!table_index->isAllocated()) {
     std::cerr << "ERROR Table::Table CANNOT_ALLOCATE_TABLE_INDEX for: " << table_name
               << " pages:" << table_max_pages << std::endl;
@@ -329,7 +332,10 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
 
   // if not already open or created -> do it
   if (page == nullptr || !page->isAllocated()) {
+    // debugging
+    std::cout << "SharedMemoryPage::Enter " << page_to_look << std::endl;
     page = new SharedMemoryPage<ELEMENT_T>(page_to_look, max_elements_in_page);
+    std::cout << "SharedMemoryPage::Exit " << page_to_look << std::endl;
 
     if (!page->isAllocated()) {
       std::cerr << "ERROR SharedMemoryPage::getPageByName page not allocated" << std::endl;
@@ -445,6 +451,8 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
   }
 
   page_memory_size = sizeof(Page_information) + sizeof(ELEMENT_T) * elements;
+  uint32_t aligned_pages = page_memory_size / sysconf(_SC_PAGE_SIZE);
+  page_memory_size = (aligned_pages + 1) * sysconf(_SC_PAGE_SIZE);
 
   // try to create page
   bool new_memory_allocated = false;
