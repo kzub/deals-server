@@ -473,6 +473,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
   } else {
     if (!checkSharedMemAvailability()) {
       std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage LOW SHARED MEMORY" << std::endl;
+      shm_unlink(page_name.c_str());
       close(fd);
       return;
     }
@@ -481,6 +482,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     if (res == -1) {
       std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage cant truncate:" << errno << " "
                 << page_name << std::endl;
+      shm_unlink(page_name.c_str());
       close(fd);
       return;
     }

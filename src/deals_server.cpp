@@ -43,6 +43,11 @@ void signalHandler(int signal) {
       break;
   }
   std::cout << "GOT signal:" << sig << std::endl;
+
+  if (signal == SIGBUS) {
+    return;
+  }
+
   if (gotQuitSignal) {
     std::cout << "SECOND TIME signal:" << sig << " exiting..." << std::endl;
     exit(-1);
