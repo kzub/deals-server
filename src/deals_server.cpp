@@ -379,7 +379,6 @@ void DealsServer::getTop(Connection &conn) {
         max_lifetime_sec, roundtrip_flights);
 
   } else if (conn.context.http.request.query.params["v"] == "2") {
-    std::cout << "!!!!!!!!! v2 !!!!!!!!!!!!!" << std::endl;
     result = db.searchForCheapest2(origin, destinations, departure_date_from, departure_date_to,
                                    dweekdays, return_date_from, return_date_to, rweekdays,
                                    stay_from, stay_to, direct_flights, price_from, price_to, limit,
