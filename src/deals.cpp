@@ -661,7 +661,7 @@ DealsCheapestDayByDay::~DealsCheapestDayByDay() {
 }
 
 //      ***************************************************
-//                   CHEAPEST BY DATES
+//          CHEAPEST BY DATES (simple std::map version)
 //      ***************************************************
 
 /*---------------------------------------------------------
@@ -706,12 +706,12 @@ bool DealsCheapestByDates::process_deal(const i::DealInfo &deal) {
   if (dst_deal.price == 0 || dst_deal.price > deal.price) {
     dst_deal = deal;
   }
-  // if  not cheaper but same dates, replace with newer results
-  else if (deal.departure_date == dst_deal.departure_date &&
-           deal.return_date == dst_deal.return_date) {
-    dst_deal = deal;
-    dst_deal.flags.overriden = true;
-  }
+  // // if  not cheaper but same dates, replace with newer results
+  // else if (deal.departure_date == dst_deal.departure_date &&
+  //          deal.return_date == dst_deal.return_date) {
+  //   dst_deal = deal;
+  //   dst_deal.flags.overriden = true;
+  // }
 
   return true;
 }
