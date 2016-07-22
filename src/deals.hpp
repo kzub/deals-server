@@ -169,7 +169,7 @@ class DealsCheapestByPeriod : public DealsSearchQuery {
   void post_search();
 
   uint16_t deals_slots_used;
-  uint32_t max_price_deal;
+  uint16_t max_price_deal;
 
   std::vector<i::DealInfo> exec_result;
   i::DealInfo* result_deals = nullptr;  // size = filter_limit
@@ -220,9 +220,6 @@ class DealsCheapestByDates : public DealsSearchQuery {
   bool process_deal(const i::DealInfo& deal);
   void pre_search();
   void post_search();
-
-  uint32_t max_price_deal;
-  uint32_t deals_slots_used;
 
   std::map<uint32_t, i::DealInfo> grouped_destinations;
   std::vector<i::DealInfo> exec_result;

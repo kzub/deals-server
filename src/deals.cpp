@@ -695,51 +695,22 @@ std::vector<DealInfo> DealsDatabase::searchForCheapest2(
 // DealsCheapestByDates PRESEARCH
 //----------------------------------------------------------------
 void DealsCheapestByDates::pre_search() {
-  max_price_deal = 0;
-  deals_slots_used = 0;
 }
 
 //---------------------------------------------------------
 // Process selected deal and decide go next or stop here
 //---------------------------------------------------------
 bool DealsCheapestByDates::process_deal(const i::DealInfo &deal) {
-  // skip expensive offers without even comparasion
-  if (deals_slots_used > destination_values_size) {
-    if (deal.price > max_price_deal) {
-      return true;
-    }
-  }
-
   auto &dst_deal = grouped_destinations[deal.destination];
 
-  if (dst_deal.price == 0) {
-    // new element added
+  if (dst_deal.price == 0 || dst_deal.price > deal.price) {
     dst_deal = deal;
-    deals_slots_used++;
-  } else if (dst_deal.price > deal.price) {
-    // overwrite existing
-    dst_deal = deal;
-  } else if (deal.departure_date == dst_deal.departure_date &&
-             deal.return_date == dst_deal.return_date) {
-    // if  not cheaper but same dates, overwrite with newer results
+  }
+  // if  not cheaper but same dates, replace with newer results
+  else if (deal.departure_date == dst_deal.departure_date &&
+           deal.return_date == dst_deal.return_date) {
     dst_deal = deal;
     dst_deal.flags.overriden = true;
-  } else {
-    // not overwrited -> exit...
-    return true;
-  }
-
-  if (dst_deal.price > max_price_deal) {
-    // overwrited version is more extensive, just overwrite max value
-    max_price_deal = dst_deal.price;
-  } else {
-    // else find new max price from all values
-    max_price_deal = 0;
-    for (auto &d : grouped_destinations) {
-      if (d.second.price > max_price_deal) {
-        max_price_deal = d.second.price;
-      }
-    }
   }
 
   return true;
