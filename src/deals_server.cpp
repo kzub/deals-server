@@ -45,7 +45,7 @@ void signalHandler(int signal) {
   std::cout << "GOT signal:" << sig << std::endl;
   if (gotQuitSignal) {
     std::cout << "SECOND TIME signal:" << sig << " exiting..." << std::endl;
-    exit(-1);
+    std::exit(-1);
   }
   gotQuitSignal = true;
 }
@@ -66,7 +66,7 @@ void DealsServer::process() {
     std::cout << "Waiting for connections... " << connections << std::endl;
     if (connections == 0) {
       std::cout << "No active connections -> quit!" << std::endl;
-      exit(0);
+      std::exit(0);
     }
   }
 }

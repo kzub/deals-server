@@ -35,9 +35,7 @@ Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
   }
 
   // open existed index or make new one
-  std::cout << "T::SharedMemoryPage::Enter " << table_name << std::endl;
   table_index = new SharedMemoryPage<TablePageIndexElement>(table_name, table_max_pages);
-  std::cout << "T::SharedMemoryPage::Exit " << table_name << std::endl;
 
   if (!table_index->isAllocated()) {
     std::cerr << "ERROR Table::Table CANNOT_ALLOCATE_TABLE_INDEX for: " << table_name
@@ -334,10 +332,7 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
 
   // if not already open or created -> do it
   if (page == nullptr || !page->isAllocated()) {
-    // debugging
-    std::cout << "SharedMemoryPage::Enter " << page_to_look << std::endl;
     page = new SharedMemoryPage<ELEMENT_T>(page_to_look, max_elements_in_page);
-    std::cout << "SharedMemoryPage::Exit " << page_to_look << std::endl;
 
     if (!page->isAllocated()) {
       std::cerr << "ERROR SharedMemoryPage::getPageByName page not allocated" << std::endl;
@@ -452,12 +447,19 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     return;
   }
 
+  // two processes could try to open the same page in a same time
+  // first will create page, but not truncate yet, second will open it
+  // compare size and remove page because it has wrong(zero) size
+  locks::CriticalSection lock(page_name);
+  lock.enter();
+  //   ^^^^^ will auto exited on class destruction, if exited before lock.exit()
+
+  bool new_memory_allocated = false;
   page_memory_size = sizeof(Page_information) + sizeof(ELEMENT_T) * elements;
   uint32_t aligned_pages = page_memory_size / sysconf(_SC_PAGE_SIZE);
   page_memory_size = (aligned_pages + 1) * sysconf(_SC_PAGE_SIZE);
 
   // try to create page
-  bool new_memory_allocated = false;
   int fd = shm_open(page_name.c_str(), O_RDWR | O_CREAT | O_EXCL, (mode_t)0666);
   if (fd == -1) {
     // try to open if page already exists
@@ -492,7 +494,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     std::cout << "CREATE:" << page_name << " size:" << page_memory_size << std::endl;
   }
 
-  // fd = fileno(f); //if you have a stream (e.g. from fopen), not a file descriptor.
+  // read page size
   struct stat buf;
   fstat(fd, &buf);
   int size = buf.st_size;
@@ -504,18 +506,21 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
     close(fd);
     return;
   }
-  // std::cout << "MAPPING:" << page_name << " size:" << page_memory_size << std::endl;
+
+  // page well allocated, let other processes work with this page.
+  lock.exit();
+
+  // map page to process local memory
   void* map = mmap(nullptr, page_memory_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
   // After a call to mmap(2) the file descriptor may be closed without affecting
-  // the memory mapping.
-  // http://linux.die.net/man/3/shm_open
+  // the memory mapping. http://linux.die.net/man/3/shm_open
   close(fd);
 
   if (map == MAP_FAILED) {
     std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage MAP_FAILED:" << errno << " page_name("
               << page_name << ") size:" << page_memory_size << " REMOVING..." << std::endl;
-    shm_unlink(page_name.c_str());
+    // no shm_unlink(page_name.c_str());
     return;
   }
 
@@ -525,11 +530,9 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
 
   if (new_memory_allocated) {
     // cleanup info structure & first element
-    memset(shared_memory, 0, sizeof(Page_information) + sizeof(ELEMENT_T));
+    memset(shared_memory, 0, page_memory_size);
     shared_pageinfo->unlinked = false;
     shared_pageinfo->expiration_check = 0;
-    // std::cout << "MEMSET:" << page_name << " bytes:" << sizeof(Page_information) +
-    // sizeof(ELEMENT_T) << std::endl;
   }
   // std::cout << "MAKE PAGE: " << page_name <<  "(" << page_memory_size << ") " << std::endl;
 };

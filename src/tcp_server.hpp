@@ -132,7 +132,7 @@ TCPServer<Context>::TCPServer(const uint16_t port) {
 
   if (srv_sockfd == -1) {
     std::cout << "ERROR opening socket:" << errno << std::endl;
-    exit(-1);
+    std::exit(-1);
   }
 
   /* Initialize socket structure */
@@ -152,7 +152,7 @@ TCPServer<Context>::TCPServer(const uint16_t port) {
 
   if (res != 0) {
     std::cout << "ERROR on listening" << errno << std::endl;
-    exit(-1);
+    std::exit(-1);
   }
 
   std::cout << "listen on " << get_server_address() << " max_connections:" << ACCEPT_QUEUE_LENGTH

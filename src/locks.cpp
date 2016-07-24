@@ -19,7 +19,7 @@ CriticalSection::CriticalSection(std::string name)
   lock = sem_open(name.c_str(), O_RDWR | O_CREAT, (mode_t)0666, 1);
 
   if (lock == SEM_FAILED) {
-    std::cout << "error opening semaphore errorcode:" << errno << std::endl;
+    std::cout << "ERROR CriticalSection::CriticalSection sem_open() errno:" << errno << std::endl;
     return;
   }
 
@@ -31,7 +31,7 @@ CriticalSection::CriticalSection(std::string name)
 //-----------------------------------------------
 CriticalSection::~CriticalSection() {
   if (unlock_needed) {
-    std::cout << "ERR: auto unlocking CriticalSection:" << name << std::endl;
+    std::cout << "ERROR: CriticalSection::~CriticalSection auto unlocking:" << name << std::endl;
     semaphore_release(true);
   }
 
@@ -47,7 +47,8 @@ void CriticalSection::semaphore_accuire() {
 #ifdef WAIT_INFINITY_TIME
   int res = sem_wait(lock);
   if (res == -1) {
-    std::cout << "semaphore wait errorcode:" << errno << std::endl;
+    std::cout << "ERROR: CriticalSection::semaphore_accuire sem_wait() errno:" << errno
+              << std::endl;
     throw "cant unlock";
   }
   return;
@@ -59,7 +60,8 @@ void CriticalSection::semaphore_accuire() {
       wait_retries++;
 
       if (wait_retries * SLEEP_BETWEEN_TRIES_USEC / 1000 > WAIT_FOR_LOCK_MSEC) {
-        std::cout << "ERROR semaphore wait timeout errorcode:" << errno << std::endl;
+        std::cout << "ERROR: CriticalSection::semaphore_accuire sem_trywait() errno:" << errno
+                  << std::endl;
         throw "cant unlock";
       }
 
@@ -77,7 +79,7 @@ void CriticalSection::reset_not_for_production() {
     sem_post(lock);
   }
   sem_post(lock);
-  std::cout << "reset_not_for_production(" << name << ") done" << std::endl;
+  std::cout << "WARNING: reset_not_for_production use (" << name << ") done" << std::endl;
 }
 
 //-----------------------------------------------
@@ -86,7 +88,7 @@ void CriticalSection::reset_not_for_production() {
 void CriticalSection::semaphore_release(bool nothrow) {
   int res = sem_post(lock);
   if (res == -1) {
-    std::cout << "error post() semaphore errorcode:" << errno << std::endl;
+    std::cout << "ERROR CriticalSection::semaphore_release sem_post() errno:" << errno << std::endl;
     if (nothrow) {
       return;
     }
@@ -99,7 +101,7 @@ void CriticalSection::semaphore_release(bool nothrow) {
 //-----------------------------------------------
 void CriticalSection::check() {
   if (!initialized) {
-    std::cerr << "ERROR: CriticalSection::check not initialized" << std::endl;
+    std::cerr << "ERROR CriticalSection::check not initialized" << std::endl;
     throw "check(): uninitialized";
   }
 }
