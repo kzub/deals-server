@@ -368,7 +368,7 @@ bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
   }
   // if  not cheaper but same dates, replace with newer results
   else if (deal.departure_date == dst_deal.departure_date &&
-           deal.return_date == dst_deal.return_date) {
+           deal.return_date == dst_deal.return_date && deal.flags.direct == dst_deal.flags.direct) {
     // deals::utils::copy(dst_deal, deal);
     grouped_destinations[deal.destination] = deal;
     grouped_destinations[deal.destination].flags.overriden = true;
