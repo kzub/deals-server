@@ -376,11 +376,9 @@ bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
 // DealsCheapestByDatesSimple POSTSEARCH
 //----------------------------------------------------------------
 void DealsCheapestByDatesSimple::post_search() {
-  std::cout << "RESUTL:";
   // process results
   for (auto &v : grouped_destinations) {
     exec_result.push_back(v.second);
-    deals::utils::print(v.second);
   }
 
   std::sort(exec_result.begin(), exec_result.end(),
