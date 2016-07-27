@@ -354,26 +354,21 @@ void DealsCheapestByDatesSimple::pre_search() {
 //---------------------------------------------------------
 bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
   auto &dst_deal = grouped_destinations[deal.destination];
-  std::cout << "MAP size:" << grouped_destinations.size() << " destination:" << deal.destination
-            << std::endl;
-  deals::utils::print(dst_deal);
-
-  std::cout << "NEW " << deal.destination << std::endl;
-  deals::utils::print(deal);
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
-    grouped_destinations[deal.destination] = deal;
-    std::cout << "------- OVERWRITE BY CHEAPER" << std::endl;
-    // deals::utils::copy(dst_deal, deal);
+    std::cout << "-------COPY BY PRICE" << std::endl;
+    deals::utils::print(deal);
+    deals::utils::print(dst_deal);
+    dst_deal = deal;
   }
   // if  not cheaper but same dates, replace with newer results
   else if (deal.departure_date == dst_deal.departure_date &&
            deal.return_date == dst_deal.return_date && deal.flags.direct == dst_deal.flags.direct) {
-    // deals::utils::copy(dst_deal, deal);
-    grouped_destinations[deal.destination] = deal;
-    grouped_destinations[deal.destination].flags.overriden = true;
-    std::cout << "--------------- OVERWRITE BY EQ DATES" << std::endl;
-    // deals::utils::print(dst_deal);
+    std::cout << "------COPY BY DATE" << std::endl;
+    deals::utils::print(deal);
+    deals::utils::print(dst_deal);
+    dst_deal = deal;
+    dst_deal.flags.overriden = true;
   }
 
   return true;
@@ -451,12 +446,12 @@ bool DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
   auto &dst_deal = dst_dates[deal.departure_date];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
-    deals::utils::copy(dst_deal, deal);
+    dst_deal = deal;
   }
   // if  not cheaper but same dates, replace with newer results
   else if (deal.departure_date == dst_deal.departure_date &&
-           deal.return_date == dst_deal.return_date) {
-    deals::utils::copy(dst_deal, deal);
+           deal.return_date == dst_deal.return_date && deal.flags.direct == dst_deal.flags.direct) {
+    dst_deal = deal;
     dst_deal.flags.overriden = true;
   }
 
