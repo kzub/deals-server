@@ -353,24 +353,26 @@ void DealsCheapestByDatesSimple::pre_search() {
 // Process selected deal and decide go next or stop here
 //---------------------------------------------------------
 bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
-  std::cout << "MACH: ";
+  std::cout << "MATCH:";
   deals::utils::print(deal);
 
   auto &dst_deal = grouped_destinations[deal.destination];
+  std::cout << "MAP: " << grouped_destinations.size() << " " << deal.destination;
+  deals::utils::print(dst_deal);
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     grouped_destinations[deal.destination] = deal;
-    std::cout << "COPY----->";
-    deals::utils::print(dst_deal);
+    std::cout << "COPY TO MAP -------------^^^^ ";
     // deals::utils::copy(dst_deal, deal);
   }
   // if  not cheaper but same dates, replace with newer results
   else if (deal.departure_date == dst_deal.departure_date &&
            deal.return_date == dst_deal.return_date) {
-    deals::utils::copy(dst_deal, deal);
-    dst_deal.flags.overriden = true;
-    std::cout << "COPY----->";
-    deals::utils::print(dst_deal);
+    // deals::utils::copy(dst_deal, deal);
+    grouped_destinations[deal.destination] = deal;
+    grouped_destinations[deal.destination].flags.overriden = true;
+    std::cout << "COPY BY EQ DATES ---------------^^^^^^";
+    // deals::utils::print(dst_deal);
   }
 
   return true;
