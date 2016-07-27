@@ -482,8 +482,8 @@ void copy(i::DealInfo &dst, const i::DealInfo &src) {
 void print(const i::DealInfo &deal) {
   std::cout << "i::DEAL: (" << query::int_to_date(deal.departure_date) << ")"
             << query::code_to_origin(deal.origin) << "-" << query::code_to_origin(deal.destination)
-            << "(" << query::int_to_date(deal.return_date) << ") : " << deal.price << deal.page_name
-            << ":" << deal.index << std::endl;
+            << "(" << query::int_to_date(deal.return_date) << ") : " << deal.price << " "
+            << deal.page_name << ":" << deal.index << std::endl;
 }
 void print(const DealInfo &deal) {
   std::cout << "DEAL: (" << deal.departure_date << ")" << deal.origin << "-" << deal.destination
