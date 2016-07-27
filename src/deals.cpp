@@ -353,16 +353,17 @@ void DealsCheapestByDatesSimple::pre_search() {
 // Process selected deal and decide go next or stop here
 //---------------------------------------------------------
 bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
-  std::cout << "MATCH:";
-  deals::utils::print(deal);
-
   auto &dst_deal = grouped_destinations[deal.destination];
-  std::cout << "MAP: " << grouped_destinations.size() << " " << deal.destination;
+  std::cout << "MAP size:" << grouped_destinations.size() << " destination:" << deal.destination
+            << std::endl;
   deals::utils::print(dst_deal);
+
+  std::cout << "NEW " << deal.destination << std::endl;
+  deals::utils::print(deal);
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     grouped_destinations[deal.destination] = deal;
-    std::cout << "COPY TO MAP -------------^^^^ ";
+    std::cout << "------- OVERWRITE BY CHEAPER" << std::endl;
     // deals::utils::copy(dst_deal, deal);
   }
   // if  not cheaper but same dates, replace with newer results
@@ -371,7 +372,7 @@ bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
     // deals::utils::copy(dst_deal, deal);
     grouped_destinations[deal.destination] = deal;
     grouped_destinations[deal.destination].flags.overriden = true;
-    std::cout << "COPY BY EQ DATES ---------------^^^^^^";
+    std::cout << "--------------- OVERWRITE BY EQ DATES" << std::endl;
     // deals::utils::print(dst_deal);
   }
 
