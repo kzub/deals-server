@@ -356,17 +356,15 @@ bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
   auto &dst_deal = grouped_destinations[deal.destination];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
-    std::cout << "-------COPY BY PRICE" << std::endl;
-    deals::utils::print(deal);
-    deals::utils::print(dst_deal);
+    // std::cout << "-------COPY BY PRICE" << std::endl; deals::utils::print(deal);
+    // deals::utils::print(dst_deal);
     dst_deal = deal;
   }
   // if  not cheaper but same dates, replace with newer results
   else if (deal.departure_date == dst_deal.departure_date &&
            deal.return_date == dst_deal.return_date && deal.flags.direct == dst_deal.flags.direct) {
-    std::cout << "------COPY BY DATE" << std::endl;
-    deals::utils::print(deal);
-    deals::utils::print(dst_deal);
+    // std::cout << "------COPY BY DATE" << std::endl;  deals::utils::print(deal);
+    // deals::utils::print(dst_deal);
     dst_deal = deal;
     dst_deal.flags.overriden = true;
   }
