@@ -353,6 +353,9 @@ void DealsCheapestByDatesSimple::pre_search() {
 // Process selected deal and decide go next or stop here
 //---------------------------------------------------------
 bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
+  std::cout << "MACH: ";
+  deals::utils::print(deal);
+
   auto &dst_deal = grouped_destinations[deal.destination];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
@@ -372,9 +375,11 @@ bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
 // DealsCheapestByDatesSimple POSTSEARCH
 //----------------------------------------------------------------
 void DealsCheapestByDatesSimple::post_search() {
+  std::cout << "RESUTL:";
   // process results
   for (auto &v : grouped_destinations) {
     exec_result.push_back(v.second);
+    deals::utils::print(v.second);
   }
 
   std::sort(exec_result.begin(), exec_result.end(),
@@ -477,7 +482,8 @@ void copy(i::DealInfo &dst, const i::DealInfo &src) {
 void print(const i::DealInfo &deal) {
   std::cout << "i::DEAL: (" << query::int_to_date(deal.departure_date) << ")"
             << query::code_to_origin(deal.origin) << "-" << query::code_to_origin(deal.destination)
-            << "(" << query::int_to_date(deal.return_date) << ") : " << deal.price << std::endl;
+            << "(" << query::int_to_date(deal.return_date) << ") : " << deal.price << deal.page_name
+            << ":" << deal.index << std::endl;
 }
 void print(const DealInfo &deal) {
   std::cout << "DEAL: (" << deal.departure_date << ")" << deal.origin << "-" << deal.destination
