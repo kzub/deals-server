@@ -437,7 +437,8 @@ bool DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
   auto &dst_dates = grouped_destinations_and_dates[deal.destination];
   auto &dst_deal = dst_dates[deal.departure_date];
 
-  if (dst_deal.price == 0 || dst_deal.price > deal.price) {
+  /*                         |use last available variant|  */
+  if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     dst_deal = deal;
   }
   // if  not cheaper but same dates, replace with newer results
