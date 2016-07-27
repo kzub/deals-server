@@ -59,6 +59,7 @@ struct DealInfo {
 namespace utils {
 void print(const i::DealInfo& deal);
 void print(const DealInfo& deal);
+void copy(i::DealInfo& dst, const i::DealInfo& src);
 std::string sprint(const DealInfo& deal);
 };
 
