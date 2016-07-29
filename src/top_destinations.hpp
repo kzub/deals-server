@@ -2,10 +2,8 @@
 #define SRC_TOP_DST_HPP
 
 #include <map>
-#include "deals.hpp"
 #include "search_query.hpp"
 #include "shared_memory.hpp"
-#include "utils.hpp"
 
 namespace top {
 
@@ -23,7 +21,7 @@ struct DstInfo {
   uint32_t destination;
   uint32_t departure_date;
 };
-}
+}  // namespace i
 
 struct DstInfo {
   uint32_t destination;
@@ -33,8 +31,11 @@ struct DstInfo {
 namespace utils {
 void print(const i::DstInfo& deal);
 void print(const DstInfo& deal);
-};
+}  // namespace utils
 
+//-----------------------------------------------------------
+// TopDstDatabase
+//-----------------------------------------------------------
 class TopDstDatabase {
  public:
   TopDstDatabase();
@@ -44,7 +45,7 @@ class TopDstDatabase {
   std::vector<DstInfo> getLocaleTop(std::string locale, std::string departure_date_from,
                                     std::string departure_date_to, uint16_t limit);
 
-  void truncate();
+  void truncate();  // clear database
 
  private:
   shared_mem::Table<i::DstInfo>* db_index;
@@ -52,6 +53,9 @@ class TopDstDatabase {
   friend void unit_test();
 };
 
+//-----------------------------------------------------
+// TopDstSearchQuery
+//-----------------------------------------------------
 class TopDstSearchQuery : public shared_mem::TableProcessor<i::DstInfo>, public query::SearchQuery {
  public:
   TopDstSearchQuery(shared_mem::Table<i::DstInfo>& table) : table(table) {
@@ -60,8 +64,8 @@ class TopDstSearchQuery : public shared_mem::TableProcessor<i::DstInfo>, public 
  protected:
   std::vector<DstInfo> exec();
 
-  /* function that will be called by TableProcessor
-        *  for iterating over all not expired pages in table */
+  // function that will be called by TableProcessor
+  // for iterating over all not expired pages in table
   bool process_function(i::DstInfo* elements, uint32_t size);
 
   friend class TopDstDatabase;
@@ -70,6 +74,6 @@ class TopDstSearchQuery : public shared_mem::TableProcessor<i::DstInfo>, public 
   shared_mem::Table<i::DstInfo>& table;
   std::map<uint32_t, uint32_t> grouped_destinations;
 };
-}
+}  // namespace top
 
 #endif

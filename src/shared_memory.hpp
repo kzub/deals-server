@@ -44,6 +44,7 @@ class ElementPointer {
       : error(ErrorCode::NO_ERROR), page_name(page_name), index(index), size(size), table(table){};
 
   ELEMENT_T* get_data();
+  operator ELEMENT_T*();
 
   const ErrorCode error;
   const std::string page_name;

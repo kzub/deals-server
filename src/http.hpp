@@ -1,10 +1,8 @@
 #ifndef SRC_HTTP_PARSER_HPP
 #define SRC_HTTP_PARSER_HPP
 
-#include <cstring>
 #include <iostream>
 #include <vector>
-
 #include "utils.hpp"
 
 namespace http {
@@ -98,6 +96,6 @@ class HttpResponse {
 };
 
 void unit_test();
-}
+}  // namespace http
 
 #endif

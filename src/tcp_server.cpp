@@ -1,7 +1,7 @@
-#include "tcp_server.hpp"
 #include <arpa/inet.h>
-#include <strings.h>
 #include <sys/ioctl.h>
+
+#include "tcp_server.hpp"
 
 namespace srv {
 
@@ -10,8 +10,7 @@ namespace srv {
 *----------------------------------------------------------------------*/
 TCPConnection::TCPConnection(const int accept_sockfd)
     : created_time(timing::getTimestampSec()), connection_alive(false) {
-  // std::cout << "TCPConnection() accept_sockfd:" << accept_sockfd <<
-  // std::endl;
+  // std::cout << "TCPConnection() accept_sockfd:" << accept_sockfd << std::endl;
 
   clilen = sizeof(cli_addr);
   sockfd = accept(accept_sockfd, (struct sockaddr *)&cli_addr, &clilen);
@@ -34,10 +33,10 @@ TCPConnection::TCPConnection(const int accept_sockfd)
 * TCPConnection Destructor
 *----------------------------------------------------------------------*/
 TCPConnection::~TCPConnection() {
+  // std::cout << "close connection:" << sockfd << std::endl;
   if (sockfd != -1) {
     ::close(sockfd);
   }
-  // std::cout << "close connection:" << sockfd << std::endl;
 }
 
 /*----------------------------------------------------------------------
@@ -47,7 +46,7 @@ void TCPConnection::network_read() {
   int count;
   ioctl(sockfd, FIONREAD, &count);
   if (count == 0) {
-    // TODO: understand why it may happend
+    // TODO: understand why it may happend on peak load
     close();  // close connection
     return;
   }
@@ -59,7 +58,7 @@ void TCPConnection::network_read() {
     close();  // close connection
     return;
   }
-  // std::cout << "recv:" << res << std::endl;
+
   data_in = std::string(buf, res);
 }
 
@@ -79,9 +78,8 @@ void TCPConnection::network_write() {
     return;
   }
 
-#ifdef NET_MAX_PACKET_SIZE
-  // send data by chunks
-  // currently dont know which variant is better
+#ifdef NET_MAX_PACKET_SIZE  // send data by chunks
+  // currently i dont know which variant is better
   std::string chunk = data_out.substr(0, NET_MAX_PACKET_SIZE);
   ssize_t res = send(sockfd, chunk.c_str(), chunk.length(), 0);
 
@@ -103,7 +101,7 @@ void TCPConnection::network_write() {
     //  read - write - read - write - read - write - close
     data_out.clear();
   }
-#else
+#else  // ------------- without NET_MAX_PACKET_SIZE (send whole data at once)
   // send data without chunking
   ssize_t res = send(sockfd, data_out.c_str(), data_out.length(), 0);
 
@@ -139,10 +137,10 @@ bool TCPConnection::is_alive() {
 * TCPConnection close
 *----------------------------------------------------------------------*/
 void TCPConnection::close() {
-  // dont close right here, because it could be outgoung write data
-  // in the buffer
+  // dont close right here, because it could be outgoung write data in the buffer
   connection_alive = false;
 }
+
 /*----------------------------------------------------------------------
 * TCPConnection close(response)
 *----------------------------------------------------------------------*/
@@ -180,7 +178,7 @@ std::string TCPConnection::get_client_address() {
 }
 
 /*----------------------------------------------------------------------
-* inet_addr_to_string
+* inet_addr_to_string (mainly for printing)
 *----------------------------------------------------------------------*/
 std::string inet_addr_to_string(struct sockaddr_in &hostaddr) {
   char buf[INET_ADDRSTRLEN];

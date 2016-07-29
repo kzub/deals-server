@@ -563,6 +563,11 @@ bool SharedMemoryPage<ELEMENT_T>::isAllocated() {
   return shared_memory != nullptr;
 }
 
+template <typename ELEMENT_T>
+ElementPointer<ELEMENT_T>::operator ELEMENT_T*() {
+  return get_data();
+}
+
 /*-----------------------------------------------------------------
 * ElementPointer get_data
 *-----------------------------------------------------------------*/

@@ -1,12 +1,8 @@
 #ifndef LOCKS_HPP
 #define LOCKS_HPP
 
-#include <semaphore.h>
 #include <iostream>
 
-#include <cinttypes>
-
-#include <fcntl.h> /* For O_* constants */
 #include <semaphore.h>
 
 namespace locks {
@@ -36,6 +32,6 @@ class CriticalSection {
 };
 
 int unit_test();
-}
+}  // namespace locks
 
 #endif

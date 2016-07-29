@@ -4,14 +4,12 @@
 #include <cinttypes>
 #include <iostream>
 #include <list>
-#include <vector>
-
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 
 #include <fcntl.h>
+#include <netdb.h>
+#include <netinet/in.h>
 #include <poll.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #include "timing.hpp"
@@ -44,11 +42,9 @@ io_handler close() do nothing, if all io_handkers closed -> connection->close()
 #define MAX_CONNECTION_LIFETIME_SEC 5
 #define POLL_TIMEOUT_MS 5000
 
-// class Connection;
-
-typedef std::string NetData;
-// typedef void (ConnectionProcessor)(Connection& conn);
+typedef std::string NetData;  // net bytes is an std::string instance
 std::string inet_addr_to_string(struct sockaddr_in& hostaddr);
+
 /*----------------------------------------------------------------------
 * TCPConnection
 *----------------------------------------------------------------------*/
@@ -90,7 +86,7 @@ class TCPConnection {
 template <typename Context>
 class TCPServer;
 /*----------------------------------------------------------------------
-* TCPServer
+* TCPServer  virtual class for tcp connections processing
 *----------------------------------------------------------------------*/
 template <typename Context>
 class TCPServer {
@@ -99,6 +95,7 @@ class TCPServer {
    public:
     Connection(const int sockfd) : TCPConnection(sockfd) {
     }
+    // connection related context (http::HttpParser for example)
     Context context;
   };
 
@@ -109,6 +106,7 @@ class TCPServer {
   std::string get_server_address();
   std::list<Connection*> get_alive_connections();
 
+  // must be implemented in derived class
   virtual void on_data(Connection& conn) = 0;
   virtual void on_connect(Connection& conn) = 0;
 
@@ -121,6 +119,7 @@ class TCPServer {
   struct sockaddr_in serv_addr;
 };
 
+// class templates require to be instantate by every #include
 // IMPLEMENTAION ->>>>>>>>>>>>>>>>>>>>>>>
 
 /*----------------------------------------------------------------------
@@ -165,7 +164,6 @@ TCPServer<Context>::TCPServer(const uint16_t port) {
 *----------------------------------------------------------------------*/
 template <typename Context>
 void TCPServer<Context>::accept_new_connection() {
-  // std::cout << "accept_new_connection:" << srv_sockfd << std::endl;
   Connection* conn = new Connection(srv_sockfd);
 
   if (!conn->is_alive()) {
@@ -175,7 +173,7 @@ void TCPServer<Context>::accept_new_connection() {
   }
 
   connections.push_back(conn);
-  // call virtual metod to let parent class know about new connection
+  // call virtual metod to let derived class know about new connection
   // and init connection context
   on_connect(*conn);
 }
@@ -206,7 +204,7 @@ uint16_t TCPServer<Context>::process() {
   uint32_t current_time = timing::getTimestampSec();
 
   // ------------------------------------------------------
-  // setup descriptors we will be looking for
+  // setup descriptors we will be listening for
   nfds_t nfds = connections.size() + 1;
   pollfd pfd[nfds];
   pollfd* pfd_main_socket = &pfd[0];
@@ -239,7 +237,6 @@ uint16_t TCPServer<Context>::process() {
   // ------------------------------------------------------
   // wait for incoming event
   int retval = poll(pfd, nfds, POLL_TIMEOUT_MS);
-  // std::cout << "poll res:" << retval << std::endl;
 
   if (retval == -1) {
     if (errno != EINTR) {  // if not a signal
@@ -298,5 +295,5 @@ template <typename Context>
 std::string TCPServer<Context>::get_server_address() {
   return inet_addr_to_string(serv_addr);
 }
-}
+}  // namespace srv
 #endif

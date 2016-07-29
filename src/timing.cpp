@@ -1,5 +1,6 @@
-#include "timing.hpp"
 #include <unistd.h>
+
+#include "timing.hpp"
 
 namespace timing {
 
@@ -78,12 +79,13 @@ void Timer::report() {
 }
 
 //---------------------------------------------------
-// TIMELORD
+// TIMELORD class for traveling in time
 //---------------------------------------------------
 TimeLord::operator uint32_t() {
   return tick_counter / ticks_in_second;
 }
 
+//---------------------------------------------------
 TimeLord &TimeLord::operator++() {
   tick_counter++;
 
@@ -104,10 +106,12 @@ TimeLord &TimeLord::operator+=(uint32_t step) {
 
   return *this;
 }
+
 //---------------------------------------------------
 void TimeLord::reset() {
   tick_counter = 1;
 }
+
 //---------------------------------------------------
 bool TimeLord::test(uint32_t x) {
   return tick_counter <= (x * ticks_in_second);
@@ -125,4 +129,4 @@ void unit_test() {
   timer.tick("stage4");
   timer.finish("finish");
 }
-}
+}  // namespace timing

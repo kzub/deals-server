@@ -22,7 +22,7 @@ void unit_test();
 
 struct Flags {
   bool direct : 1;
-  bool overriden : 1;
+  bool overriden : 1;  // show that not cheapest but lastest in period
   uint8_t departure_day_of_week : 4;
   uint8_t return_day_of_week : 4;
 };
@@ -41,8 +41,8 @@ struct DealInfo {
   uint32_t index;
   uint32_t size;
 };
-typedef uint8_t DealData;
-}
+typedef uint8_t DealData;  // aka char
+}  // namespace deals::i
 
 struct DealInfo {
   uint32_t timestamp;
@@ -59,9 +59,8 @@ struct DealInfo {
 namespace utils {
 void print(const i::DealInfo& deal);
 void print(const DealInfo& deal);
-void copy(i::DealInfo& dst, const i::DealInfo& src);
 std::string sprint(const DealInfo& deal);
-};
+}  // namespace deals::utils
 
 //------------------------------------------------------------
 // DealsDatabase
@@ -74,6 +73,7 @@ class DealsDatabase {
   bool addDeal(std::string origin, std::string destination, std::string departure_date,
                std::string return_date, bool direct_flight, uint32_t price, std::string data);
 
+  // find cheapest by selected filters
   std::vector<DealInfo> searchForCheapest(
       std::string origin, std::string destinations, std::string departure_date_from,
       std::string departure_date_to, std::string departure_days_of_week,
@@ -82,6 +82,7 @@ class DealsDatabase {
       uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec,
       ::utils::Threelean roundtrip_flights);
 
+  // find cheapest for each day in provided deparutre interval
   std::vector<DealInfo> searchForCheapestDayByDay(
       std::string origin, std::string destinations, std::string departure_date_from,
       std::string departure_date_to, std::string departure_days_of_week,
@@ -90,6 +91,7 @@ class DealsDatabase {
       uint32_t price_to, uint16_t limit, uint32_t max_lifetime_sec,
       ::utils::Threelean roundtrip_flights);
 
+  // clear database
   void truncate();
 
  private:
@@ -118,7 +120,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
 
  private:
   // function that will be called by TableProcessor
-  // for iterating over all not expired pages in table */
+  // for iterating over all not expired pages in table
   bool process_function(i::DealInfo* elements, uint32_t size);
 
   // VIRTUAL FUNCTIONS SECTION:

@@ -12,8 +12,8 @@ static uint32_t debug_time_shift = 0;
 
 //---------------------------------------------------
 timing_t getTimestampMs();
-//---------------------------------------------------
 uint32_t getTimestampSec();
+
 //---------------------------------------------------
 // Time measurment tool
 //---------------------------------------------------
@@ -37,7 +37,7 @@ class Timer {
 };
 
 //---------------------------------------------------
-// Feature traveling tool
+// Time traveling tool
 //---------------------------------------------------
 class TimeLord {
  public:
@@ -56,5 +56,5 @@ class TimeLord {
 };
 
 void unit_test();
-}
+}  // namespace timing
 #endif

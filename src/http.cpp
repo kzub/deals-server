@@ -1,7 +1,10 @@
+
 #include <cassert>
 #include <cinttypes>
+#include <cstring>
 
 #include "http.hpp"
+#include "utils.hpp"
 
 namespace http {
 
@@ -24,7 +27,6 @@ ParserResult HttpHeaders::parse(std::string http_message) {
   std::vector<std::string> http_headers_lines = utils::split_string(http_headers, "\r\n");
 
   // std::cout << "RequestLine:" << http_headers_lines[0] << std::endl;
-
   // omit first one as it is a request line
   for (auto line = http_headers_lines.begin() + 1; line != http_headers_lines.end(); ++line) {
     // std::cout << "HeaderLine:" << *line << std::endl;
@@ -146,6 +148,7 @@ void HttpParser::write(const char* data, size_t size) {
   write(msg);
 };
 
+// save function worked with std::string
 void HttpParser::write(std::string msg) {
   msgs.push_back(msg);
   bytes_written += msg.length();
@@ -409,9 +412,4 @@ void unit_test() {
 
   std::cout << "OK =)" << std::endl;
 }
-}
-
-int maidn() {
-  http::unit_test();
-  return 0;
 }

@@ -1,3 +1,5 @@
+#include "locks.hpp"
+
 #include <cassert>
 #include <cinttypes>
 #include <iostream>
@@ -6,7 +8,6 @@
 #include <semaphore.h>
 #include <unistd.h>
 
-#include "locks.hpp"
 #include "timing.hpp"
 
 namespace locks {
@@ -44,7 +45,7 @@ CriticalSection::~CriticalSection() {
 // CriticalSection acciure
 //-----------------------------------------------
 void CriticalSection::semaphore_accuire() {
-#ifdef WAIT_INFINITY_TIME
+#ifdef WAIT_INFINITY_TIME  // faster switching
   int res = sem_wait(lock);
   if (res == -1) {
     std::cout << "ERROR: CriticalSection::semaphore_accuire sem_wait() errno:" << errno
@@ -52,7 +53,7 @@ void CriticalSection::semaphore_accuire() {
     throw "cant unlock";
   }
   return;
-#else
+#else  // ------- without WAIT_INFINITY_TIME manual implementation
   uint32_t wait_retries = 0;
   while (1) {
     int res = sem_trywait(lock);
@@ -74,14 +75,6 @@ void CriticalSection::semaphore_accuire() {
 #endif
 }
 
-void CriticalSection::reset_not_for_production() {
-  while (sem_trywait(lock) == -1) {
-    sem_post(lock);
-  }
-  sem_post(lock);
-  std::cout << "WARNING: reset_not_for_production use (" << name << ") done" << std::endl;
-}
-
 //-----------------------------------------------
 // CriticalSection release
 //-----------------------------------------------
@@ -94,6 +87,17 @@ void CriticalSection::semaphore_release(bool nothrow) {
     }
     throw "semaphore_release(): cannot sem_post";
   }
+}
+
+//-----------------------------------------------
+// Used to clear semaphore in case you kill application, that was in locked state
+//-----------------------------------------------
+void CriticalSection::reset_not_for_production() {
+  std::cout << "WARNING: reset_not_for_production use (" << name << ") done" << std::endl;
+  while (sem_trywait(lock) == -1) {
+    sem_post(lock);
+  }
+  sem_post(lock);
 }
 
 //-----------------------------------------------
@@ -169,4 +173,4 @@ int unit_test() {
   std::cout << "locks... OK" << std::endl;
   return 0;
 }
-}
+}  // namespace locks

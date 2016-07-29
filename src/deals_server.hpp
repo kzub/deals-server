@@ -7,12 +7,18 @@
 #include "top_destinations.hpp"
 
 namespace deals_srv {
+//------------------------------------------------------
+// Connection Context
+//------------------------------------------------------
 class Context {
  public:
-  int test;
+  int anyvalue;
   http::HttpParser http;
 };
 
+//------------------------------------------------------
+// DealsServer derivered from TCPServer
+//------------------------------------------------------
 class DealsServer : public srv::TCPServer<Context> {
  public:
   DealsServer(uint16_t port) : srv::TCPServer<Context>(port) {
@@ -28,11 +34,12 @@ class DealsServer : public srv::TCPServer<Context> {
   void getTop(Connection& conn);
   void getDestiantionsTop(Connection& conn);
 
+  // in memory databases
   deals::DealsDatabase db;
   top::TopDstDatabase db_dst;
 
   bool quit_request = false;
 };
-}
+}  // namespace deals_srv
 
 #endif

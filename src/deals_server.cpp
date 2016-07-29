@@ -1,30 +1,30 @@
 #include <csignal>
 #include <fstream>
 
-#include "deals.hpp"
 #include "deals_server.hpp"
-#include "http.hpp"
 #include "locks.hpp"
 #include "timing.hpp"
 
 namespace deals_srv {
 
-/* --------------------------------------------------------
-* DealsServer on connect
-*----------------------------------------------------------*/
+//-----------------------------------------------------------
+// DealsServer on connect
+//-----------------------------------------------------------
 void DealsServer::on_connect(Connection &conn) {
   // std::cout << "new conn:" << conn.get_client_address() << std::endl;
 }
 
-/* --------------------------------------------------------
-* DealsServer quit request inside application
-*----------------------------------------------------------*/
+//-----------------------------------------------------------
+// DealsServer quit request inside application
+//-----------------------------------------------------------
 void DealsServer::quit() {
   std::cout << "WARNING DealsServer::quit()" << std::endl;
   quit_request = true;
 }
 
-// ----------------------------------------------------------
+//-----------------------------------------------------------
+// system signals handler
+//-----------------------------------------------------------
 bool gotQuitSignal = false;
 void signalHandler(int signal) {
   std::string sig;
@@ -50,9 +50,9 @@ void signalHandler(int signal) {
   gotQuitSignal = true;
 }
 
-/* --------------------------------------------------------
-* DealsServer process in child class
-*----------------------------------------------------------*/
+//-----------------------------------------------------------
+// DealsServer process in child class
+//-----------------------------------------------------------
 void DealsServer::process() {
   uint16_t connections = srv::TCPServer<Context>::process();
 
@@ -71,9 +71,9 @@ void DealsServer::process() {
   }
 }
 
-/* --------------------------------------------------------
-* DealsServer on data
-*----------------------------------------------------------*/
+// --------------------------------------------------------
+// DealsServer on data
+//-----------------------------------------------------------
 void DealsServer::on_data(Connection &conn) {
   // gracefull restart
   if (quit_request) {
@@ -88,33 +88,34 @@ void DealsServer::on_data(Connection &conn) {
     return;
   }
 
+  // try to process http request
   try {
     if (conn.context.http.request.method == "GET") {
-      // -------------------  'GET' BEGIN ----------------------
+      //-------------------  'GET' BEGIN ----------------------
       if (conn.context.http.request.query.path == "/deals/top") {
         getTop(conn);
         return;
       }
-
+      //--------
       if (conn.context.http.request.query.path == "/destinations/top") {
         getDestiantionsTop(conn);
         return;
       }
-
+      //--------
       if (conn.context.http.request.query.path == "/deals/clear") {
         db.truncate();
         http::HttpResponse response(200, "OK", "deals cleared\n");
         conn.close(response);
         return;
       }
-
+      //--------
       if (conn.context.http.request.query.path == "/destinations/clear") {
         db_dst.truncate();
         http::HttpResponse response(200, "OK", "destinations cleared\n");
         conn.close(response);
         return;
       }
-
+      //--------
       if (conn.context.http.request.query.path == "/clear") {
         db.truncate();
         db_dst.truncate();
@@ -122,13 +123,13 @@ void DealsServer::on_data(Connection &conn) {
         conn.close(response);
         return;
       }
-
+      //--------
       if (conn.context.http.request.query.path == "/ping") {
         http::HttpResponse response(200, "OK", "pong\n");
         conn.close(response);
         return;
       }
-
+      //--------
       if (conn.context.http.request.query.path == "/quit") {
         quit();
         http::HttpResponse response(200, "OK", "quiting...\n");
@@ -148,14 +149,14 @@ void DealsServer::on_data(Connection &conn) {
       // *) (+) OW filter
       // *) (+) rewrite sym waiting func
       // *) ? Deals By Aircompany
-    }  // -------------------  'GET' END ----------------------
-    else if (conn.context.http.request.method == "POST") {
-      // -------------------  'POST' BEGIN ----------------------
+      // -------------------  'GET' END ----------------------
+    } else if (conn.context.http.request.method == "POST") {
+      //-------------------  'POST' BEGIN ----------------------
       if (conn.context.http.request.query.path == "/deals/add") {
         addDeal(conn);
         return;
       }
-    }  // -------------------  'POST' END ----------------------
+    }  //-------------------  'POST' END ----------------------
 
     // default response:
     conn.close(http::HttpResponse(404, "Not Found", "Method unknown\n"));
@@ -170,27 +171,28 @@ void DealsServer::on_data(Connection &conn) {
   }
 }
 
-/*---------------------------------------------------------
-* DealsServer getTop
-*-----------------------------------------------------------*/
+//-----------------------------------------------------------
+// DealsServer getTop
+//-----------------------------------------------------------
 void DealsServer::getTop(Connection &conn) {
-  // origin/destinations
+  // origin
   //-------------------------
   std::string origin = utils::toUpperCase(conn.context.http.request.query.params["origin"]);
-  std::string destinations =
-      utils::toUpperCase(conn.context.http.request.query.params["destinations"]);
-
   if (origin.length() != 3) {
     conn.close(http::HttpResponse(400, "Bad origin", "Bad origin\n"));
     return;
   }
 
+  // destinations
+  //-------------------------
+  std::string destinations =
+      utils::toUpperCase(conn.context.http.request.query.params["destinations"]);
   if (!query::check_destinations_format(destinations)) {
     conn.close(http::HttpResponse(400, "Bad destinations", "Bad destinations\n"));
     return;
   }
 
-  // direct and flights with stops
+  // direct_flights
   //-------------------------
   utils::Threelean direct_flights = utils::Threelean::Undefined;
 
@@ -204,7 +206,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // roundtrips
+  // roundtrip_flights
   //-------------------------
   utils::Threelean roundtrip_flights = utils::Threelean::Undefined;
 
@@ -218,7 +220,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // search timelimit
+  // timelimit
   //-------------------------
   uint32_t max_lifetime_sec = 0;
   if (conn.context.http.request.query.params["timelimit"].length()) {
@@ -230,7 +232,7 @@ void DealsServer::getTop(Connection &conn) {
     }
   }
 
-  // search limit
+  // deals_limit
   //-------------------------
   uint16_t limit = 0;
   if (conn.context.http.request.query.params["deals_limit"].length()) {
@@ -242,7 +244,7 @@ void DealsServer::getTop(Connection &conn) {
     }
   }
 
-  // stay days  (0 = any)
+  // stay_from
   //-------------------------
   uint16_t stay_from = 0;
   if (conn.context.http.request.query.params["stay_from"].length()) {
@@ -254,6 +256,8 @@ void DealsServer::getTop(Connection &conn) {
     }
   }
 
+  // stay_to
+  //-------------------------
   uint16_t stay_to = 0;
   if (conn.context.http.request.query.params["stay_to"].length()) {
     try {
@@ -264,7 +268,7 @@ void DealsServer::getTop(Connection &conn) {
     }
   }
 
-  // departure week day
+  // departure_days_of_week
   //-------------------------
   std::string dweekdays = conn.context.http.request.query.params["departure_days_of_week"];
   if (dweekdays.length() && !query::check_weekdays_format(dweekdays)) {
@@ -273,7 +277,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // return week day
+  // return_days_of_week
   //-------------------------
   std::string rweekdays = conn.context.http.request.query.params["return_days_of_week"];
   if (rweekdays.length() && !query::check_weekdays_format(rweekdays)) {
@@ -281,7 +285,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // departure date from   ( date format: 2016-05-01 )
+  // departure_date_from     ( date format: 2016-05-01 )
   //-------------------------
   std::string departure_date_from = conn.context.http.request.query.params["departure_date_from"];
   if (departure_date_from.length() && !query::check_date_format(departure_date_from)) {
@@ -289,7 +293,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // departure date to  ( date format: 2016-05-01 )
+  // departure_date_to       ( date format: 2016-05-01 )
   //-------------------------
   std::string departure_date_to = conn.context.http.request.query.params["departure_date_to"];
   if (departure_date_to.length() && !query::check_date_format(departure_date_to)) {
@@ -297,7 +301,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // return date from  ( date format: 2016-05-01 )
+  // return_date_from        ( date format: 2016-05-01 )
   //-------------------------
   std::string return_date_from = conn.context.http.request.query.params["return_date_from"];
   if (return_date_from.length() && !query::check_date_format(return_date_from)) {
@@ -305,7 +309,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // return date to  ( date format: 2016-05-01 )
+  // return_date_to          ( date format: 2016-05-01 )
   //-------------------------
   std::string return_date_to = conn.context.http.request.query.params["return_date_to"];
   if (return_date_to.length() && !query::check_date_format(return_date_to)) {
@@ -324,7 +328,7 @@ void DealsServer::getTop(Connection &conn) {
     return;
   }
 
-  // check price_from filter
+  // price_from
   //-------------------------
   uint32_t price_from = 0;
   if (conn.context.http.request.query.params["price_from"].length()) {
@@ -336,7 +340,7 @@ void DealsServer::getTop(Connection &conn) {
     }
   }
 
-  // check price_to filter
+  // price_to
   //-------------------------
   uint32_t price_to = 0;
   if (conn.context.http.request.query.params["price_to"].length()) {
@@ -348,6 +352,8 @@ void DealsServer::getTop(Connection &conn) {
     }
   }
 
+  // add_locale_top
+  //-------------------------
   if (conn.context.http.request.query.params["add_locale_top"] == "true") {
     std::string locale = conn.context.http.request.query.params["locale"];
     if (locale.length() != 2) {
@@ -358,17 +364,16 @@ void DealsServer::getTop(Connection &conn) {
     std::vector<top::DstInfo> result =
         db_dst.getLocaleTop(locale, departure_date_from, departure_date_to, limit);
 
-    // std::cout << "before destiantions:" << destinations << std::endl;
     for (auto &dst : result) {
       if (destinations.length() != 0) {
         destinations += ",";
       }
       destinations += query::code_to_origin(dst.destination);
     }
-    // std::cout << "after destiantions:" << destinations << std::endl;
   }
 
-  // SEARCH
+  // all check are done. Input seems to be fine
+  // SEARCH STEP
   //-------------------------
   std::vector<deals::DealInfo> result;
 
@@ -407,8 +412,7 @@ void DealsServer::getTop(Connection &conn) {
 
   uint32_t sizes_strlen = std::to_string(sizes.length()).length();
 
-  // increase size_info in case string length of size_info length will be
-  // increased
+  // increase size_info in case string length of size_info length will be increased
   // after adding size_info block size (first argument) itself
   if (std::to_string(sizes.length() + sizes_strlen + 1).length() != sizes_strlen) {
     sizes_strlen++;
@@ -416,9 +420,6 @@ void DealsServer::getTop(Connection &conn) {
 
   std::string size_info = std::to_string(sizes.length() + sizes_strlen + 1) + ";" + sizes;
   std::string response = size_info;
-
-  // std::cout << "sizes:" << sizes << " sizes.length:" << sizes.length()
-  // << " sizes_strlen:" << sizes_strlen << " size_info:" << size_info;
 
   // write to response deals data
   //-------------------------
@@ -433,33 +434,42 @@ void DealsServer::getTop(Connection &conn) {
   conn.close(rq_result);
 }
 
-/*---------------------------------------------------------
-* DealsServer addDeal
-*-----------------------------------------------------------*/
+//------------------------------------------------------------
+// DealsServer addDeal
+//------------------------------------------------------------
 void DealsServer::addDeal(Connection &conn) {
+  // locale
+  //------------
   std::string locale = utils::toLowerCase(conn.context.http.request.query.params["locale"]);
   if (locale.length() != 2) {
     conn.close(http::HttpResponse(400, "Bad locale", "Bad locale"));
     return;
   }
 
+  // origin
+  //------------
   std::string origin = utils::toUpperCase(conn.context.http.request.query.params["origin"]);
-  std::string destination =
-      utils::toUpperCase(conn.context.http.request.query.params["destination"]);
-
   if (origin.length() != 3) {
     conn.close(http::HttpResponse(400, "Bad origin", "Bad origin"));
     return;
   }
+
+  // destinations
+  //-------------
+  std::string destination =
+      utils::toUpperCase(conn.context.http.request.query.params["destination"]);
   if (destination.length() != 3) {
     conn.close(http::HttpResponse(400, "Bad destination", "Bad destination"));
     return;
   }
+
   if (origin == destination) {
     conn.close(http::HttpResponse(400, "Bad origin eq destination", "Bad origin eq destination"));
     return;
   }
 
+  // price
+  //-------------
   uint32_t price = 0;
   try {
     price = std::stol(conn.context.http.request.query.params["price"]);
@@ -468,6 +478,8 @@ void DealsServer::addDeal(Connection &conn) {
     return;
   }
 
+  // direct_flight
+  //-------------
   std::string direct_flight_str =
       utils::toLowerCase(conn.context.http.request.query.params["direct_flight"]);
   if (direct_flight_str != "true" && direct_flight_str != "false") {
@@ -476,30 +488,38 @@ void DealsServer::addDeal(Connection &conn) {
   }
   bool direct_flight = direct_flight_str == "true";
 
+  // departure_date
+  //-------------
   std::string departure_date = conn.context.http.request.query.params["departure_date"];
-  std::string return_date = conn.context.http.request.query.params["return_date"];
-
   if (query::date_to_int(departure_date) == 0) {
     conn.close(http::HttpResponse(400, "Bad departure_date", "Bad departure_date"));
     return;
   }
+
+  // return_date
+  //-------------
+  std::string return_date = conn.context.http.request.query.params["return_date"];
   if (return_date.length() > 0) {
     if (query::date_to_int(return_date) == 0) {
       conn.close(http::HttpResponse(400, "Bad return_date", "Bad return_date"));
       return;
     }
   }
+
   if (!query::check_date_to_date(departure_date, return_date)) {
     conn.close(http::HttpResponse(400, "Bad date parameters", "Bad date parameters\n"));
     return;
   }
 
+  // read POST body (zipped deal json)
   std::string data = conn.context.http.get_body();
 
   // std::cout << "(add) dep:" << departure_date << " from:" << origin
   //           << " to:" << destination << " ret:" << return_date
   //           << " price:" << price << std::endl;
 
+  // deals db
+  //---------------
   bool good =
       db.addDeal(origin, destination, departure_date, return_date, direct_flight, price, data);
 
@@ -508,6 +528,8 @@ void DealsServer::addDeal(Connection &conn) {
     return;
   }
 
+  // destinations db
+  //---------------
   good = db_dst.addDestination(locale, destination, departure_date);
 
   if (!good) {
@@ -522,13 +544,15 @@ void DealsServer::addDeal(Connection &conn) {
 * DealsServer getDestiantionsTop
 *-----------------------------------------------------------*/
 void DealsServer::getDestiantionsTop(Connection &conn) {
+  // locale
+  //---------------
   std::string locale = utils::toLowerCase(conn.context.http.request.query.params["locale"]);
   if (locale.length() != 2) {
     conn.close(http::HttpResponse(400, "Bad locale", "Bad locale"));
     return;
   }
 
-  // departure date from   ( date format: 2016-05-01 )
+  // departure_date_from     ( date format: 2016-05-01 )
   //-------------------------
   std::string departure_date_from = conn.context.http.request.query.params["departure_date_from"];
   if (departure_date_from.length() && departure_date_from.length() &&
@@ -537,7 +561,7 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
     return;
   }
 
-  // departure date to  ( date format: 2016-05-01 )
+  // departure_date_to       ( date format: 2016-05-01 )
   //-------------------------
   std::string departure_date_to = conn.context.http.request.query.params["departure_date_to"];
   if (departure_date_to.length() && departure_date_to.length() &&
@@ -546,7 +570,7 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
     return;
   }
 
-  // search timelimit
+  // timelimit
   //-------------------------
   uint32_t max_lifetime_sec = 0;
   if (conn.context.http.request.query.params["timelimit"].length()) {
@@ -558,7 +582,7 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
     }
   }
 
-  // search limit
+  // destinations_limit
   //-------------------------
   uint16_t limit = 0;
   if (conn.context.http.request.query.params["destinations_limit"].length()) {
@@ -584,9 +608,9 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
     return;
   }
 
-  std::string response;
   // write to response  data
   //-------------------------
+  std::string response;
   for (auto &elm : result) {
     response += query::code_to_origin(elm.destination) + ";" + std::to_string(elm.counter) + "\n";
   }
@@ -600,7 +624,9 @@ void DealsServer::getDestiantionsTop(Connection &conn) {
 
 }  // namespace deals_srv
 
-// ------------------------------------------------
+//-------------------------------------------------
+// Here it begins
+//--------------------------------------------------
 int main(int argc, char *argv[]) {
   if (argc > 1 && std::string(argv[1]) == "test") {
     std::cout << "running autotests..." << std::endl;
