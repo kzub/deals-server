@@ -6,6 +6,7 @@
 
 namespace utils {
 
+// true/false/undefined
 enum class Threelean : int { True = 1, False = 0, Undefined = -1 };
 
 /*-----------------------------------------------------

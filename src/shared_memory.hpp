@@ -16,6 +16,7 @@ namespace shared_mem {
 
 bool checkSharedMemAvailability();
 
+// result of page insertion
 enum class ErrorCode : int {
   NO_ERROR = 0,
   RECORD_SIZE_TO_BIG = 1,
@@ -35,6 +36,9 @@ struct TablePageIndexElement {
   char page_name[MEMPAGE_NAME_MAX_LEN];
 };
 
+//-----------------------------------------------
+// ElementPointer
+//-----------------------------------------------
 template <typename ELEMENT_T>
 class ElementPointer {
  public:
@@ -55,17 +59,22 @@ class ElementPointer {
   Table<ELEMENT_T>& table;
 };
 
+//-----------------------------------------------
+// TableProcessor
+//-----------------------------------------------
 template <typename ELEMENT_T>
 class TableProcessor {
  protected:
-  /* function that will be called for iterating over all not expired pages in
-   * table */
+  // function that will be called for iterating over all not expired pages in table
   virtual bool process_function(ELEMENT_T* elements, uint32_t size) = 0;
 
   template <class T>
   friend class Table;
 };
 
+//-----------------------------------------------
+// Table
+//-----------------------------------------------
 template <typename ELEMENT_T>
 class Table {
  public:
@@ -86,12 +95,13 @@ class Table {
   void clear_index_record(TablePageIndexElement& record);
   void release_expired_memory_pages();
 
-  locks::CriticalSection* lock;
+  locks::CriticalSection* lock;  // [interprocess memory access management]
+  std::vector<SharedMemoryPage<ELEMENT_T>*> opened_pages_list;
+  SharedMemoryPage<TablePageIndexElement>* table_index;  // [INDEX]
+
   uint16_t table_max_pages;
   uint16_t last_known_index_length;
   uint32_t max_elements_in_page;
-  std::vector<SharedMemoryPage<ELEMENT_T>*> opened_pages_list;
-  SharedMemoryPage<TablePageIndexElement>* table_index;
   uint32_t record_expire_seconds;
   uint32_t time_to_check_page_expire = 0;
 
@@ -102,28 +112,34 @@ class Table {
   friend class ElementPointer;
 };
 
+//-------------------------------------------------------
+// SharedMemoryPage
+//-------------------------------------------------------
 template <typename ELEMENT_T>
 class SharedMemoryPage {
  public:
-  bool isAllocated();
-  ELEMENT_T* getElements();
   ~SharedMemoryPage();
 
+  bool isAllocated();
+  ELEMENT_T* getElements();
+
  private:
+  SharedMemoryPage(std::string page_name, uint32_t elements);
+
+  // every shared memory page has this properties:
   struct Page_information {
     bool unlinked;
     uint32_t expiration_check;
   };
+  Page_information* shared_pageinfo;
 
-  SharedMemoryPage(std::string page_name, uint32_t elements);
-
+  // page property
   std::string page_name;
   uint32_t page_memory_size;
 
-  // look to shared memeory
+  // pointer looked to shared memory
   void* shared_memory;
   ELEMENT_T* shared_elements;
-  Page_information* shared_pageinfo;
 
   static void unlink(std::string page_name) {
     std::cout << "UNLINK: " << page_name << std::endl;

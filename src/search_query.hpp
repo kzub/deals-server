@@ -56,7 +56,7 @@ class SearchQuery {
   DateInterval departure_date_values;
 
   // example: [2016-10-01, 2016-10-02, 2016-10-03]
-  // not implemented yet:
+  // NOT IMPLEMENTED YET:
   bool filter_departure_dates = false;
   std::vector<uint32_t> departure_dates_vector;
 
@@ -64,7 +64,7 @@ class SearchQuery {
   DateInterval return_date_values;
 
   // example: [2016-10-01, 2016-10-02, 2016-10-03]
-  // not implemented yet:
+  // NOT IMPLEMENTED YET:
   bool filter_return_dates = false;
   std::vector<uint32_t> return_dates_vector;
 

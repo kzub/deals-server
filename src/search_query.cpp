@@ -1,6 +1,9 @@
 #include "search_query.hpp"
 
 namespace query {
+//--------------------------------------------------
+// origin
+//--------------------------------------------------
 void SearchQuery::origin(std::string origin) {
   if (origin.length() == 0) {
     return;
@@ -9,6 +12,9 @@ void SearchQuery::origin(std::string origin) {
   origin_value = origin_to_code(origin);
 }
 
+//--------------------------------------------------
+// destinations
+//--------------------------------------------------
 void SearchQuery::destinations(std::string destinations) {
   if (destinations.length() == 0) {
     return;
@@ -26,6 +32,9 @@ void SearchQuery::destinations(std::string destinations) {
   }
 }
 
+//--------------------------------------------------
+// max_lifetime_sec
+//--------------------------------------------------
 void SearchQuery::max_lifetime_sec(uint32_t max_lifetime) {
   if (max_lifetime == 0) {
     return;
@@ -35,6 +44,9 @@ void SearchQuery::max_lifetime_sec(uint32_t max_lifetime) {
   timestamp_value = timing::getTimestampSec() - max_lifetime;
 }
 
+//--------------------------------------------------
+// departure_dates
+//--------------------------------------------------
 void SearchQuery::departure_dates(std::string departure_date_from, std::string departure_date_to) {
   if (departure_date_from.length() == 0 && departure_date_to.length() == 0) {
     return;
@@ -65,7 +77,9 @@ void SearchQuery::departure_dates(std::string departure_date_from, std::string d
   }
 }
 
-// comma separated list of dates to look up
+//--------------------------------------------------
+// departure_dates
+//--------------------------------------------------
 void SearchQuery::departure_dates(std::string departure_dates) {
   if (departure_dates.length() == 0) {
     return;
@@ -84,7 +98,9 @@ void SearchQuery::departure_dates(std::string departure_dates) {
   }
 }
 
-// comma separated list of dates to look up
+//--------------------------------------------------
+// return_dates
+//--------------------------------------------------
 void SearchQuery::return_dates(std::string return_dates) {
   if (return_dates.length() == 0) {
     return;
@@ -103,6 +119,9 @@ void SearchQuery::return_dates(std::string return_dates) {
   }
 }
 
+//--------------------------------------------------
+// return_dates
+//--------------------------------------------------
 void SearchQuery::return_dates(std::string return_date_from, std::string return_date_to) {
   if (return_date_from.length() == 0 && return_date_to.length() == 0) {
     return;
@@ -135,6 +154,9 @@ void SearchQuery::return_dates(std::string return_date_from, std::string return_
   }
 }
 
+//--------------------------------------------------
+// stay_days
+//--------------------------------------------------
 void SearchQuery::stay_days(uint16_t stay_from, uint16_t stay_to) {
   if (stay_from == 0 && (stay_to == 0 || stay_to >= UINT8_MAX)) {
     return;
@@ -162,6 +184,9 @@ void SearchQuery::stay_days(uint16_t stay_from, uint16_t stay_to) {
   }
 }
 
+//--------------------------------------------------
+// departure_weekdays
+//--------------------------------------------------
 void SearchQuery::departure_weekdays(std::string days_of_week) {
   if (days_of_week.length() == 0) {
     return;
@@ -170,6 +195,9 @@ void SearchQuery::departure_weekdays(std::string days_of_week) {
   filter_departure_weekdays = true;
 }
 
+//--------------------------------------------------
+// return_weekdays
+//--------------------------------------------------
 void SearchQuery::return_weekdays(std::string days_of_week) {
   if (days_of_week.length() == 0) {
     return;
@@ -178,6 +206,9 @@ void SearchQuery::return_weekdays(std::string days_of_week) {
   filter_return_weekdays = true;
 }
 
+//--------------------------------------------------
+// weekdays_bitmask
+//--------------------------------------------------
 uint8_t SearchQuery::weekdays_bitmask(std::string days_of_week) {
   uint8_t result = 0;
   std::vector<std::string> split_result = ::utils::split_string(days_of_week);
@@ -200,6 +231,9 @@ uint8_t SearchQuery::weekdays_bitmask(std::string days_of_week) {
   return result;
 }
 
+//--------------------------------------------------
+// direct_flights
+//--------------------------------------------------
 void SearchQuery::direct_flights(utils::Threelean direct_flights) {
   if (direct_flights == utils::Threelean::Undefined) {
     return;
@@ -209,6 +243,9 @@ void SearchQuery::direct_flights(utils::Threelean direct_flights) {
   direct_flights_flag = (direct_flights == utils::Threelean::True ? true : false);
 }
 
+//--------------------------------------------------
+// roundtrip_flights
+//--------------------------------------------------
 void SearchQuery::roundtrip_flights(utils::Threelean roundtrip) {
   if (roundtrip == utils::Threelean::Undefined) {
     return;
@@ -218,6 +255,9 @@ void SearchQuery::roundtrip_flights(utils::Threelean roundtrip) {
   roundtrip_flight_flag = (roundtrip == utils::Threelean::True ? true : false);
 }
 
+//--------------------------------------------------
+// result_limit
+//--------------------------------------------------
 void SearchQuery::result_limit(uint16_t _filter_limit) {
   if (_filter_limit) {
     // ignore zero value
@@ -225,6 +265,9 @@ void SearchQuery::result_limit(uint16_t _filter_limit) {
   }
 }
 
+//--------------------------------------------------
+// price
+//--------------------------------------------------
 void SearchQuery::price(uint32_t price_from, uint32_t price_to) {
   if (price_from == 0 && price_to == 0) {
     // no filter applied
@@ -236,6 +279,9 @@ void SearchQuery::price(uint32_t price_from, uint32_t price_to) {
   price_to_value = price_to ? price_to : UINT32_MAX;
 }
 
+//--------------------------------------------------
+// locale
+//--------------------------------------------------
 void SearchQuery::locale(std::string locale) {
   if (locale.length() != 2) {
     return;
@@ -245,6 +291,9 @@ void SearchQuery::locale(std::string locale) {
   locale_value = locale_to_code(locale);
 }
 
+//--------------------------------------------------
+// apply_filters
+//--------------------------------------------------
 void SearchQuery::apply_filters(std::string _origin, std::string _destinations,
                                 std::string _departure_date_from, std::string _departure_date_to,
                                 std::string _departure_days_of_week, std::string _return_date_from,
@@ -329,7 +378,7 @@ bool check_date_to_date(std::string _date_from, std::string _date_to) {
 }
 
 //--------------------------------------------------
-// deals Utils
+// origin_to_code
 //--------------------------------------------------
 uint32_t origin_to_code(std::string code) {
   PlaceCodec a2i;
@@ -341,7 +390,7 @@ uint32_t origin_to_code(std::string code) {
 }
 
 //--------------------------------------------------
-//
+// code_to_origin
 //--------------------------------------------------
 std::string code_to_origin(uint32_t code) {
   PlaceCodec a2i;
@@ -354,7 +403,7 @@ std::string code_to_origin(uint32_t code) {
 }
 
 //--------------------------------------------------
-// ISO date standare 2016-06-16
+// date_to_int          ISO date standare 2016-06-16
 //--------------------------------------------------
 uint32_t date_to_int(std::string date) {
   if (date.length() != 10) {
@@ -375,7 +424,7 @@ uint32_t date_to_int(std::string date) {
 };
 
 //--------------------------------------------------
-// ISO date standare 2016-06-16
+// int_to_date          ISO date standare 2016-06-16
 //--------------------------------------------------
 std::string int_to_date(uint32_t date) {
   if (!date) {

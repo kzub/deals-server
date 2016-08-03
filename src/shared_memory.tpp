@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <fcntl.h> /* For O_* constants */
 #include <string.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -14,12 +15,10 @@
 #include "timing.hpp"
 
 namespace shared_mem {
-#include <sys/mman.h>
 
 /*-----------------------------------------------------------------
-* TABLE
+* TABLE        Constructor
 *-----------------------------------------------------------------*/
-// Table Constructor ----------------------------------------------
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
                         uint32_t max_elements_in_page, uint32_t record_expire_seconds)
@@ -47,7 +46,9 @@ Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
   std::cout << "Table::Table (" << table_name << ") OK" << std::endl;
 }
 
-// Table Destructor ----------------------------------------------
+//-----------------------------------------------------
+// Table Destructor
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::~Table() {
   std::cout << "TABLE (" << table_index->page_name << ") destructor... ";
@@ -60,7 +61,9 @@ Table<ELEMENT_T>::~Table() {
   std::cout << "OK" << std::endl;
 }
 
-// processTablePages ----------------------------------------------
+//-----------------------------------------------------
+// clear_index_record
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::clear_index_record(TablePageIndexElement& record) {
   record.expire_at = 0;
@@ -68,7 +71,9 @@ void Table<ELEMENT_T>::clear_index_record(TablePageIndexElement& record) {
   record.page_name[0] = 0;
 }
 
-// processTablePages ----------------------------------------------
+//-----------------------------------------------------
+// processRecords
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   // check if there is time to release some pages
@@ -135,7 +140,9 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   }
 }
 
-// cleanup ----------------------------------------------
+//-----------------------------------------------------
+// cleanup
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::cleanup() {
   lock->enter();
@@ -171,7 +178,9 @@ void Table<ELEMENT_T>::cleanup() {
   SharedMemoryPage<ELEMENT_T>::unlink(table_index->page_name);
 }
 
-// release_open_pages ----------------------------------------------
+//-----------------------------------------------------
+// release_open_pages
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_open_pages() {
   for (auto page : opened_pages_list) {
@@ -180,7 +189,9 @@ void Table<ELEMENT_T>::release_open_pages() {
   opened_pages_list.clear();
 }
 
-// Table addRecord ----------------------------------------------
+//-----------------------------------------------------
+// Table addRecord
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
                                                       uint32_t records_cout,
@@ -311,7 +322,9 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   return ElementPointer<ELEMENT_T>(*this, insert_page_name, insert_element_idx, records_cout);
 }
 
-// Table localGetPageByName -------------------------------------
+//-----------------------------------------------------
+// localGetPageByName
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(const std::string& page_to_look) {
   // find page in open pages list
@@ -324,7 +337,9 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(const std::str
   return nullptr;
 }
 
-// Table getPageByName -------------------------------------------
+//-----------------------------------------------------
+// getPagesByName
+//-----------------------------------------------------
 template <typename ELEMENT_T>
 SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& page_to_look) {
   // let's look for page now in local heap
@@ -347,9 +362,9 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
   return page;
 }
 
-//------------------------------------------------------------
-// auto release Table expired memeory
-//------------------------------------------------------------
+//------------------------------------------------------------------
+// release_expired_memory_pages | auto release Table expired memeory
+//------------------------------------------------------------------
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_expired_memory_pages() {
   uint32_t current_time = timing::getTimestampSec();
@@ -438,7 +453,9 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
 * SHARED MEMORY
 *-----------------------------------------------------------------*/
 
-// SharedMemoryPage Constructor ----------------------------------
+//------------------------------------------------------------
+// SharedMemoryPage Constructor
+//------------------------------------------------------------
 template <typename ELEMENT_T>
 SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t elements)
     : page_name(page_name), shared_memory(nullptr) {
@@ -537,7 +554,9 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
   // std::cout << "MAKE PAGE: " << page_name <<  "(" << page_memory_size << ") " << std::endl;
 };
 
-// SharedMemoryPage Destructor -----------------------------------
+//------------------------------------------------------------
+// SharedMemoryPage Destructor
+//------------------------------------------------------------
 template <typename ELEMENT_T>
 SharedMemoryPage<ELEMENT_T>::~SharedMemoryPage() {
   // The munmap() system call deletes the mappings for the specified address
@@ -552,17 +571,25 @@ SharedMemoryPage<ELEMENT_T>::~SharedMemoryPage() {
   }
 }
 
-// getElements() -------------------------------------------------
+//------------------------------------------------------------
+// getElements
+//------------------------------------------------------------
 template <typename ELEMENT_T>
 ELEMENT_T* SharedMemoryPage<ELEMENT_T>::getElements() {
   return shared_elements;
 }
 
+//------------------------------------------------------------
+// isAllocated
+//------------------------------------------------------------
 template <typename ELEMENT_T>
 bool SharedMemoryPage<ELEMENT_T>::isAllocated() {
   return shared_memory != nullptr;
 }
 
+//------------------------------------------------------------
+// operator ELEMENT_T*()
+//------------------------------------------------------------
 template <typename ELEMENT_T>
 ElementPointer<ELEMENT_T>::operator ELEMENT_T*() {
   return get_data();
@@ -585,4 +612,4 @@ ELEMENT_T* ElementPointer<ELEMENT_T>::get_data() {
 
   return page->getElements() + index;
 }
-}
+}  // namespace shared_mem

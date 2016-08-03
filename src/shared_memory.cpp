@@ -1,11 +1,11 @@
 #include <cassert>
 
-#include <stdio.h>
 #include <sys/statvfs.h>
+
 #include "shared_memory.hpp"
 #include "timing.hpp"
-namespace shared_mem {
 
+namespace shared_mem {
 //-----------------------------------------------------------
 // Check system has free shared memory
 //-----------------------------------------------------------
@@ -13,6 +13,7 @@ bool checkSharedMemAvailability() {
   struct statvfs res;
   statvfs("/dev/shm/", &res);
 #ifdef __APPLE__
+  // doesnt work on apple
   return true;
 #endif
   uint32_t freemem = (100 * res.f_bavail / res.f_blocks);
@@ -38,7 +39,7 @@ struct TestInfo {
 // ---------------------------------------------------------
 
 /* ----------------------------------------------------------
-**  Check results
+**  TestResult            Check results
 ** ----------------------------------------------------------*/
 class TestResult : public TableProcessor<TestInfo> {
  public:
@@ -46,9 +47,7 @@ class TestResult : public TableProcessor<TestInfo> {
   }
 
   bool process_function(TestInfo* elements, uint32_t size) {
-    // std::cout << "size:" << size << std::endl;
-    uint32_t idx;
-    for (idx = 0; idx < size; ++idx) {
+    for (uint32_t idx = 0; idx < size; ++idx) {
       if (found.size() <= elements[idx].value) {
         for (uint32_t todo = elements[idx].value - found.size() + 1; todo > 0; todo--) {
           // std::cout << "PUSHBACK size:" << found.size() << " value:" <<
@@ -73,7 +72,9 @@ class TestResult : public TableProcessor<TestInfo> {
   std::vector<uint32_t> found;
 };
 
-// ---------------------------------------------------------
+//---------------------------------------------------------
+// Test::check
+//---------------------------------------------------------
 std::vector<uint32_t> check(Table<TestInfo>& index) {
   TestResult scan_result(&index);
   scan_result.go();
@@ -86,8 +87,10 @@ std::vector<uint32_t> check(Table<TestInfo>& index) {
 
   return scan_result.found;
 }
-// ---------------------------------------------------------
 
+//---------------------------------------------------------
+// Test::testAddMultipleRecords
+//---------------------------------------------------------
 void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval = 0,
                             uint32_t lifetime = 0) {
   uint32_t idx;
@@ -105,6 +108,9 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval 
   // std::cout << "ADDED " << idx << " records" << std::endl;
 }
 
+//---------------------------------------------------------
+// Test::unit_test
+//---------------------------------------------------------
 int unit_test() {
   Table<TestInfo> index("TT", 1000, 100, 60);
   index.cleanup();
@@ -197,7 +203,7 @@ int unit_test() {
 
   return 0;
 }
-}
+}  // namespace shared_mem
 
 int mainss() {
   shared_mem::unit_test();
