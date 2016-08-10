@@ -393,7 +393,9 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       // page expired -> make it empty and use it to save records
       // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
       //                     ^              ^
-      if (index_record.expire_at > 0 && index_record.expire_at >= current_time) {
+      if (index_record.expire_at > 0 &&
+          index_record.expire_at + MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC >= current_time) {
+        //                         ^^^ to be sure page not being used by anyone
         last_data_idx = idx;
       }
 
