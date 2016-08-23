@@ -121,7 +121,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
  private:
   // function that will be called by TableProcessor
   // for iterating over all not expired pages in table
-  bool process_function(i::DealInfo* elements, uint32_t size);
+  bool process_function(i::DealInfo* elements, uint32_t size) override;
 
   // VIRTUAL FUNCTIONS SECTION:
   virtual bool process_deal(const i::DealInfo& deal) = 0;
@@ -144,9 +144,9 @@ class DealsCheapestByDatesSimple : public DealsSearchQuery {
   DealsCheapestByDatesSimple(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
   }
   // implement virtual functions:
-  bool process_deal(const i::DealInfo& deal);
-  void pre_search();
-  void post_search();
+  bool process_deal(const i::DealInfo& deal) override;
+  void pre_search() override;
+  void post_search() override;
 
   std::map<uint32_t, i::DealInfo> grouped_destinations;
   std::vector<i::DealInfo> exec_result;
@@ -161,9 +161,9 @@ class DealsCheapestDayByDay : public DealsSearchQuery {
   }
 
   // implement virtual functions:
-  bool process_deal(const i::DealInfo& deal);
-  void pre_search();
-  void post_search();
+  bool process_deal(const i::DealInfo& deal) override;
+  void pre_search() override;
+  void post_search() override;
 
   std::map<uint32_t, std::map<uint32_t, i::DealInfo>> grouped_destinations_and_dates;
   std::vector<i::DealInfo> exec_result;

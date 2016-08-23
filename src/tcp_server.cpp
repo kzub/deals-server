@@ -119,7 +119,7 @@ void TCPConnection::network_write() {
 /*----------------------------------------------------------------------
 * TCPConnection close
 *----------------------------------------------------------------------*/
-std::string TCPConnection::get_data() {
+std::string &TCPConnection::get_data() {
   return data_in;
 }
 
