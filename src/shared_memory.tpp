@@ -570,6 +570,7 @@ SharedMemoryPage<ELEMENT_T>::~SharedMemoryPage() {
     std::cout << "FREE " << page_name << " (" << page_memory_size << ") ";
     int res_unmap = munmap(shared_memory, page_memory_size);
     std::cout << (res_unmap == 0 ? "OK " : "FAIL ") << std::endl;
+    shared_memory = nullptr;
   }
 }
 
