@@ -42,7 +42,7 @@ io_handler close() do nothing, if all io_handkers closed -> connection->close()
 #define MAX_CONNECTION_LIFETIME_SEC 5
 #define POLL_TIMEOUT_MS 5000
 
-typedef std::string NetData;  // net bytes is an std::string instance
+using NetData = std::string;  // net bytes is an std::string instance
 std::string inet_addr_to_string(struct sockaddr_in& hostaddr);
 
 /*----------------------------------------------------------------------

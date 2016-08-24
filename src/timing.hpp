@@ -7,7 +7,7 @@
 
 namespace timing {
 //---------------------------------------------------
-typedef long long timing_t;
+using timing_t = long long;
 static uint32_t debug_time_shift = 0;
 
 //---------------------------------------------------
@@ -27,10 +27,10 @@ class Timer {
   void report();
 
  private:
-  typedef struct {
+  using tick_t = struct {
     std::string text;
     timing_t clock;
-  } tick_t;
+  };
 
   std::vector<tick_t> ticks;
   std::string name;

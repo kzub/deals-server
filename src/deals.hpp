@@ -41,7 +41,8 @@ struct DealInfo {
   uint32_t index;
   uint32_t size;
 };
-typedef uint8_t DealData;  // aka char
+
+using DealData = uint8_t;  // aka char
 }  // namespace deals::i
 
 struct DealInfo {
