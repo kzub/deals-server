@@ -1,3 +1,4 @@
+#include <array>
 #include <cinttypes>
 #include <cstring>
 #include <iostream>
@@ -83,6 +84,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   lock->enter();
 
   std::vector<TablePageIndexElement> records_to_scan;
+  records_to_scan.reserve(opened_pages_list.size());  // optimisation
 
   uint16_t idx = 0;
   // uint16_t last_not_expired_idx = 0;
@@ -288,7 +290,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
       expire_time = current_time + record_expire_seconds;
     }
 
-    // update only if time greater
+    // update page expire time only if record expire time greater
     if (expire_time > index_record->expire_at) {
       index_record->expire_at = expire_time;
     }
