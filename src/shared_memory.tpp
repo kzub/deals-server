@@ -1,3 +1,4 @@
+#include <array>
 #include <cinttypes>
 #include <cstring>
 #include <iostream>
@@ -83,6 +84,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   lock->enter();
 
   std::vector<TablePageIndexElement> records_to_scan;
+  records_to_scan.reserve(opened_pages_list.size());  // optimisation
 
   uint16_t idx = 0;
   // uint16_t last_not_expired_idx = 0;
@@ -288,7 +290,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
       expire_time = current_time + record_expire_seconds;
     }
 
-    // update only if time greater
+    // update page expire time only if record expire time greater
     if (expire_time > index_record->expire_at) {
       index_record->expire_at = expire_time;
     }
@@ -393,7 +395,9 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       // page expired -> make it empty and use it to save records
       // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
       //                     ^              ^
-      if (index_record.expire_at > 0 && index_record.expire_at >= current_time) {
+      if (index_record.expire_at > 0 &&
+          index_record.expire_at + MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC >= current_time) {
+        //                         ^^^ to be sure page not being used by anyone
         last_data_idx = idx;
       }
 
@@ -568,6 +572,7 @@ SharedMemoryPage<ELEMENT_T>::~SharedMemoryPage() {
     std::cout << "FREE " << page_name << " (" << page_memory_size << ") ";
     int res_unmap = munmap(shared_memory, page_memory_size);
     std::cout << (res_unmap == 0 ? "OK " : "FAIL ") << std::endl;
+    shared_memory = nullptr;
   }
 }
 

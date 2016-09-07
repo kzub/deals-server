@@ -41,7 +41,8 @@ struct DealInfo {
   uint32_t index;
   uint32_t size;
 };
-typedef uint8_t DealData;  // aka char
+
+using DealData = uint8_t;  // aka char
 }  // namespace deals::i
 
 struct DealInfo {
@@ -121,7 +122,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
  private:
   // function that will be called by TableProcessor
   // for iterating over all not expired pages in table
-  bool process_function(i::DealInfo* elements, uint32_t size);
+  bool process_function(i::DealInfo* elements, uint32_t size) final override;
 
   // VIRTUAL FUNCTIONS SECTION:
   virtual bool process_deal(const i::DealInfo& deal) = 0;
@@ -144,9 +145,9 @@ class DealsCheapestByDatesSimple : public DealsSearchQuery {
   DealsCheapestByDatesSimple(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
   }
   // implement virtual functions:
-  bool process_deal(const i::DealInfo& deal);
-  void pre_search();
-  void post_search();
+  bool process_deal(const i::DealInfo& deal) final override;
+  void pre_search() final override;
+  void post_search() final override;
 
   std::map<uint32_t, i::DealInfo> grouped_destinations;
   std::vector<i::DealInfo> exec_result;
@@ -161,9 +162,9 @@ class DealsCheapestDayByDay : public DealsSearchQuery {
   }
 
   // implement virtual functions:
-  bool process_deal(const i::DealInfo& deal);
-  void pre_search();
-  void post_search();
+  bool process_deal(const i::DealInfo& deal) final override;
+  void pre_search() final override;
+  void post_search() final override;
 
   std::map<uint32_t, std::map<uint32_t, i::DealInfo>> grouped_destinations_and_dates;
   std::vector<i::DealInfo> exec_result;

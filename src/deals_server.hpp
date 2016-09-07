@@ -27,8 +27,8 @@ class DealsServer : public srv::TCPServer<Context> {
   void quit();
 
  private:
-  void on_connect(Connection& conn);
-  void on_data(Connection& conn);
+  void on_connect(Connection& conn) final override;
+  void on_data(Connection& conn) final override;
 
   void addDeal(Connection& conn);
   void getTop(Connection& conn);
