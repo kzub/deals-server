@@ -55,7 +55,7 @@ class HttpParser {
   }
 
   void write(const char* data, size_t size);
-  void write(std::string msg);
+  void write(const std::string& msg);
   bool is_request_complete();
   bool is_headers_complete();
 
@@ -84,7 +84,7 @@ class HttpResponse {
   HttpResponse(uint16_t status_code, std::string reason_phrase, std::string body);
 
   void add_header(std::string name, std::string value);
-  void write(std::string msg);
+  void write(const std::string& msg);
 
   operator std::string();
 

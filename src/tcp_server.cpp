@@ -44,21 +44,37 @@ TCPConnection::~TCPConnection() {
 *----------------------------------------------------------------------*/
 void TCPConnection::network_read() {
   int count;
-  ioctl(sockfd, FIONREAD, &count);
+  int res;
+
+  res = ioctl(sockfd, FIONREAD, &count);
+  if (res != 0) {
+    std::cerr << "ERROR TCPConnection::network_read:: ioctl, errno:" << errno << std::endl;
+    close();  // close connection
+    return;
+  }
+
   if (count == 0) {
-    // TODO: understand why it may happend on peak load
+    std::cerr << "ERROR TCPConnection::network_read:: count == 0" << std::endl;
     close();  // close connection
     return;
   }
 
   char buf[count];
-  int res = recv(sockfd, &buf, count, 0);
+  res = recv(sockfd, &buf, count, MSG_DONTWAIT);
 
-  if (res == -1 || res == 0) {
+  if (res == -1) {
+    std::cerr << "ERROR TCPConnection::network_read::recv, errno:" << errno << std::endl;
     close();  // close connection
     return;
   }
 
+  if (res == 0) {
+    std::cerr << "ERROR TCPConnection::network_read::recv, res == 0:" << std::endl;
+    close();  // close connection
+    return;
+  }
+
+  // TODO: update connection time?
   data_in = std::string(buf, res);
 }
 
@@ -66,7 +82,9 @@ void TCPConnection::network_read() {
 * TCPConnection Read
 *----------------------------------------------------------------------*/
 void TCPConnection::network_data_processed() {
-  data_in.clear();
+  // не нужно потому что есть data_in = std::string(buf, res);
+  // copy assigned constructor будет вызван
+  // data_in.clear();
 }
 
 /*----------------------------------------------------------------------
@@ -103,10 +121,12 @@ void TCPConnection::network_write() {
   }
 #else  // ------------- without NET_MAX_PACKET_SIZE (send whole data at once)
   // send data without chunking
-  ssize_t res = send(sockfd, data_out.c_str(), data_out.length(), 0);
+  ssize_t res = send(sockfd, data_out.c_str(), data_out.length(), MSG_DONTWAIT);
 
   if (res == -1 || res == 0) {
-    std::cout << "ERROR on send network_write()" << std::endl;
+    std::cout << get_client_address()
+              << " ERROR on send network_write(), data.length:" << data_out.length()
+              << ", res:" << res << ", errno:" << errno << std::endl;
     data_out.clear();  // mark connection as nothing to send
     close();           // mark connections as dead
     return;
@@ -119,7 +139,7 @@ void TCPConnection::network_write() {
 /*----------------------------------------------------------------------
 * TCPConnection close
 *----------------------------------------------------------------------*/
-const std::string TCPConnection::get_data() {
+const std::string &TCPConnection::get_data() {
   return data_in;
 }
 
@@ -128,6 +148,7 @@ const std::string TCPConnection::get_data() {
 *----------------------------------------------------------------------*/
 bool TCPConnection::is_alive() {
   if (has_something_to_send()) {
+    // connections often closed with mesage to send
     return true;
   }
   return connection_alive;

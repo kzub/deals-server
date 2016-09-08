@@ -26,6 +26,10 @@ ParserResult HttpHeaders::parse(std::string http_message) {
   std::string http_headers = http_message.substr(0, pos);
   std::vector<std::string> http_headers_lines = utils::split_string(http_headers, "\r\n");
 
+  if (http_headers_lines.size() == 0) {
+    return ParserResult::PARSE_ERR;
+  }
+
   // std::cout << "RequestLine:" << http_headers_lines[0] << std::endl;
   // omit first one as it is a request line
   for (auto line = http_headers_lines.begin() + 1; line != http_headers_lines.end(); ++line) {
@@ -149,7 +153,7 @@ void HttpParser::write(const char* data, size_t size) {
 };
 
 // save function worked with std::string
-void HttpParser::write(std::string msg) {
+void HttpParser::write(const std::string& msg) {
   msgs.push_back(msg);
   bytes_written += msg.length();
 
@@ -224,7 +228,7 @@ void HttpResponse::add_header(std::string name, std::string value) {
 //------------------------------------------------------------------
 // Response: Write data to response
 //------------------------------------------------------------------
-void HttpResponse::write(std::string msg) {
+void HttpResponse::write(const std::string& msg) {
   body.push_back(msg);
 }
 
