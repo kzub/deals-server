@@ -21,7 +21,7 @@ class Context {
 //------------------------------------------------------
 class DealsServer : public srv::TCPServer<Context> {
  public:
-  DealsServer(uint16_t port) : srv::TCPServer<Context>(port) {
+  DealsServer(const std::string host, const uint16_t port) : srv::TCPServer<Context>(host, port) {
   }
   void process();
   void quit();

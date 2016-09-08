@@ -5,6 +5,7 @@
 #include <iostream>
 #include <list>
 
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -99,7 +100,7 @@ class TCPServer {
     Context context;
   };
 
-  TCPServer(const uint16_t port);
+  TCPServer(const std::string host, const uint16_t port);
 
  public:
   uint16_t process();  // return number of active connections
@@ -126,7 +127,7 @@ class TCPServer {
 * TCPServer init
 *----------------------------------------------------------------------*/
 template <typename Context>
-TCPServer<Context>::TCPServer(const uint16_t port) {
+TCPServer<Context>::TCPServer(const std::string host, const uint16_t port) {
   srv_sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (srv_sockfd == -1) {
@@ -137,20 +138,29 @@ TCPServer<Context>::TCPServer(const uint16_t port) {
   /* Initialize socket structure */
   bzero(&serv_addr, sizeof(serv_addr));
 
+  int res;
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = INADDR_ANY;
   serv_addr.sin_port = htons(port);
 
+  if (host.length() > 0) {
+    res = inet_pton(AF_INET, host.c_str(), &serv_addr.sin_addr.s_addr);
+    if (res != 1) {
+      std::cerr << "ERROR converting ip address:" << host << ", errno:" << errno << std::endl;
+      std::exit(-1);
+    }
+  }
+
   /* Now bind the host address using bind() call.*/
   while (bind(srv_sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-    std::cout << "ERROR on binding:" << errno << std::endl;
+    std::cout << "ERROR binding (" << host << ":" << port << ") errno:" << errno << std::endl;
     sleep(5);
   }
 
-  int res = listen(srv_sockfd, ACCEPT_QUEUE_LENGTH);
+  res = listen(srv_sockfd, ACCEPT_QUEUE_LENGTH);
 
   if (res != 0) {
-    std::cout << "ERROR on listening" << errno << std::endl;
+    std::cerr << "ERROR on listening" << errno << std::endl;
     std::exit(-1);
   }
 

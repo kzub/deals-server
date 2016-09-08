@@ -647,8 +647,8 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  if (argc < 2) {
-    std::cout << "deals_server <port>" << std::endl;
+  if (argc < 3) {
+    std::cout << "deals_server <host> <port>" << std::endl;
     return -1;
   }
 
@@ -656,8 +656,9 @@ int main(int argc, char *argv[]) {
   std::signal(SIGTERM, deals_srv::signalHandler);
   std::signal(SIGBUS, deals_srv::signalHandler);
 
-  uint16_t port = std::stol(argv[1]);
-  deals_srv::DealsServer srv(port);
+  const std::string host = argv[1];
+  const uint16_t port = std::stol(argv[2]);
+  deals_srv::DealsServer srv(host, port);
 
   while (1) {
     srv.process();

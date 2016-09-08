@@ -15,11 +15,12 @@ if [[ $1 = "start" ]]; then
 		exit
 	fi
 
+	HOST="0.0.0.0"
 	PORT=$((5000+$2))
 
 	for i in `seq $2 $3`;
 	do
-		RUN="chpst -o 8000 -P -u zubkov $APPFILE $PORT"
+		RUN="chpst -o 8000 -P -u zubkov $APPFILE $HOST $PORT"
 		echo $RUN
 		$RUN >> $LOGFILE 2>&1 &
 		PORT=$((1+$PORT))
