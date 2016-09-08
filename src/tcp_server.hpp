@@ -60,6 +60,7 @@ class TCPConnection {
   void close();
   void close(const std::string);
   void write(const std::string);
+  void reset();
   bool is_alive();
   const std::string& get_data();
   bool has_something_to_send();
@@ -282,7 +283,7 @@ uint16_t TCPServer<Context>::process() {
   // i == 0 => main socket listening for new connections
   for (i = 1; i < nfds; ++i) {
     if (pfd[i].revents & POLLHUP) {
-      p_connections[i]->close();
+      p_connections[i]->reset();
       continue;
     }
 
