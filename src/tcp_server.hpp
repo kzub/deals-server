@@ -60,7 +60,7 @@ class TCPConnection {
   void close(const std::string);
   void write(const std::string);
   bool is_alive();
-  std::string& get_data();
+  const std::string get_data();
   bool has_something_to_send();
   uint16_t get_socket();
 
