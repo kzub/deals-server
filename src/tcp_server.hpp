@@ -40,7 +40,8 @@ io_handler close() do nothing, if all io_handkers closed -> connection->close()
 */
 // #define NET_MAX_PACKET_SIZE 6000
 #define ACCEPT_QUEUE_LENGTH 100
-#define MAX_CONNECTION_LIFETIME_SEC 3
+#define MAX_CONNECTION_LIFETIME_SEC 10
+#define MAX_CONNECTION_IDLE_TIME_SEC 2
 #define POLL_TIMEOUT_MS 3000
 
 using NetData = std::string;  // net bytes is an std::string instance
@@ -71,6 +72,7 @@ class TCPConnection {
   std::string get_client_address();
 
   const uint32_t created_time;
+  uint32_t last_beat_time;
 
  private:
   std::string client_addr;
@@ -244,6 +246,11 @@ uint16_t TCPServer<Context>::process() {
     if (current_time - conn->created_time > MAX_CONNECTION_LIFETIME_SEC) {
       std::cerr << get_server_address()
                 << " ERROR MAX_CONNECTION_LIFETIME_SEC:" << MAX_CONNECTION_LIFETIME_SEC
+                << std::endl;
+      conn->close();
+    } else if (current_time - conn->last_beat_time > MAX_CONNECTION_IDLE_TIME_SEC) {
+      std::cerr << get_server_address()
+                << " ERROR MAX_CONNECTION_IDLE_TIME_SEC:" << MAX_CONNECTION_IDLE_TIME_SEC
                 << std::endl;
       conn->close();
     }

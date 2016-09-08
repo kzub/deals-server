@@ -9,7 +9,9 @@ namespace srv {
 * TCPConnection Constructor
 *----------------------------------------------------------------------*/
 TCPConnection::TCPConnection(const int accept_sockfd)
-    : created_time(timing::getTimestampSec()), connection_alive(false) {
+    : created_time(timing::getTimestampSec()),
+      last_beat_time(created_time),
+      connection_alive(false) {
   // std::cout << "TCPConnection() accept_sockfd:" << accept_sockfd << std::endl;
 
   clilen = sizeof(cli_addr);
@@ -74,7 +76,7 @@ void TCPConnection::network_read() {
     return;
   }
 
-  // TODO: update connection time?
+  last_beat_time = timing::getTimestampSec();
   data_in = std::string(buf, res);
 }
 
@@ -95,6 +97,7 @@ void TCPConnection::network_write() {
   if (msg_length == 0) {
     return;
   }
+  last_beat_time = timing::getTimestampSec();
 
 #ifdef NET_MAX_PACKET_SIZE  // send data by chunks
   // currently i dont know which variant is better
