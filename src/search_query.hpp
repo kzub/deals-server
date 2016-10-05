@@ -1,7 +1,7 @@
 #ifndef SRC_SEARCH_QUERY_HPP
 #define SRC_SEARCH_QUERY_HPP
 
-#include <set>
+#include <unordered_set>
 #include "shared_memory.hpp"
 #include "utils.hpp"
 
@@ -50,7 +50,7 @@ class SearchQuery {
   uint32_t origin_value;
 
   bool filter_destination = false;
-  std::set<uint32_t> destination_values_set;
+  std::unordered_set<uint32_t> destination_values_set;
 
   bool filter_departure_date = false;
   DateInterval departure_date_values;

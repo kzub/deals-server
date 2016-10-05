@@ -140,11 +140,11 @@ void DealsServer::on_data(Connection &conn) {
       // TODO
       // *) add cache for getLocaleTop
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
-      // *) rewrite to std::map grouping (month calendar)
       // *) increase expire time to 2 days. but search for deals just for 8 hours by default
       // *) logger with date/time
       // *) stat info: connections, records count (used/expired/total), opened pages
       // *) nginx cache for requests
+      // *) (+) rewrite to std::unordered_map grouping (month calendar)
       // *) (+) stop accepting new connections and quit after all connections are served
       // *) (+) calc amount of space left on dev/shm
       // *) (+) OW filter

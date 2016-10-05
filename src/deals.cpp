@@ -316,7 +316,7 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
 }
 
 //      ***************************************************
-//          CHEAPEST BY DATES (simple std::map version)
+//     CHEAPEST BY DATES (simple std::unordered_map version)
 //      ***************************************************
 
 /*---------------------------------------------------------
