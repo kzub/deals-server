@@ -1,7 +1,7 @@
 #ifndef SRC_TOP_DST_HPP
 #define SRC_TOP_DST_HPP
 
-#include <map>
+#include <unordered_map>
 #include "search_query.hpp"
 #include "shared_memory.hpp"
 
@@ -72,7 +72,7 @@ class TopDstSearchQuery : public shared_mem::TableProcessor<i::DstInfo>, public 
 
  private:
   shared_mem::Table<i::DstInfo>& table;
-  std::map<uint32_t, uint32_t> grouped_destinations;
+  std::unordered_map<uint32_t, uint32_t> grouped_destinations;
 };
 }  // namespace top
 

@@ -1,7 +1,7 @@
 #ifndef SRC_DEALS_HPP
 #define SRC_DEALS_HPP
 
-#include <map>
+#include <unordered_map>
 #include "search_query.hpp"
 #include "shared_memory.hpp"
 #include "utils.hpp"
@@ -149,7 +149,7 @@ class DealsCheapestByDatesSimple : public DealsSearchQuery {
   void pre_search() final override;
   void post_search() final override;
 
-  std::map<uint32_t, i::DealInfo> grouped_destinations;
+  std::unordered_map<uint32_t, i::DealInfo> grouped_destinations;
   std::vector<i::DealInfo> exec_result;
 };
 
@@ -166,7 +166,8 @@ class DealsCheapestDayByDay : public DealsSearchQuery {
   void pre_search() final override;
   void post_search() final override;
 
-  std::map<uint32_t, std::map<uint32_t, i::DealInfo>> grouped_destinations_and_dates;
+  std::unordered_map<uint32_t, std::unordered_map<uint32_t, i::DealInfo>>
+      grouped_destinations_and_dates;
   std::vector<i::DealInfo> exec_result;
 };
 
