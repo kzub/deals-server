@@ -138,6 +138,7 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       // TODO
+      // *) add cache for getLocaleTop
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
       // *) rewrite to std::map grouping (month calendar)
       // *) increase expire time to 2 days. but search for deals just for 8 hours by default
