@@ -62,7 +62,20 @@ bool TopDstDatabase::addDestination(std::string locale, std::string destination,
 std::vector<DstInfo> TopDstDatabase::getLocaleTop(std::string locale,
                                                   std::string departure_date_from,
                                                   std::string departure_date_to, uint16_t limit) {
-  std::vector<DstInfo> result;
+  auto cache = result_cache_by_locale.find(locale);
+
+  if (cache != result_cache_by_locale.end()) {
+    // std::cout << "found cache" << std::endl;
+    if (!cache->second.is_expired()) {
+      // std::cout << "use cached" << std::endl;
+      return cache->second.get_value();
+    } else {
+      result_cache_by_locale.erase(cache);
+      // std::cout << "erase cache" << std::endl;
+    }
+  }
+
+  TopDstDatabase::Result result;
 
   TopDstSearchQuery query(*db_index);
 
@@ -71,6 +84,10 @@ std::vector<DstInfo> TopDstDatabase::getLocaleTop(std::string locale,
   query.result_limit(limit);
 
   result = query.exec();
+
+  cache::Cache<TopDstDatabase::Result> cached_result = {result, 5};
+  result_cache_by_locale.emplace(locale, cached_result);
+  // std::cout << "write to cached" << std::endl;
 
   return result;
 }

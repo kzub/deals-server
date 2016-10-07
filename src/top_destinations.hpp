@@ -2,6 +2,7 @@
 #define SRC_TOP_DST_HPP
 
 #include <unordered_map>
+#include "cache.hpp"
 #include "search_query.hpp"
 #include "shared_memory.hpp"
 
@@ -41,14 +42,16 @@ class TopDstDatabase {
   TopDstDatabase();
   ~TopDstDatabase();
 
+  using Result = std::vector<DstInfo>;
   bool addDestination(std::string locale, std::string destination, std::string departure_date);
-  std::vector<DstInfo> getLocaleTop(std::string locale, std::string departure_date_from,
-                                    std::string departure_date_to, uint16_t limit);
+  Result getLocaleTop(std::string locale, std::string departure_date_from,
+                      std::string departure_date_to, uint16_t limit);
 
   void truncate();  // clear database
 
  private:
   shared_mem::Table<i::DstInfo>* db_index;
+  std::unordered_map<std::string, cache::Cache<Result>> result_cache_by_locale;
 
   friend void unit_test();
 };
