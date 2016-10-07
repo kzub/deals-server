@@ -350,13 +350,24 @@ std::vector<DealInfo> DealsDatabase::searchForCheapest(
 // DealsCheapestByDatesSimple PRESEARCH
 //----------------------------------------------------------------
 void DealsCheapestByDatesSimple::pre_search() {
-  // nothing to do here
+  grouped_max_price = 0;
 }
 
 //---------------------------------------------------------
 // Process selected deal and decide go next or stop here
 //---------------------------------------------------------
 bool DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
+  if (grouped_destinations.size() > filter_limit) {
+    if (grouped_max_price <= deal.price) {
+      // deal price is far more expensive, skip grouping
+      return true;
+    }
+    grouped_max_price = deal.price;
+
+  } else if (grouped_max_price < deal.price) {
+    grouped_max_price = deal.price;
+  }
+
   auto &dst_deal = grouped_destinations[deal.destination];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {

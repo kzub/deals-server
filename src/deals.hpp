@@ -151,6 +151,7 @@ class DealsCheapestByDatesSimple : public DealsSearchQuery {
 
   std::unordered_map<uint32_t, i::DealInfo> grouped_destinations;
   std::vector<i::DealInfo> exec_result;
+  uint32_t grouped_max_price = 0;
 };
 
 //------------------------------------------------------------

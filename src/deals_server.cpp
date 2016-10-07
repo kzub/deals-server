@@ -138,6 +138,9 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       // TODO
+      // *) overwrite not expired pages on low mem
+      // *) add strong types for function parameters
+      // *) check if price is less than top N max. Otherwise skip map[destination] calculation
       // *) add cache for getLocaleTop
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
       // *) increase expire time to 2 days. but search for deals just for 8 hours by default
