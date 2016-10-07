@@ -11,7 +11,7 @@ class Cache {
   // Cache(const Cache<TYPE>& cache);
   // Cache(Cache<TYPE>&& cache);
   bool is_expired();
-  TYPE& get_value();
+  TYPE get_value();
 
  private:
   uint32_t ts_live_until_sec;
@@ -22,7 +22,7 @@ class Cache {
 // constructor
 template <typename TYPE>
 Cache<TYPE>::Cache(TYPE& val, uint32_t lifetime_sec) : value(val) {
-  std::cout << "CONST" << std::endl;
+  // std::cout << "CONST" << std::endl;
   ts_live_until_sec = lifetime_sec + timing::getTimestampSec();
 };
 
@@ -44,13 +44,13 @@ Cache<TYPE>::Cache(Cache<TYPE>&& cache) {
 template <typename TYPE>
 bool Cache<TYPE>::is_expired() {
   auto now = timing::getTimestampSec();
-  std::cout << "diff:" << std::to_string(ts_live_until_sec - now) << std::endl;
+  // std::cout << "diff:" << std::to_string(ts_live_until_sec - now) << std::endl;
   return ts_live_until_sec < now;
 }
 
 // get()
 template <typename TYPE>
-TYPE& Cache<TYPE>::get_value() {
+TYPE Cache<TYPE>::get_value() {
   return value;
 }
 
