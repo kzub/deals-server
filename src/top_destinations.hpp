@@ -42,16 +42,19 @@ class TopDstDatabase {
   TopDstDatabase();
   ~TopDstDatabase();
 
-  using Result = std::vector<DstInfo>;
   bool addDestination(std::string locale, std::string destination, std::string departure_date);
-  Result getLocaleTop(std::string locale, std::string departure_date_from,
-                      std::string departure_date_to, uint16_t limit);
+  std::vector<DstInfo> getLocaleTop(std::string locale, std::string departure_date_from,
+                                    std::string departure_date_to, uint16_t limit);
 
+  std::vector<DstInfo> getCachedResult(std::string locale, std::string departure_date_from,
+                                       std::string departure_date_to, uint16_t limit);
+
+  void saveResultToCache(std::string locale, std::vector<DstInfo>& result);
   void truncate();  // clear database
-
  private:
+  using CachedResult = cache::Cache<std::vector<DstInfo>>;
   shared_mem::Table<i::DstInfo>* db_index;
-  std::unordered_map<std::string, cache::Cache<Result>> result_cache_by_locale;
+  std::unordered_map<std::string, CachedResult> result_cache_by_locale;
 
   friend void unit_test();
 };
