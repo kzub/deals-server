@@ -66,6 +66,10 @@ std::vector<DstInfo> TopDstDatabase::getCachedResult(std::string locale,
                                                      std::string departure_date_from,
                                                      std::string departure_date_to,
                                                      uint16_t limit) {
+  if (departure_date_from.size() > 0 || departure_date_to.size() > 0) {
+    // std::cout << "[CACHE] date range exists:" << locale << std::endl;
+    return {};
+  }
   auto cache = result_cache_by_locale.find(locale);
 
   if (cache == result_cache_by_locale.end()) {

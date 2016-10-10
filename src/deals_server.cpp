@@ -138,16 +138,17 @@ void DealsServer::on_data(Connection &conn) {
       }
 
       // TODO
+      // *) clear mem mechanism parallesation?
       // *) check day by day logic in case of no destinations specified. look for opt opportunities
       // *) overwrite not expired pages on low mem
       // *) add strong types for function parameters
-      // *) add cache for getLocaleTop
       // *) unit test + alg speed comparasion of DealsCheapestDayByDay::process_deal
       // *) increase expire time to 2 days. but search for deals just for 8 hours by default
       // *) logger with date/time
       // *) stat info: connections, records count (used/expired/total), opened pages
       // *) nginx cache for requests
-      // +) check if price is less than top N max. Otherwise skip map[destination] calculation
+      // *) (+) check if price is less than top N max. Otherwise skip map[destination] calculation
+      // *) (+) add cache for getLocaleTop
       // *) (+) rewrite to std::unordered_map grouping (month calendar)
       // *) (+) stop accepting new connections and quit after all connections are served
       // *) (+) calc amount of space left on dev/shm
