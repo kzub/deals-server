@@ -169,7 +169,7 @@ void DealsServer::on_data(Connection &conn) {
 
   } catch (deals::RequestError err) {
     std::cout << "Request ERROR: " << err.message << std::endl;
-    conn.close(http::HttpResponse(err.code, "Bad request:", err.message));
+    conn.close(http::HttpResponse(err.code, "Bad request", err.message));
   } catch (const char *text) {
     std::cout << "Request ERROR: " << text << std::endl;
     conn.close(http::HttpResponse(500, "Internal Server Error", text));
