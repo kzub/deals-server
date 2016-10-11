@@ -167,8 +167,11 @@ void DealsServer::on_data(Connection &conn) {
     // default response:
     conn.close(http::HttpResponse(404, "Not Found", "Method unknown\n"));
 
+  } catch (deals::RequestError err) {
+    std::cout << "Request error: " << err.message << std::endl;
+    conn.close(http::HttpResponse(err.code, "Internal Server Error", err.message));
   } catch (const char *text) {
-    std::cout << "Request processing error: " << text << std::endl;
+    std::cout << "Request error: " << text << std::endl;
     conn.close(http::HttpResponse(500, "Internal Server Error", text));
   } catch (...) {
     std::cout << "Request processing error: unknown" << std::endl;

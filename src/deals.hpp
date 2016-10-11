@@ -172,6 +172,18 @@ class DealsCheapestDayByDay : public DealsSearchQuery {
   std::vector<i::DealInfo> exec_result;
 };
 
+//------------------------------------------------------------
+// Deals error codes
+//------------------------------------------------------------
+class RequestError {
+ public:
+  RequestError(std::string text, uint16_t code = 400) : message(text), code(code) {
+  }
+
+  const std::string message;
+  const uint16_t code;
+};
+
 }  // namespace deals
 
 #endif

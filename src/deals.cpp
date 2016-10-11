@@ -19,7 +19,7 @@ void DealsSearchQuery::execute() {
   // if there was bad parameters -> no processing required
   if (query_is_broken) {
     std::cout << "ERROR: query has inconsistent parameters" << std::endl;
-    throw "something wrong with request parameters";
+    throw RequestError("something wrong with request parameters", 400);
     return;
   }
 
@@ -439,16 +439,22 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
 //----------------------------------------------------------------
 void DealsCheapestDayByDay::pre_search() {
   // filter_departure_date must be specified
+  if (!filter_destination) {
+    std::cout << "ERROR no destinations specified" << std::endl;
+    throw RequestError("destinations list must be specified");
+  }
+
+  // filter_departure_date must be specified
   if (!filter_departure_date || !departure_date_values.duration) {
     std::cout << "ERROR no departure_date range" << std::endl;
-    throw "departure dates interval must be specified";
+    throw RequestError("departure dates interval must be specified");
   }
 
   // 3 city * 365 days - limit
   if (result_destinations_count * departure_date_values.duration > 1098) {
     std::cout << "ERROR result_destinations_count * departure_date_values.duration > 1098"
               << std::endl;
-    throw "too much deals count requested, reduce destinations or dates range";
+    throw RequestError("too much deals count requested, reduce destinations or dates range");
   }
 }
 
