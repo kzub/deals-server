@@ -122,10 +122,10 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
  private:
   // function that will be called by TableProcessor
   // for iterating over all not expired pages in table
-  bool process_function(i::DealInfo* elements, uint32_t size) final override;
+  void process_function(const i::DealInfo& element) final override;
 
   // VIRTUAL FUNCTIONS SECTION:
-  virtual bool process_deal(const i::DealInfo& deal) = 0;
+  virtual void process_deal(const i::DealInfo& deal) = 0;
   // if process_function() deside deals worth of processing
   // process_deal() will be called in parent class
 
@@ -134,6 +134,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
   virtual void post_search() = 0;
 
   shared_mem::Table<i::DealInfo>& table;
+  uint32_t current_time = 0;
   friend class DealsDatabase;
 };
 
@@ -145,7 +146,7 @@ class DealsCheapestByDatesSimple : public DealsSearchQuery {
   DealsCheapestByDatesSimple(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {
   }
   // implement virtual functions:
-  bool process_deal(const i::DealInfo& deal) final override;
+  void process_deal(const i::DealInfo& deal) final override;
   void pre_search() final override;
   void post_search() final override;
 
@@ -163,7 +164,7 @@ class DealsCheapestDayByDay : public DealsSearchQuery {
   }
 
   // implement virtual functions:
-  bool process_deal(const i::DealInfo& deal) final override;
+  void process_deal(const i::DealInfo& deal) final override;
   void pre_search() final override;
   void post_search() final override;
 

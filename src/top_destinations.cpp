@@ -155,42 +155,34 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
 
 /* function that will be called by TableProcessor
       *  for iterating over all not expired pages in table */
-bool TopDstSearchQuery::process_function(i::DstInfo* elements, uint32_t size) {
-  for (uint32_t idx = 0; idx < size; ++idx) {
-    const i::DstInfo& current_element = elements[idx];
+void TopDstSearchQuery::process_function(const i::DstInfo& current_element) {
+  // ******************************************************************
+  // FILTERING OUT AREA
+  // ******************************************************************
 
-    // ******************************************************************
-    // FILTERING OUT AREA
-    // ******************************************************************
-
-    // if departure date interval provided let's look it matches
-    // --------------------------------
-    if (filter_locale) {
-      if (locale_value != current_element.locale) {
-        // std::cout << "filter_locale" << std::endl;
-        continue;
-      }
+  // if departure date interval provided let's look it matches
+  // --------------------------------
+  if (filter_locale) {
+    if (locale_value != current_element.locale) {
+      // std::cout << "filter_locale" << std::endl;
+      return;
     }
-
-    // if departure date interval provided let's look it matches
-    // --------------------------------
-    if (filter_departure_date) {
-      if (current_element.departure_date < departure_date_values.from ||
-          current_element.departure_date > departure_date_values.to) {
-        // std::cout << "filter_departure_date" << std::endl;
-        continue;
-      }
-    }
-
-    // **********************************************************************
-    // BUILD DESTINATIONS HASH AREA
-    // **********************************************************************
-
-    grouped_destinations[current_element.destination]++;
   }
 
-  // true - means continue to iterate
-  return true;
+  // if departure date interval provided let's look it matches
+  // --------------------------------
+  if (filter_departure_date) {
+    if (current_element.departure_date < departure_date_values.from ||
+        current_element.departure_date > departure_date_values.to) {
+      // std::cout << "filter_departure_date" << std::endl;
+      return;
+    }
+  }
+
+  // **********************************************************************
+  // BUILD DESTINATIONS HASH AREA
+  // **********************************************************************
+  grouped_destinations[current_element.destination]++;
 }
 
 namespace utils {

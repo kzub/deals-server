@@ -72,7 +72,7 @@ class TopDstSearchQuery : public shared_mem::TableProcessor<i::DstInfo>, public 
 
   // function that will be called by TableProcessor
   // for iterating over all not expired pages in table
-  bool process_function(i::DstInfo* elements, uint32_t size);
+  void process_function(const i::DstInfo& element);
 
   friend class TopDstDatabase;
 

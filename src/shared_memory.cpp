@@ -46,22 +46,16 @@ class TestResult : public TableProcessor<TestInfo> {
   TestResult(Table<TestInfo>* table) : table(table) {
   }
 
-  bool process_function(TestInfo* elements, uint32_t size) {
-    for (uint32_t idx = 0; idx < size; ++idx) {
-      if (found.size() <= elements[idx].value) {
-        for (uint32_t todo = elements[idx].value - found.size() + 1; todo > 0; todo--) {
-          // std::cout << "PUSHBACK size:" << found.size() << " value:" <<
-          // elements[idx].value << std::endl;
-          found.push_back(0);
-        }
+  void process_function(const TestInfo& element) {
+    if (found.size() <= element.value) {
+      for (uint32_t todo = element.value - found.size() + 1; todo > 0; todo--) {
+        // std::cout << "PUSHBACK size:" << found.size() << " value:" <<
+        // element.value << std::endl;
+        found.push_back(0);
       }
-
-      found[elements[idx].value]++;
-      // std::cout << " idx:" << idx << " value:" << elements[idx].value << "
-      // found:" << found[elements[idx].value] <<std::endl;
     }
-    // std::cout << std::endl << "found:" << found << std::endl;
-    return true;
+
+    found[element.value]++;
   }
 
   void go() {
