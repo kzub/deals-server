@@ -220,7 +220,7 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   uint32_t data_size = data.length();
 
   // 1) Add data and get data offset in db page
-  shared_mem::ElementPointer<i::DealData> result = db_data->addRecord(data_pointer, data_size);
+  auto result = db_data->addRecord(data_pointer, data_size);
   if (result.error != shared_mem::ErrorCode::NO_ERROR) {
     std::cout << "ERROR DealsDatabase::addDeal 1:" << (int)result.error << std::endl;
     return false;
@@ -254,7 +254,7 @@ bool DealsDatabase::addDeal(std::string origin, std::string destination, std::st
   }
 
   // 2) Add deal to index, with data position information
-  shared_mem::ElementPointer<i::DealInfo> di_result = db_index->addRecord(&info);
+  auto di_result = db_index->addRecord(&info);
   if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
     std::cout << "ERROR DealsDatabase::addDeal 2:" << (int)di_result.error << std::endl;
     return false;
@@ -278,9 +278,9 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
   std::vector<DealInfo> result;
 
   for (const auto &deal : i_deals) {
-    shared_mem::ElementPointer<i::DealData> deal_data = {*db_data, deal.page_name, deal.index,
-                                                         deal.size};
-    i::DealData *data_pointer = deal_data.get_data();
+    auto deal_data =
+        shared_mem::ElementPointer<i::DealData>{*db_data, deal.page_name, deal.index, deal.size};
+    auto data_pointer = deal_data.get_data();
     std::string data = {(char *)data_pointer, deal.size};
 
     result.push_back((DealInfo){
@@ -363,7 +363,7 @@ void DealsCheapestByDatesSimple::process_deal(const i::DealInfo &deal) {
 //----------------------------------------------------------------
 void DealsCheapestByDatesSimple::post_search() {
   // process results
-  for (auto &v : grouped_destinations) {
+  for (const auto &v : grouped_destinations) {
     exec_result.push_back(v.second);
   }
 
@@ -456,8 +456,8 @@ void DealsCheapestDayByDay::process_deal(const i::DealInfo &deal) {
 //----------------------------------------------------------------
 void DealsCheapestDayByDay::post_search() {
   // process results
-  for (auto &dates : grouped_destinations_and_dates) {
-    for (auto &deal : dates.second) {
+  for (const auto &dates : grouped_destinations_and_dates) {
+    for (const auto &deal : dates.second) {
       exec_result.push_back(deal.second);
     }
   }

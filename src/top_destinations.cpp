@@ -49,8 +49,7 @@ bool TopDstDatabase::addDestination(std::string locale, std::string destination,
   info.departure_date = departure_date_int;
 
   // Secondly add deal to index, include data position information
-  shared_mem::ElementPointer<i::DstInfo> di_result = db_index->addRecord(&info);
-
+  auto di_result = db_index->addRecord(&info);
   if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
     std::cout << "ERROR addDestination():" << (int)di_result.error << std::endl;
     return false;
@@ -101,7 +100,7 @@ std::vector<DstInfo> TopDstDatabase::getCachedResult(std::string locale,
 void TopDstDatabase::saveResultToCache(std::string locale, std::vector<DstInfo>& result) {
   // one minute top destinations cache:
   if (result.size() > 0) {
-    TopDstDatabase::CachedResult cached_result{result, 60};
+    auto cached_result = TopDstDatabase::CachedResult{result, 60};
     result_cache_by_locale.emplace(locale, cached_result);
     // std::cout << "[CACHE] write result" << locale << std::endl;
   }
@@ -138,7 +137,7 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
   // convert result
   std::vector<DstInfo> top_destinations;
 
-  for (auto& v : grouped_destinations) {
+  for (const auto& v : grouped_destinations) {
     top_destinations.push_back({v.first, v.second});
   }
 
