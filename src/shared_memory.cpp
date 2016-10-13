@@ -18,16 +18,16 @@ bool checkSharedMemAvailability() {
 #endif
   uint32_t freemem = (100 * res.f_bavail / res.f_blocks);
 
-  if (freemem <= 2) {
+  if (freemem <= LOWMEM_ERROR_PERCENT) {
     std::cout << "ERROR VERY LOW MEMORY:" << freemem << "%"
               << " f_bavail:" << res.f_bavail << " f_blocks:" << res.f_blocks << std::endl;
-  } else if (freemem <= 5) {
+  } else if (freemem <= LOWMEM_WARNING_PERCENT) {
     std::cout << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
   }
   std::cout << "MEMORY:" << freemem << "%" << std::endl;
 
-  // pages will not allocated by 'new SharedMemory()'
-  return freemem > 3;
+  // if false pages will not allocated by 'new SharedMemory()'
+  return freemem > LOWMEM_ERROR_PERCENT;
 }
 
 /* ----------------------------------------------------------

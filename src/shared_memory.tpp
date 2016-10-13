@@ -86,15 +86,13 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   std::vector<TablePageIndexElement> records_to_scan;
   records_to_scan.reserve(opened_pages_list.size());  // optimisation
 
-  uint16_t idx = 0;
-  // uint16_t last_not_expired_idx = 0;
   uint32_t timestamp_now = timing::getTimestampSec();
 
   TablePageIndexElement* index_first = table_index->getElements();
   TablePageIndexElement* index_current;
 
   // search for pages to scan (not expired)
-  for (idx = 0; idx < table_max_pages; ++idx) {
+  for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     index_current = index_first + idx;
 
@@ -120,7 +118,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   lock->exit();
 
   bool continue_iteration;
-  for (auto& record : records_to_scan) {
+  for (const auto& record : records_to_scan) {
     // call table processor routine
     SharedMemoryPage<ELEMENT_T>* page = getPageByName(record.page_name);
     if (page == nullptr) {
@@ -212,7 +210,6 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   std::string insert_page_name;
   uint32_t insert_element_idx;
   uint32_t current_time = timing::getTimestampSec();
-  uint16_t idx = 0;
   TablePageIndexElement* index_record;
   bool current_record_was_cleared;
 
@@ -220,7 +217,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   lock->enter();
 
   // search for free space in pages
-  for (idx = 0; idx < table_max_pages; ++idx) {
+  for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     index_record = &table_index->shared_elements[idx];
     // std::cout << "===> " << table_index->page_name + ":" +
@@ -365,8 +362,12 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
 }
 
 //------------------------------------------------------------------
-// release_expired_memory_pages | auto release Table expired memeory
+// release_expired_memory_pages | auto release Table expired memory
 //------------------------------------------------------------------
+// [a][ab][b][c][d]      table A
+// [aaa][bb][cc][cddd]   table B
+//      ^ remove at this point will release [aaa] but not release [ab]
+//        in this case [ab] will point to unexisted page
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_expired_memory_pages() {
   uint32_t current_time = timing::getTimestampSec();
@@ -396,7 +397,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
       //                     ^              ^
       if (index_record.expire_at > 0 &&
-          index_record.expire_at + MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC >= current_time) {
+          index_record.expire_at + MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > current_time) {
         //                         ^^^ to be sure page not being used by anyone
         last_data_idx = idx;
       }
