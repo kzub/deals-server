@@ -540,7 +540,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
 
   if (map == MAP_FAILED) {
     std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage MAP_FAILED:" << errno << " page_name("
-              << page_name << ") size:" << page_memory_size << " REMOVING..." << std::endl;
+              << page_name << ") size:" << page_memory_size << std::endl;
     // no shm_unlink(page_name.c_str());
     return;
   }
