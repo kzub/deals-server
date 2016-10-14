@@ -73,7 +73,7 @@ template <typename ELEMENT_T>
 class TableProcessor {
  protected:
   // function that will be called for iterating over all not expired pages in table
-  virtual void process_function(const ELEMENT_T& element) = 0;
+  virtual void process_element(const ELEMENT_T& element) = 0;
 
   template <class T>
   friend class Table;

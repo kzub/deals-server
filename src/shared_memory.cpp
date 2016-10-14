@@ -46,7 +46,7 @@ class TestResult : public TableProcessor<TestInfo> {
   TestResult(Table<TestInfo>* table) : table(table) {
   }
 
-  void process_function(const TestInfo& element) {
+  void process_element(const TestInfo& element) {
     if (found.size() <= element.value) {
       for (uint32_t todo = element.value - found.size() + 1; todo > 0; todo--) {
         // std::cout << "PUSHBACK size:" << found.size() << " value:" <<

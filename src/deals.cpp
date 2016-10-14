@@ -35,7 +35,7 @@ void DealsSearchQuery::execute() {
   // run presearch in child class context
   pre_search();
 
-  // table processor iterates table pages and call DealsSearchQuery::process_function()
+  // table processor iterates table pages and call DealsSearchQuery::process_element()
   table.processRecords(*this);
 
   // run postsearch in child class context
@@ -43,11 +43,11 @@ void DealsSearchQuery::execute() {
 };
 
 //----------------------------------------------------------------
-// DealsSearchQuery process_function()
+// DealsSearchQuery process_element()
 // function that will be called by TableProcessor
 // for iterating over all not expired pages in table
 //----------------------------------------------------------------
-void DealsSearchQuery::process_function(const i::DealInfo &deal) {
+void DealsSearchQuery::process_element(const i::DealInfo &deal) {
   // check not expired
   // --------------------------------
   if (deal.timestamp + DEALS_EXPIRES < current_time) {

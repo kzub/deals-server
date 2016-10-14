@@ -122,11 +122,11 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
  private:
   // function that will be called by TableProcessor
   // for iterating over all not expired pages in table
-  void process_function(const i::DealInfo& element) final override;
+  void process_element(const i::DealInfo& element) final override;
 
   // VIRTUAL FUNCTIONS SECTION:
   virtual void process_deal(const i::DealInfo& deal) = 0;
-  // if process_function() deside deals worth of processing
+  // if process_element() deside deals worth of processing
   // process_deal() will be called in parent class
 
   // before and after processing

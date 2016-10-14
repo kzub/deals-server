@@ -134,10 +134,10 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
     const auto elements = page->getElements();
     const auto size = max_elements_in_page - record.page_elements_available;
 
+    // processor.type == element_processor
     // go throught all elements and apply process function
     for (uint32_t idx = 0; idx < size; ++idx) {
-      const ELEMENT_T& element = elements[idx];
-      processor.process_function(element);
+      processor.process_element(elements[idx]);
     }
   }
 }
