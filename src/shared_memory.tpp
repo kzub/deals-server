@@ -117,7 +117,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
 
   lock->exit();
 
-  bool continue_iteration;
+  // process every element in every page
   for (const auto& record : records_to_scan) {
     // call table processor routine
     SharedMemoryPage<ELEMENT_T>* page = getPageByName(record.page_name);
@@ -131,11 +131,13 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
       continue;
     }
 
-    continue_iteration = processor.process_function(
-        page->getElements(), max_elements_in_page - record.page_elements_available);
+    const auto elements = page->getElements();
+    const auto size = max_elements_in_page - record.page_elements_available;
 
-    if (continue_iteration == false) {
-      break;
+    // processor.type == element_processor
+    // go throught all elements and apply process function
+    for (uint32_t idx = 0; idx < size; ++idx) {
+      processor.process_element(elements[idx]);
     }
   }
 }
@@ -364,10 +366,11 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
 //------------------------------------------------------------------
 // release_expired_memory_pages | auto release Table expired memory
 //------------------------------------------------------------------
-// [a][ab][b][c][d]      table A
-// [aaa][bb][cc][cddd]   table B
+// [a][ab][b][c][d]      Table A
+// [aaa][bb][cc][cddd]   Table B
 //      ^ remove at this point will release [aaa] but not release [ab]
 //        in this case [ab] will point to unexisted page
+//        application should care about Table A & Table B consistency
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_expired_memory_pages() {
   uint32_t current_time = timing::getTimestampSec();

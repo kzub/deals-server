@@ -49,8 +49,7 @@ bool TopDstDatabase::addDestination(std::string locale, std::string destination,
   info.departure_date = departure_date_int;
 
   // Secondly add deal to index, include data position information
-  shared_mem::ElementPointer<i::DstInfo> di_result = db_index->addRecord(&info);
-
+  auto di_result = db_index->addRecord(&info);
   if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
     std::cout << "ERROR addDestination():" << (int)di_result.error << std::endl;
     return false;
@@ -101,8 +100,12 @@ std::vector<DstInfo> TopDstDatabase::getCachedResult(std::string locale,
 void TopDstDatabase::saveResultToCache(std::string locale, std::vector<DstInfo>& result) {
   // one minute top destinations cache:
   if (result.size() > 0) {
-    TopDstDatabase::CachedResult cached_result{result, 60};
+    auto cached_result = TopDstDatabase::CachedResult{result, 60};
     result_cache_by_locale.emplace(locale, cached_result);
+    // result_cache_by_locale.insert(std::pair<std::string, TopDstDatabase::CachedResult>(locale,
+    // cached_result));
+    // result_cache_by_locale.insert(
+    // std::pair<decltype(locale), decltype(cached_result)>({locale, cached_result}));
     // std::cout << "[CACHE] write result" << locale << std::endl;
   }
 }
@@ -138,7 +141,7 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
   // convert result
   std::vector<DstInfo> top_destinations;
 
-  for (auto& v : grouped_destinations) {
+  for (const auto& v : grouped_destinations) {
     top_destinations.push_back({v.first, v.second});
   }
 
@@ -155,42 +158,34 @@ std::vector<DstInfo> TopDstSearchQuery::exec() {
 
 /* function that will be called by TableProcessor
       *  for iterating over all not expired pages in table */
-bool TopDstSearchQuery::process_function(i::DstInfo* elements, uint32_t size) {
-  for (uint32_t idx = 0; idx < size; ++idx) {
-    const i::DstInfo& current_element = elements[idx];
+void TopDstSearchQuery::process_element(const i::DstInfo& current_element) {
+  // ******************************************************************
+  // FILTERING OUT AREA
+  // ******************************************************************
 
-    // ******************************************************************
-    // FILTERING OUT AREA
-    // ******************************************************************
-
-    // if departure date interval provided let's look it matches
-    // --------------------------------
-    if (filter_locale) {
-      if (locale_value != current_element.locale) {
-        // std::cout << "filter_locale" << std::endl;
-        continue;
-      }
+  // if departure date interval provided let's look it matches
+  // --------------------------------
+  if (filter_locale) {
+    if (locale_value != current_element.locale) {
+      // std::cout << "filter_locale" << std::endl;
+      return;
     }
-
-    // if departure date interval provided let's look it matches
-    // --------------------------------
-    if (filter_departure_date) {
-      if (current_element.departure_date < departure_date_values.from ||
-          current_element.departure_date > departure_date_values.to) {
-        // std::cout << "filter_departure_date" << std::endl;
-        continue;
-      }
-    }
-
-    // **********************************************************************
-    // BUILD DESTINATIONS HASH AREA
-    // **********************************************************************
-
-    grouped_destinations[current_element.destination]++;
   }
 
-  // true - means continue to iterate
-  return true;
+  // if departure date interval provided let's look it matches
+  // --------------------------------
+  if (filter_departure_date) {
+    if (current_element.departure_date < departure_date_values.from ||
+        current_element.departure_date > departure_date_values.to) {
+      // std::cout << "filter_departure_date" << std::endl;
+      return;
+    }
+  }
+
+  // **********************************************************************
+  // BUILD DESTINATIONS HASH AREA
+  // **********************************************************************
+  grouped_destinations[current_element.destination]++;
 }
 
 namespace utils {
