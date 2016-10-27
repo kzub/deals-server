@@ -1,4 +1,3 @@
-#include <array>
 #include <cinttypes>
 #include <cstring>
 #include <iostream>

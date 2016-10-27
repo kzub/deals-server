@@ -48,7 +48,7 @@ void CriticalSection::semaphore_accuire() {
 #ifdef WAIT_INFINITY_TIME  // faster switching
   int res = sem_wait(lock);
   if (res == -1) {
-    std::cout << "ERROR: CriticalSection::semaphore_accuire sem_wait() errno:" << errno
+    std::cerr << "ERROR: CriticalSection::semaphore_accuire sem_wait() errno:" << errno
               << std::endl;
     throw "cant unlock";
   }
@@ -61,7 +61,7 @@ void CriticalSection::semaphore_accuire() {
       wait_retries++;
 
       if (wait_retries * SLEEP_BETWEEN_TRIES_USEC / 1000 > WAIT_FOR_LOCK_MSEC) {
-        std::cout << "ERROR: CriticalSection::semaphore_accuire sem_trywait() errno:" << errno
+        std::cerr << "ERROR: CriticalSection::semaphore_accuire sem_trywait() errno:" << errno
                   << std::endl;
         throw "cant unlock";
       }

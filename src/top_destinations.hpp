@@ -5,6 +5,7 @@
 #include "cache.hpp"
 #include "search_query.hpp"
 #include "shared_memory.hpp"
+#include "types.hpp"
 
 namespace top {
 
@@ -18,7 +19,7 @@ void unit_test();
 
 namespace i {
 struct DstInfo {
-  uint16_t locale;
+  uint8_t locale;
   uint32_t destination;
   uint32_t departure_date;
 };
@@ -42,19 +43,28 @@ class TopDstDatabase {
   TopDstDatabase();
   ~TopDstDatabase();
 
-  bool addDestination(std::string locale, std::string destination, std::string departure_date);
-  std::vector<DstInfo> getLocaleTop(std::string locale, std::string departure_date_from,
-                                    std::string departure_date_to, uint16_t limit);
+  void addDestination(const types::CountryCode& locale, const types::IATACode& destination,
+                      const types::Date& departure_date);
 
-  std::vector<DstInfo> getCachedResult(std::string locale, std::string departure_date_from,
-                                       std::string departure_date_to, uint16_t limit);
+  std::vector<DstInfo> getLocaleTop(const types::Required<types::CountryCode>& locale,
+                                    const types::Optional<types::Date>& departure_date_from,
+                                    const types::Optional<types::Date>& departure_date_to,
+                                    const types::Optional<types::Number>& limit);
 
-  void saveResultToCache(std::string locale, std::vector<DstInfo>& result);
+  std::vector<DstInfo> getCachedResult(const types::CountryCode& locale,
+                                       const types::Date& departure_date_from,
+                                       const types::Date& departure_date_to,
+                                       const types::Number& limit);
+
+  void saveResultToCache(const types::CountryCode& locale, const types::Date& departure_date_from,
+                         const types::Date& departure_date_to, const std::vector<DstInfo>& result);
+
   void truncate();  // clear database
  private:
-  using CachedResult = cache::Cache<std::vector<DstInfo>>;
   shared_mem::Table<i::DstInfo>* db_index;
-  std::unordered_map<std::string, CachedResult> result_cache_by_locale;
+
+  using CachedResult = const cache::Cache<std::vector<DstInfo>>;
+  std::unordered_map<uint8_t, CachedResult> result_cache_by_locale;
 
   friend void unit_test();
 };
@@ -74,11 +84,11 @@ class TopDstSearchQuery : public shared_mem::TableProcessor<i::DstInfo>, public 
   // for iterating over all not expired pages in table
   void process_element(const i::DstInfo& element);
 
-  friend class TopDstDatabase;
-
  private:
   shared_mem::Table<i::DstInfo>& table;
   std::unordered_map<uint32_t, uint32_t> grouped_destinations;
+
+  friend class TopDstDatabase;
 };
 }  // namespace top
 

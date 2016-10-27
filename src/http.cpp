@@ -41,7 +41,7 @@ ParserResult HttpHeaders::parse(std::string http_message) {
       continue;
     }
 
-    utils::Object one_header;
+    types::Object one_header;
     one_header.name = line->substr(0, hpos);
     one_header.name = utils::toLowerCase(one_header.name);
 
@@ -78,7 +78,7 @@ ParserResult URIQueryParams::parse(std::string query_text) {
 
   // for every param 'param1=value' make an object
   for (auto& param : query_params) {
-    utils::Object one_param;
+    types::Object one_param;
     // std::cout << "param;" << *param << std::endl;
     size_t pos = param.find("=");
     if (pos == -1) {

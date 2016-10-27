@@ -5,20 +5,6 @@
 
 namespace utils {
 //------------------------------------------------------------------
-// ObjectMap [] accessor
-//------------------------------------------------------------------
-std::string ObjectMap::operator[](const std::string name) {
-  return findValueInObjs(mapStorage, name);
-}
-
-//------------------------------------------------------------------
-// ObjectMap add_object
-//------------------------------------------------------------------
-void ObjectMap::add_object(const Object obj) {
-  mapStorage.push_back(obj);
-}
-
-//------------------------------------------------------------------
 //  split_string       by delimiter and put it into vector
 //------------------------------------------------------------------
 std::vector<std::string> split_string(std::string text, const std::string delimiter) {
@@ -68,19 +54,6 @@ std::string toUpperCase(std::string text) {
   // transform lowercase
   std::transform(text.begin(), text.end(), text.begin(), ::toupper);
   return text;
-}
-
-//------------------------------------------------------------------
-// findValueInObjs                 (search by key in object storage)
-//------------------------------------------------------------------
-std::string findValueInObjs(const std::vector<Object> objs, const std::string name) {
-  for (auto& obj : objs) {
-    if (obj.name == name) {
-      return obj.value;
-    }
-  }
-  std::string empty;
-  return empty;
 }
 
 //-----------------------------------------------------
@@ -141,14 +114,32 @@ uint8_t day_of_week_from_str(const std::string _weekday) {
   return 7;  // error
 }
 
+uint8_t day_of_week_bitmask_from_str(const std::string _weekday) {
+  return 1 << day_of_week_from_str(_weekday);
+}
+
 //-----------------------------------------------------------
 // day_of_week_str_from_code
 //-----------------------------------------------------------
-std::string day_of_week_str_from_code(const uint8_t code) {
-  if (code > 7) {
-    return days[7];
+std::string day_of_week_str_from_bitmask(const uint8_t code) {
+  switch (code) {
+    case 0b00000001:
+      return days[0];
+    case 0b00000010:
+      return days[1];
+    case 0b00000100:
+      return days[2];
+    case 0b00001000:
+      return days[3];
+    case 0b00010000:
+      return days[4];
+    case 0b00100000:
+      return days[5];
+    case 0b01000000:
+      return days[6];
+    default:
+      return days[7];
   }
-  return days[code];
 }
 
 //-----------------------------------------------------------
@@ -210,6 +201,14 @@ uint32_t days_between_dates(const std::string date1, const std::string date2) {
 
   uint32_t date2_days = rdn(int_year, int_month, int_day);
 
+  return date2_days - date1_days;
+}
+
+uint32_t days_between_dates(const uint16_t date1_year, const uint8_t date1_month,
+                            const uint8_t date1_day, const uint16_t date2_year,
+                            const uint8_t date2_month, const uint8_t date2_day) {
+  const uint32_t date1_days = rdn(date1_year, date1_month, date1_day);
+  const uint32_t date2_days = rdn(date2_year, date2_month, date2_day);
   return date2_days - date1_days;
 }
 }  // namespace utils

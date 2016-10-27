@@ -223,7 +223,8 @@ async.until(
 					return_date: dates[1],
 					direct_flight: Math.random() > 0.5,
 					locale: getRandomLocale(),
-					price: getRandomPrice()
+					price: getRandomPrice(),
+					destination_country: getRandomLocale()
 				};
 				httpsend('add', params, JSON.stringify(params), cb);
 		},

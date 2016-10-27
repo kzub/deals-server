@@ -1,6 +1,7 @@
 #ifndef SRC_DEALS_SERVER_HPP
 #define SRC_DEALS_SERVER_HPP
 
+#include <functional>
 #include "deals.hpp"
 #include "http.hpp"
 #include "tcp_server.hpp"
@@ -33,6 +34,8 @@ class DealsServer : public srv::TCPServer<Context> {
   void addDeal(Connection& conn);
   void getTop(Connection& conn);
   void getDestiantionsTop(Connection& conn);
+  void terminateWithError(Connection& conn);
+  void writeTopResult(Connection& conn, std::vector<deals::DealInfo>&& result);
 
   // in memory databases
   deals::DealsDatabase db;

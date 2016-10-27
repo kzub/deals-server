@@ -10,7 +10,7 @@ namespace http {
 enum class ParserResult : int { PARSE_OK = 0, PARSE_AWAIT = 1, PARSE_ERR = -1 };
 
 // ------------------------------------------------------------------
-class HttpHeaders : public utils::ObjectMap {
+class HttpHeaders : public types::ObjectMap {
  public:
   ParserResult parse(std::string http_message);
 };
@@ -21,7 +21,7 @@ class HttpHeaders : public utils::ObjectMap {
 class URIQueryParams {
  public:
   ParserResult parse(std::string query_text);
-  utils::ObjectMap params;
+  types::ObjectMap params;
   std::string path;
 };
 
