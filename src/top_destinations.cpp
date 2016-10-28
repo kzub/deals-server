@@ -122,7 +122,7 @@ std::vector<DstInfo> TopDstDatabase::getLocaleTop(
   //
   auto cache_result = getCachedResult(locale, departure_date_from, departure_date_to, limit);
   if (cache_result.size() > 0) {
-    return std::move(cache_result);
+    return cache_result;
   }
 
   TopDstSearchQuery query(*db_index);
@@ -134,7 +134,7 @@ std::vector<DstInfo> TopDstDatabase::getLocaleTop(
   auto result = query.exec();
 
   saveResultToCache(locale, departure_date_from, departure_date_to, result);
-  return std::move(result);
+  return result;
 }
 
 // -----------------------------------------------------------------
