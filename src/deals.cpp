@@ -66,6 +66,12 @@ void DealsSearchQuery::process_element(const i::DealInfo &deal) {
     }
   }
 
+  if (filter_destination_country) {
+    if (destination_country_set.find(deal.destination_country) == destination_country_set.end()) {
+      return;
+    }
+  }
+
   if (filter_departure_date && (deal.departure_date < departure_date_values.from ||
                                 deal.departure_date > departure_date_values.to)) {
     return;
@@ -197,7 +203,7 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
     auto data_pointer = (char *)deal_data.get_data();
     std::string data = {data_pointer, deal.size};
 
-    if (1) {
+    if (0) {
       std::shared_ptr<DealInfoTest> testdata(new DealInfoTest{
           types::code_to_origin(deal.origin), types::code_to_origin(deal.destination),
           types::int_to_date(deal.departure_date), types::int_to_date(deal.return_date),
@@ -225,6 +231,7 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
 std::vector<DealInfo> DealsDatabase::searchForCheapest(
     const types::Required<types::IATACode> &origin,
     const types::Optional<types::IATACodes> &destinations,
+    const types::Optional<types::CountryCodes> &destination_countries,
     const types::Optional<types::Date> &departure_date_from,
     const types::Optional<types::Date> &departure_date_to,
     const types::Optional<types::Weekdays> &departure_days_of_week,
@@ -241,6 +248,7 @@ std::vector<DealInfo> DealsDatabase::searchForCheapest(
   DealsCheapestByDatesSimple query(*db_index);  // <- table processed by search class
   query.origin(origin);
   query.destinations(destinations);
+  query.destination_countries(destination_countries);
   query.departure_dates(departure_date_from, departure_date_to);
   query.return_dates(return_date_from, return_date_to);
   query.departure_weekdays(departure_days_of_week);
@@ -323,6 +331,7 @@ void DealsCheapestByDatesSimple::post_search() {
 std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
     const types::Required<types::IATACode> &origin,
     const types::Optional<types::IATACodes> &destinations,
+    const types::Optional<types::CountryCodes> &destination_countries,
     const types::Optional<types::Date> &departure_date_from,
     const types::Optional<types::Date> &departure_date_to,
     const types::Optional<types::Weekdays> &departure_days_of_week,
@@ -339,6 +348,7 @@ std::vector<DealInfo> DealsDatabase::searchForCheapestDayByDay(
   DealsCheapestDayByDay query(*db_index);
   query.origin(origin);
   query.destinations(destinations);
+  query.destination_countries(destination_countries);
   query.departure_dates(departure_date_from, departure_date_to);
   query.return_dates(return_date_from, return_date_to);
   query.departure_weekdays(departure_days_of_week);

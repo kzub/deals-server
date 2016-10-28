@@ -93,7 +93,7 @@ class BaseParameter {
   bool paramter_undefined = false;
 };
 //------------------------------------------------------------
-struct IATACodeHash;
+struct CodeHash;
 
 class IATACode : public BaseParameter {
  public:
@@ -103,29 +103,12 @@ class IATACode : public BaseParameter {
 
  private:
   uint32_t code = 0;
+
   friend bool operator==(const IATACode& d1, const IATACode& d2);
-  friend IATACodeHash;
+  friend CodeHash;
 };
 bool operator==(const IATACode& d1, const IATACode& d2);
 
-struct IATACodeHash {
-  std::size_t operator()(IATACode const& obj) const {
-    return inthash(obj.code);
-  }
-
- private:
-  std::hash<uint32_t> inthash{};
-};
-
-class IATACodes : public BaseParameter {
- public:
-  IATACodes(std::string code);
-  void add_code(uint32_t dbcode);
-  const std::unordered_set<IATACode, IATACodeHash>& get_codes() const;
-
- private:
-  std::unordered_set<IATACode, IATACodeHash> codes;
-};
 //------------------------------------------------------------
 class CountryCode : public BaseParameter {
  public:
@@ -135,6 +118,43 @@ class CountryCode : public BaseParameter {
 
  private:
   uint8_t code = 0;
+
+  friend bool operator==(const CountryCode& d1, const CountryCode& d2);
+  friend CodeHash;
+};
+bool operator==(const CountryCode& d1, const CountryCode& d2);
+//------------------------------------------------------------
+struct CodeHash {
+  std::size_t operator()(IATACode const& obj) const {
+    return int32hash(obj.code);
+  }
+  std::size_t operator()(CountryCode const& obj) const {
+    return int8hash(obj.code);
+  }
+
+ private:
+  std::hash<uint32_t> int32hash{};
+  std::hash<uint8_t> int8hash{};
+};
+
+class IATACodes : public BaseParameter {
+ public:
+  IATACodes(std::string code);
+  void add_code(uint32_t dbcode);
+  const std::unordered_set<IATACode, CodeHash>& get_codes() const;
+
+ private:
+  std::unordered_set<IATACode, CodeHash> codes;
+};
+
+class CountryCodes : public BaseParameter {
+ public:
+  CountryCodes(std::string code);
+  void add_code(uint8_t dbcode);
+  const std::unordered_set<CountryCode, CodeHash>& get_codes() const;
+
+ private:
+  std::unordered_set<CountryCode, CodeHash> codes;
 };
 //------------------------------------------------------------
 class Date : public BaseParameter {

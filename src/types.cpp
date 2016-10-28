@@ -78,7 +78,7 @@ void IATACodes::add_code(uint32_t dbcode) {
   codes.insert({dbcode});
 }
 
-const std::unordered_set<IATACode, IATACodeHash>& IATACodes::get_codes() const {
+const std::unordered_set<IATACode, CodeHash>& IATACodes::get_codes() const {
   return codes;
 }
 
@@ -98,11 +98,50 @@ CountryCode::CountryCode(std::string _code) {
   code = country_to_code(utils::toUpperCase(_code));
 }
 
+CountryCode::CountryCode(uint8_t dbcode) {
+  if (dbcode >= COUNTRIES.size()) {
+    throw Error("Bad Country code:" + std::to_string(dbcode) + "\n", ErrorCode::InternalError);
+  }
+
+  code = dbcode;
+}
+
+bool operator==(const CountryCode& d1, const CountryCode& d2) {
+  if (d1.isUndefined() || d2.isUndefined()) {
+    return false;
+  }
+
+  return d1.code == d2.code;
+}
+
 uint8_t CountryCode::get_code() const {
   if (paramter_undefined) {
     throw Error("CountryCode parameter not defined\n");
   }
   return code;
+}
+
+//------------------------------------------------------------------------
+// CountryCodes
+//------------------------------------------------------------------------
+CountryCodes::CountryCodes(std::string _codes) {
+  if (_codes.length() == 0) {
+    paramter_undefined = true;
+    return;
+  }
+
+  const auto split_result = utils::split_string(_codes);
+  for (const auto& code : split_result) {
+    codes.insert({code});
+  }
+}
+
+void CountryCodes::add_code(uint8_t dbcode) {
+  codes.insert({dbcode});
+}
+
+const std::unordered_set<CountryCode, CodeHash>& CountryCodes::get_codes() const {
+  return codes;
 }
 
 //------------------------------------------------------------------------

@@ -30,6 +30,23 @@ void SearchQuery::destinations(const types::IATACodes& destinations) {
 }
 
 //--------------------------------------------------
+void SearchQuery::destination_countries(const types::CountryCodes& countries) {
+  if (countries.isUndefined()) {
+    return;
+  }
+  destination_country_set.clear();
+
+  auto it = countries.get_codes();
+  for (const auto& country : it) {
+    destination_country_set.insert(country.get_code());
+  }
+
+  if (destination_country_set.size()) {
+    filter_destination_country = true;
+  }
+}
+
+//--------------------------------------------------
 void SearchQuery::max_lifetime_sec(const types::Number& max_lifetime) {
   if (max_lifetime.isUndefined()) {
     return;

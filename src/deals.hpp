@@ -96,6 +96,7 @@ class DealsDatabase {
   std::vector<DealInfo> searchForCheapest(
       const types::Required<types::IATACode>& origin,
       const types::Optional<types::IATACodes>& destinations,
+      const types::Optional<types::CountryCodes>& destination_countries,
       const types::Optional<types::Date>& departure_date_from,
       const types::Optional<types::Date>& departure_date_to,
       const types::Optional<types::Weekdays>& departure_days_of_week,
@@ -113,6 +114,7 @@ class DealsDatabase {
   std::vector<DealInfo> searchForCheapestDayByDay(
       const types::Required<types::IATACode>& origin,
       const types::Optional<types::IATACodes>& destinations,
+      const types::Optional<types::CountryCodes>& destination_countries,
       const types::Optional<types::Date>& departure_date_from,
       const types::Optional<types::Date>& departure_date_to,
       const types::Optional<types::Weekdays>& departure_days_of_week,

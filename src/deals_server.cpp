@@ -73,6 +73,7 @@ void DealsServer::process() {
 
 // TODO
 // *) search by country
+// *) reduce storage types uint32t -> uint16
 // *) clear mem mechanism parallesation?
 // *) overwrite not expired pages on low mem
 // *) logger with date/time
@@ -173,24 +174,25 @@ void DealsServer::on_data(Connection &conn) {
 void DealsServer::getTop(Connection &conn) {
   auto params = conn.context.http.request.query.params;
 
-  using namespace types;                                              // Examples:
-  Required<IATACode> origin(params, "origin");                        // MOW
-  Optional<IATACodes> destinations(params, "destinations");           // MAD,BER,LAX,LON
-  Optional<Date> departure_date_from(params, "departure_date_from");  // 2016-05-01
-  Optional<Date> departure_date_to(params, "departure_date_to");      // 2016-05-01
-  Optional<Date> return_date_from(params, "return_date_from");        // 2016-05-01
-  Optional<Date> return_date_to(params, "return_date_to");            // 2016-05-01
-  Optional<Weekdays> dweekdays(params, "departure_days_of_week");     // sun,mon,fri
-  Optional<Weekdays> rweekdays(params, "return_days_of_week");        // sun,mon,fri
-  Optional<Number> stay_from(params, "stay_from");                    // 3
-  Optional<Number> stay_to(params, "stay_to");                        // 10
-  Optional<Number> timelimit(params, "timelimit");                    // 10
-  Optional<Number> deals_limit(params, "deals_limit");                // 10
-  Optional<Boolean> direct_flights(params, "direct_flights");         // false
-  Optional<Boolean> roundtrip_flights(params, "roundtrip_flights");   // false
-  Optional<Boolean> add_locale_top(params, "add_locale_top");         // false
-  Optional<Boolean> day_by_day(params, "day_by_day");                 // false
-  Optional<CountryCode> locale(params, "locale");                     // ru
+  using namespace types;                                                          // Examples:
+  Required<IATACode> origin(params, "origin");                                    // MOW
+  Optional<IATACodes> destinations(params, "destinations");                       // MAD,BER,LAX,LON
+  Optional<CountryCodes> destination_countries(params, "destination_countries");  // RU,ES,DE
+  Optional<Date> departure_date_from(params, "departure_date_from");              // 2016-05-01
+  Optional<Date> departure_date_to(params, "departure_date_to");                  // 2016-05-01
+  Optional<Date> return_date_from(params, "return_date_from");                    // 2016-05-01
+  Optional<Date> return_date_to(params, "return_date_to");                        // 2016-05-01
+  Optional<Weekdays> dweekdays(params, "departure_days_of_week");                 // sun,mon,fri
+  Optional<Weekdays> rweekdays(params, "return_days_of_week");                    // sun,mon,fri
+  Optional<Number> stay_from(params, "stay_from");                                // 3
+  Optional<Number> stay_to(params, "stay_to");                                    // 10
+  Optional<Number> timelimit(params, "timelimit");                                // 10
+  Optional<Number> deals_limit(params, "deals_limit");                            // 10
+  Optional<Boolean> direct_flights(params, "direct_flights");                     // false
+  Optional<Boolean> roundtrip_flights(params, "roundtrip_flights");               // false
+  Optional<Boolean> add_locale_top(params, "add_locale_top");                     // false
+  Optional<Boolean> day_by_day(params, "day_by_day");                             // false
+  Optional<CountryCode> locale(params, "locale");                                 // ru
 
   if (return_date_from > return_date_to || departure_date_from > departure_date_to ||
       departure_date_from > return_date_from || departure_date_from > return_date_to ||
@@ -209,10 +211,10 @@ void DealsServer::getTop(Connection &conn) {
     }
   }
 
-#define TOP_SEARCH_PARAMS                                                                    \
-  origin, destinations, departure_date_from, departure_date_to, dweekdays, return_date_from, \
-      return_date_to, rweekdays, stay_from, stay_to, direct_flights, deals_limit, timelimit, \
-      roundtrip_flights
+#define TOP_SEARCH_PARAMS                                                                         \
+  origin, destinations, destination_countries, departure_date_from, departure_date_to, dweekdays, \
+      return_date_from, return_date_to, rweekdays, stay_from, stay_to, direct_flights,            \
+      deals_limit, timelimit, roundtrip_flights
 
   if (day_by_day.isDefined() && day_by_day.isTrue()) {
     writeTopResult(conn, db.searchForCheapestDayByDay(TOP_SEARCH_PARAMS));

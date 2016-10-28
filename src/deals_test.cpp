@@ -197,6 +197,7 @@ void unit_test() {
   using rn = types::Required<types::Number>;
   using on = types::Optional<types::Number>;
   using ow = types::Optional<types::Weekdays>;
+  using oc = types::Optional<types::CountryCodes>;
 
   // add some data, that will be outdated
   for (int i = 0; i < TEST_ELEMENTS_COUNT; ++i) {
@@ -248,10 +249,11 @@ void unit_test() {
 
   // 1st test ----------------------------
   // *********************************************************
-  std::vector<DealInfo> result = db.searchForCheapest(
-      ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), od(params, "z"), od(params, "z"),
-      ow(params, "z"), od(params, "z"), od(params, "z"), ow(params, "z"), on(params, "z"),
-      on(params, "z"), ob(params, "z"), on(params, "z"), on(params, "10"), ob(params, "z"));
+  std::vector<DealInfo> result =
+      db.searchForCheapest(ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"),
+                           od(params, "z"), od(params, "z"), ow(params, "z"), od(params, "z"),
+                           od(params, "z"), ow(params, "z"), on(params, "z"), on(params, "z"),
+                           ob(params, "z"), on(params, "z"), on(params, "10"), ob(params, "z"));
 
   timer.tick("test1 START");
   for (auto &deal : result) {
@@ -306,7 +308,7 @@ void unit_test() {
   timer.tick("test 2 INIT");
   // 2nd test -------------------------------
   // *********************************************************
-  result = db.searchForCheapest(ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"),
+  result = db.searchForCheapest(ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"),
                                 od(params, "2016-06-01"), od(params, "2016-06-23"), ow(params, "z"),
                                 od(params, "2016-06-10"), od(params, "2016-06-22"), ow(params, "z"),
                                 on(params, "z"), on(params, "z"), ob(params, "z"), on(params, "z"),
@@ -364,18 +366,24 @@ void unit_test() {
   timer.tick("test 3 INIT");
   params.add_object({"thu,sat,sun", "thu,sat,sun"});
   params.add_object({"wed,sun,mon", "wed,sun,mon"});
+  params.add_object({"ZW,RU,IT", "ZW,RU,IT"});
 
-  result = db.searchForCheapest(ri(params, "MOW"), ois(params, "z"), od(params, "z"),
-                                od(params, "z"), ow(params, "thu,sat,sun"), od(params, "z"),
-                                od(params, "z"), ow(params, "wed,sun,mon"), on(params, "4"),
-                                on(params, "18"), ob(params, "false"), on(params, "z"),
-                                on(params, "2000"), ob(params, "z"));
+  result = db.searchForCheapest(ri(params, "MOW"), ois(params, "z"), oc(params, "ZW,RU,IT"),
+                                od(params, "z"), od(params, "z"), ow(params, "thu,sat,sun"),
+                                od(params, "z"), od(params, "z"), ow(params, "wed,sun,mon"),
+                                on(params, "4"), on(params, "18"), ob(params, "false"),
+                                on(params, "z"), on(params, "2000"), ob(params, "z"));
   timer.tick("test 3 START");
   std::cout << "search 3 result size:" << result.size() << std::endl;
   assert(result.size() > 0);
 
+  auto countryRU = types::CountryCode("RU").get_code();
+  auto countryIT = types::CountryCode("IT").get_code();
+
   for (int i = 0; i < result.size(); ++i) {
     deals::utils::print(result[i]);
+    assert(result[i].test->destination_country == countryRU ||
+           result[i].test->destination_country == countryIT);
     assert(result[i].test->stay_days >= 4 && result[i].test->stay_days <= 18);
     assert(result[i].test->direct == false);
     std::string dw = ::utils::day_of_week_str_from_bitmask(result[i].test->departure_day_of_week);

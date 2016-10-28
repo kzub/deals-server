@@ -22,6 +22,7 @@ class SearchQuery {
  public:
   void origin(const types::IATACode& origin);
   void destinations(const types::IATACodes& destinations);
+  void destination_countries(const types::CountryCodes& countries);
   void departure_dates(const types::Date& departure_date_from,
                        const types::Date& departure_date_to);
   void return_dates(const types::Date& return_date_from,  //
@@ -42,6 +43,9 @@ class SearchQuery {
 
   bool filter_destination = false;
   std::unordered_set<uint32_t> destination_values_set;
+
+  bool filter_destination_country = false;
+  std::unordered_set<uint8_t> destination_country_set;
 
   bool filter_departure_date = false;
   DateInterval departure_date_values;
