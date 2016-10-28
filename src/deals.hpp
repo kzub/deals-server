@@ -1,6 +1,7 @@
 #ifndef SRC_DEALS_HPP
 #define SRC_DEALS_HPP
 
+#include <memory>
 #include <unordered_map>
 #include "search_query.hpp"
 #include "shared_memory.hpp"
