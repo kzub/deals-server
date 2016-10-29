@@ -57,7 +57,7 @@ class Optional : public Base {
     parameter_name = name;
     parameter_value = params[name];
   } catch (Error err) {
-    throw Error("Bad parameter:" + name + "\n" + err.message, ErrorCode::BadParameter);
+    throw Error("Bad parameter:" + name + ". " + err.message, ErrorCode::BadParameter);
   };
 
  private:
@@ -75,7 +75,7 @@ class Required : public Base {
       throw Error("Must be defined\n", ErrorCode::BadParameter);
     }
   } catch (Error err) {
-    throw Error("Bad parameter:" + name + "\n" + err.message, ErrorCode::BadParameter);
+    throw Error("Bad parameter:" + name + ". " + err.message, ErrorCode::BadParameter);
   };
 
   Required(const Optional<Base>& parameter) try : Base(parameter.parameter_value) {

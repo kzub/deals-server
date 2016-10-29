@@ -91,7 +91,6 @@ void DealsServer::on_data(Connection &conn) {
   }
 
   conn.context.http.write(conn.get_data());
-
   if (!conn.context.http.is_request_complete()) {
     return;
   }
@@ -99,7 +98,6 @@ void DealsServer::on_data(Connection &conn) {
   // try to process http request
   try {
     auto path = conn.context.http.request.query.path;
-
     if ("GET" == conn.context.http.request.method) {
       if ("/deals/top" == path) {
         getTop(conn);
@@ -156,15 +154,23 @@ void DealsServer::on_data(Connection &conn) {
     conn.close(http::HttpResponse(404, "Not Found", "Method unknown\n"));
 
   } catch (types::Error err) {
-    std::cout << "Request ERROR: " << err.message << std::endl;
-    if (err.code == types::ErrorCode::BadParameter) {
-      conn.close(http::HttpResponse(400, "Bad request", err.message));
-    } else {
-      conn.close(http::HttpResponse(500, "Internal Server Error", err.message));
-    }
+    terminateWithError(conn, err);
   } catch (...) {
-    std::cerr << "Internal Server ERROR" << std::endl;
-    conn.close(http::HttpResponse(500, "Internal Server Error", "Something is broken inside me\n"));
+    types::Error err{"Something is broken inside me\n", types::ErrorCode::InternalError};
+    terminateWithError(conn, err);
+  }
+}
+
+//-----------------------------------------------------------
+// DealsServer terminateWithError
+//-----------------------------------------------------------
+void DealsServer::terminateWithError(Connection &conn, types::Error &err) {
+  std::cerr << conn.get_client_address() << " " << conn.context.http.request.uri
+            << " ERROR: " << err.message;
+  if (err.code == types::ErrorCode::BadParameter) {
+    conn.close(http::HttpResponse(400, "Bad request", err.message));
+  } else {
+    conn.close(http::HttpResponse(500, "Internal Server Error", err.message));
   }
 }
 
