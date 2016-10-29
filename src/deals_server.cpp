@@ -165,8 +165,11 @@ void DealsServer::on_data(Connection &conn) {
 // DealsServer terminateWithError
 //-----------------------------------------------------------
 void DealsServer::terminateWithError(Connection &conn, types::Error &err) {
-  std::cerr << conn.get_client_address() << " " << conn.context.http.request.uri
-            << " ERROR: " << err.message;
+  auto ip = conn.context.http.headers["x-real-ip"];
+  if (ip.length() == 0) {
+    ip = conn.get_client_address();
+  }
+  std::cerr << ip << " " << conn.context.http.request.uri << " ERROR: " << err.message;
   if (err.code == types::ErrorCode::BadParameter) {
     conn.close(http::HttpResponse(400, "Bad request", err.message));
   } else {
