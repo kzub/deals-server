@@ -21,13 +21,13 @@ static const std::string countries[] = {"AD", "AE", "AF", "AG", "AI", "RU", "AL"
 //------------------------------------------------------------------------
 types::Required<types::IATACode> getRandomOrigin() {
   uint16_t place = rand() % (sizeof(origins) / sizeof(origins[0]));
-  return types::Required<types::IATACode>(params, origins[place]);
+  return {params, origins[place]};
 }
 
 //------------------------------------------------------------------------
 types::Required<types::CountryCode> getRandomCountry() {
   uint16_t place = rand() % (sizeof(countries) / sizeof(countries[0]));
-  return types::Required<types::CountryCode>(params, countries[place]);
+  return {params, countries[place]};
 }
 
 //------------------------------------------------------------------------
@@ -41,7 +41,7 @@ types::Required<types::Number> getRandomPrice(uint32_t minPrice) {
 
   types::ObjectMap priceParam;
   priceParam.add_object({"test", std::to_string(price)});
-  return types::Required<types::Number>(priceParam, "test");
+  return {priceParam, "test"};
 }
 
 //------------------------------------------------------------------------
@@ -51,7 +51,7 @@ types::Required<types::Date> getRandomDate(uint32_t year = 2016) {
 
   types::ObjectMap param;
   param.add_object({"test", types::int_to_date(year * 10000 + month * 100 + day)});
-  return types::Required<types::Date>(param, "test");
+  return {param, "test"};
 }
 
 //------------------------------------------------------------------------
@@ -61,7 +61,7 @@ types::Optional<types::Date> getRandomDateOpt(uint32_t year = 2016) {
 
   types::ObjectMap param;
   param.add_object({"test", types::int_to_date(year * 10000 + month * 100 + day)});
-  return types::Optional<types::Date>(param, "test");
+  return {param, "test"};
 }
 
 //------------------------------------------------------------------------
@@ -70,7 +70,7 @@ types::Optional<types::Boolean> getRandomBool() {
 
   types::ObjectMap param;
   param.add_object({"test", value > 0x00008000 ? "true" : "false"});
-  return types::Optional<types::Boolean>(param, "test");
+  return {param, "test"};
 }
 
 //------------------------------------------------------------------------

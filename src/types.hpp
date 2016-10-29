@@ -54,14 +54,16 @@ template <typename Base>
 class Optional : public Base {
  public:
   Optional(ObjectMap params, std::string name) try : Base(params[name]) {
+    parameter_name = name;
+    parameter_value = params[name];
   } catch (Error err) {
     throw Error("Bad parameter:" + name + "\n" + err.message, ErrorCode::BadParameter);
   };
 
-  // Optional to Require converter
-  operator Required<Base>() {
-    return *this;
-  }
+ private:
+  std::string parameter_name;
+  std::string parameter_value;
+  friend class Required<Base>;
 };
 
 // REQUIRED parameter must be defined
@@ -74,6 +76,15 @@ class Required : public Base {
     }
   } catch (Error err) {
     throw Error("Bad parameter:" + name + "\n" + err.message, ErrorCode::BadParameter);
+  };
+
+  Required(const Optional<Base>& parameter) try : Base(parameter.parameter_value) {
+    if (this->isUndefined()) {
+      throw Error("Must be defined\n", ErrorCode::BadParameter);
+    }
+  } catch (Error err) {
+    throw Error("Bad parameter:" + parameter.parameter_name + "\n" + err.message,
+                ErrorCode::BadParameter);
   };
 };
 
