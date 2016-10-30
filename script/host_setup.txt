@@ -1,0 +1,33 @@
+sudo apt-get update
+sudo apt-get install git
+sudo apt-get install build-essential
+sudo apt-get install make
+sudo apt-get install clang-3.8
+sudo apt-get install mc
+sudo apt-get install linux-headers-generic
+sudo apt-get install apache2-utils
+sudo apt-get install nginx
+sudo apt-get install runit
+
+git clone https://github.com/kzub/deals-server.git
+
+
+nginx config (/etc/nginx/sites-enabled/default):
+upstream deals_server {
+    least_conn;
+    server 127.0.0.1:5000;
+    server 127.0.0.1:5001;
+    server 127.0.0.1:5002;
+    server 127.0.0.1:5003;
+    server 127.0.0.1:5004;
+    server 127.0.0.1:5005;
+    server 127.0.0.1:5006;
+    server 127.0.0.1:5007;
+}
+
+location / {
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_pass http://deals_server;
+        proxy_next_upstream error timeout http_502 http_503;
+}
+
