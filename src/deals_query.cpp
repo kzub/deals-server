@@ -15,7 +15,7 @@ std::vector<i::DealInfo> DealsSearchQuery::execute() {
   auto result = get_result();
 
   // reduce output size
-  if (filter_result_limit && result.size() > filter_result_limit) {
+  if (result.size() > filter_result_limit) {
     result.resize(filter_result_limit);
   }
 

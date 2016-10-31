@@ -95,7 +95,6 @@ std::vector<DealInfo> DealsDatabase::searchFor(
     const types::Optional<types::Boolean>& roundtrip_flights) {
   QueryClass query(*db_index);  // <- table processed by search class
 
-  query.result_limit(limit);  // may be overrided by other settings. so placed first in place
   query.origin(origin);
   query.destinations(destinations);
   query.destination_countries(destination_countries);
@@ -107,6 +106,7 @@ std::vector<DealInfo> DealsDatabase::searchFor(
   query.direct_flights(direct_flights);
   query.roundtrip_flights(roundtrip_flights);
   query.max_lifetime_sec(max_lifetime_sec);
+  query.result_limit(limit);
 
   // load deals data from data pages (DealData shared memory pagers)
   return fill_deals_with_data(query.execute());
