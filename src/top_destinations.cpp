@@ -2,7 +2,7 @@
 #include <cinttypes>
 #include <iostream>
 
-#include "deals.hpp"
+#include "deals_types.hpp"
 #include "shared_memory.hpp"
 #include "timing.hpp"
 #include "top_destinations.hpp"

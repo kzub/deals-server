@@ -4,7 +4,7 @@
 #include <climits>
 #include <iostream>
 
-#include "deals.hpp"
+#include "deals_database.hpp"
 #include "timing.hpp"
 #define TEST_ELEMENTS_COUNT 50000
 
@@ -97,7 +97,7 @@ void convertertionsTest() {
 
   std::cout << "Country encoder/decoder\n";
   auto ru = types::country_to_code("RU");
-  assert(ru == 186);
+  assert(ru == 184);
   assert(types::code_to_country(ru) == "RU");
   assert(types::country_to_code("RU") != types::country_to_code("US"));
 
@@ -249,11 +249,11 @@ void unit_test() {
 
   // 1st test ----------------------------
   // *********************************************************
-  std::vector<DealInfo> result =
-      db.searchForCheapest(ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"),
-                           od(params, "z"), od(params, "z"), ow(params, "z"), od(params, "z"),
-                           od(params, "z"), ow(params, "z"), on(params, "z"), on(params, "z"),
-                           ob(params, "z"), on(params, "z"), on(params, "10"), ob(params, "z"));
+  std::vector<DealInfo> result = db.searchFor<deals::SimplyCheapest>(
+      ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"), od(params, "z"),
+      od(params, "z"), ow(params, "z"), od(params, "z"), od(params, "z"), ow(params, "z"),
+      on(params, "z"), on(params, "z"), ob(params, "z"), on(params, "z"), on(params, "10"),
+      ob(params, "z"));
 
   timer.tick("test1 START");
   for (auto &deal : result) {
@@ -308,11 +308,11 @@ void unit_test() {
   timer.tick("test 2 INIT");
   // 2nd test -------------------------------
   // *********************************************************
-  result = db.searchForCheapest(ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"),
-                                od(params, "2016-06-01"), od(params, "2016-06-23"), ow(params, "z"),
-                                od(params, "2016-06-10"), od(params, "2016-06-22"), ow(params, "z"),
-                                on(params, "z"), on(params, "z"), ob(params, "z"), on(params, "z"),
-                                on(params, "10"), ob(params, "z"));
+  result = db.searchFor<deals::SimplyCheapest>(
+      ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"), od(params, "2016-06-01"),
+      od(params, "2016-06-23"), ow(params, "z"), od(params, "2016-06-10"), od(params, "2016-06-22"),
+      ow(params, "z"), on(params, "z"), on(params, "z"), ob(params, "z"), on(params, "z"),
+      on(params, "10"), ob(params, "z"));
 
   timer.tick("test 2 START");
   for (auto &deal : result) {
@@ -368,11 +368,11 @@ void unit_test() {
   params.add_object({"wed,sun,mon", "wed,sun,mon"});
   params.add_object({"ZW,RU,IT", "ZW,RU,IT"});
 
-  result = db.searchForCheapest(ri(params, "MOW"), ois(params, "z"), oc(params, "ZW,RU,IT"),
-                                od(params, "z"), od(params, "z"), ow(params, "thu,sat,sun"),
-                                od(params, "z"), od(params, "z"), ow(params, "wed,sun,mon"),
-                                on(params, "4"), on(params, "18"), ob(params, "false"),
-                                on(params, "z"), on(params, "2000"), ob(params, "z"));
+  result = db.searchFor<deals::SimplyCheapest>(
+      ri(params, "MOW"), ois(params, "z"), oc(params, "ZW,RU,IT"), od(params, "z"), od(params, "z"),
+      ow(params, "thu,sat,sun"), od(params, "z"), od(params, "z"), ow(params, "wed,sun,mon"),
+      on(params, "4"), on(params, "18"), ob(params, "false"), on(params, "z"), on(params, "2000"),
+      ob(params, "z"));
   timer.tick("test 3 START");
   std::cout << "search 3 result size:" << result.size() << std::endl;
   assert(result.size() > 0);

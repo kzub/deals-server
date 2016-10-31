@@ -2,7 +2,9 @@
 #define SRC_DEALS_SERVER_HPP
 
 #include <functional>
-#include "deals.hpp"
+#include "deals_cheapest.hpp"
+#include "deals_cheapest_by_date.hpp"
+#include "deals_database.hpp"
 #include "http.hpp"
 #include "tcp_server.hpp"
 #include "top_destinations.hpp"

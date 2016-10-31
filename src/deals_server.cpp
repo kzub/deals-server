@@ -226,10 +226,16 @@ void DealsServer::getTop(Connection &conn) {
       deals_limit, timelimit, roundtrip_flights
 
   if (day_by_day.isDefined() && day_by_day.isTrue()) {
-    writeTopResult(conn, db.searchForCheapestDayByDay(TOP_SEARCH_PARAMS));
+    writeTopResult(conn, db.searchFor<deals::CheapestByDay>(TOP_SEARCH_PARAMS));
   } else {
-    writeTopResult(conn, db.searchForCheapest(TOP_SEARCH_PARAMS));
+    writeTopResult(conn, db.searchFor<deals::SimplyCheapest>(TOP_SEARCH_PARAMS));
   }
+
+  // if (day_by_day.isDefined() && day_by_day.isTrue()) {
+  //   writeTopResult(conn, db.searchForCheapestByDay(TOP_SEARCH_PARAMS));
+  // } else {
+  //   writeTopResult(conn, db.searchForCheapest(TOP_SEARCH_PARAMS));
+  // }
 }
 
 //------------------------------------------------------------
