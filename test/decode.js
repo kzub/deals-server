@@ -104,6 +104,6 @@ function dataProcessor(datas) {
 			segments.push(trip.from + trip.to + '(' + trip.startDate + ')' + (id2==deal.trips.length-1?'':(trip.continued?'-':':')));
 			// console.log(trip)
 		}
-		console.log(deal.origin + '-' + deal.destination, deal.price, segments.join(''), deal.searchId, new Date(deal.dateCreated).toJSON());
+		console.log(deal.origin + '-' + deal.destination, deal.price, segments.join(''), new Date(deal.dateCreated).toJSON().slice(0, 19));
 	}
 }

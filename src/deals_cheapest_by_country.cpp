@@ -4,11 +4,14 @@ namespace deals {
 //---------------------------------------------------------
 void CheapestByCountry::pre_search() {
   grouped_max_price = 0;
+  if (filter_destination_country) {
+    filter_result_limit = destination_country_set.size();
+  }
 }
 
 //---------------------------------------------------------
 void CheapestByCountry::process_deal(const i::DealInfo &deal) {
-  if (grouped_by_country.size() > result_destinations_count) {
+  if (grouped_by_country.size() >= filter_result_limit) {
     if (grouped_max_price <= deal.price) {
       return;  // deal price is far more expensive, skip grouping
     }
@@ -43,7 +46,7 @@ void CheapestByCountry::post_search() {
 }
 
 //----------------------------------------------------------------
-std::vector<i::DealInfo> CheapestByCountry::get_result() {
+const std::vector<i::DealInfo> CheapestByCountry::get_result() const {
   return exec_result;
 }
 }  // namespace deals

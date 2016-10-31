@@ -3,20 +3,23 @@
 namespace deals {
 // ----------------------------------------------------------
 std::vector<i::DealInfo> DealsSearchQuery::execute() {
-  if (filter_destination) {
-    result_destinations_count = destination_values_set.size();
-  } else {
-    result_destinations_count = filter_result_limit;
-  }
-
   current_time = timing::getTimestampSec();
+
   pre_search();  // run in derived class
 
   // table processor iterates table pages and call DealsSearchQuery::process_element()
   table.processRecords(*this);
 
   post_search();  // run in derived class
-  return get_result();
+
+  auto result = get_result();
+
+  // reduce output size
+  if (filter_result_limit && result.size() > filter_result_limit) {
+    result.resize(filter_result_limit);
+  }
+
+  return result;
 };
 
 //----------------------------------------------------------------

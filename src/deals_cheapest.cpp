@@ -4,11 +4,14 @@ namespace deals {
 //----------------------------------------------------------------
 void SimplyCheapest::pre_search() {
   grouped_max_price = 0;
+  if (filter_destination) {
+    filter_result_limit = destination_values_set.size();
+  }
 }
 
 //---------------------------------------------------------
 void SimplyCheapest::process_deal(const i::DealInfo &deal) {
-  if (grouped_destinations.size() > result_destinations_count) {
+  if (grouped_destinations.size() >= filter_result_limit) {
     if (grouped_max_price <= deal.price) {
       return;  // deal price is far more expensive, skip grouping
     }
@@ -39,18 +42,10 @@ void SimplyCheapest::post_search() {
   // sort by price ASC
   std::sort(exec_result.begin(), exec_result.end(),
             [](const i::DealInfo &a, const i::DealInfo &b) { return a.price < b.price; });
-
-  // reduce output size
-  if (exec_result.size() > result_destinations_count) {
-    exec_result.resize(result_destinations_count);
-  }
-  if (filter_result_limit && exec_result.size() > filter_result_limit) {
-    exec_result.resize(filter_result_limit);
-  }
 }
 
 //----------------------------------------------------------------
-std::vector<i::DealInfo> SimplyCheapest::get_result() {
+const std::vector<i::DealInfo> SimplyCheapest::get_result() const {
   return exec_result;
 }
 }  // namespace deals

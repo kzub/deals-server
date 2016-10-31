@@ -15,11 +15,12 @@ void CheapestByDay::pre_search() {
   }
 
   grouped_max_price = 0;
+  filter_result_limit = departure_date_values.duration;
 }
 
 //---------------------------------------------------------
 void CheapestByDay::process_deal(const i::DealInfo &deal) {
-  if (grouped_by_date.size() > result_destinations_count) {
+  if (grouped_by_date.size() >= departure_date_values.duration) {
     if (grouped_max_price <= deal.price) {
       return;  // deal price is far more expensive, skip grouping
     }
@@ -54,7 +55,7 @@ void CheapestByDay::post_search() {
 }
 
 //----------------------------------------------------------------
-std::vector<i::DealInfo> CheapestByDay::get_result() {
+const std::vector<i::DealInfo> CheapestByDay::get_result() const {
   return exec_result;
 }
 }  // namespace deals

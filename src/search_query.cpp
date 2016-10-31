@@ -182,7 +182,9 @@ void SearchQuery::result_limit(const types::Number& limit) {
   if (limit.isUndefined()) {
     return;
   }
-  filter_result_limit = limit.get_value();
+  if (limit.get_value() > 0) {
+    filter_result_limit = limit.get_value();
+  }
 }
 
 //--------------------------------------------------

@@ -19,7 +19,7 @@ class SimplyCheapest : public DealsSearchQuery {
   void process_deal(const i::DealInfo& deal) final override;
   void pre_search() final override;
   void post_search() final override;
-  std::vector<i::DealInfo> get_result() final override;
+  const std::vector<i::DealInfo> get_result() const final override;
 
  private:
   std::vector<i::DealInfo> exec_result;
