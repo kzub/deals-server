@@ -8,6 +8,9 @@
 #include "search_query.hpp"
 
 namespace deals {
+//------------------------------------------------------------
+// SimplyCheapest
+//------------------------------------------------------------
 class SimplyCheapest : public DealsSearchQuery {
  public:
   SimplyCheapest(shared_mem::Table<i::DealInfo>& table) : DealsSearchQuery{table} {

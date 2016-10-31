@@ -2,33 +2,33 @@
 
 namespace deals {
 //----------------------------------------------------------------
-// CheapestByDay PRESEARCH
-//----------------------------------------------------------------
 void CheapestByDay::pre_search() {
-  if (!filter_destination) {
-    std::cerr << "ERROR no destinations specified" << std::endl;
-    throw types::Error("destinations must be specified\n");
-  }
-
   if (!filter_departure_date || !departure_date_values.duration) {
     std::cerr << "ERROR no departure_date range" << std::endl;
     throw types::Error("departure dates interval must be specified\n");
   }
 
-  // 3 city * 365 days - is a limit
-  if (result_destinations_count * departure_date_values.duration > 1098) {
-    std::cerr << "ERROR result_destinations_count * departure_date_values.duration > 1098"
-              << std::endl;
-    throw types::Error("too much deals count requested, reduce destinations or dates range\n");
+  // 365 days - is a limit
+  if (departure_date_values.duration > 365) {
+    std::cerr << "ERROR departure_date_values.duration > 365" << std::endl;
+    throw types::Error("Date interval to large. Reduce dates range\n");
   }
+
+  grouped_max_price = 0;
 }
 
 //---------------------------------------------------------
-// Process selected deal and decide go next or stop here
-//---------------------------------------------------------
 void CheapestByDay::process_deal(const i::DealInfo &deal) {
-  auto &dst_dates = grouped_destinations_and_dates[deal.destination];
-  auto &dst_deal = dst_dates[deal.departure_date];
+  if (grouped_by_date.size() > result_destinations_count) {
+    if (grouped_max_price <= deal.price) {
+      return;  // deal price is far more expensive, skip grouping
+    }
+  }
+  if (grouped_max_price < deal.price) {
+    grouped_max_price = deal.price;
+  }
+
+  auto &dst_deal = grouped_by_date[deal.departure_date];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     dst_deal = deal;
@@ -42,13 +42,9 @@ void CheapestByDay::process_deal(const i::DealInfo &deal) {
 }
 
 //----------------------------------------------------------------
-// CheapestByDay POSTSEARCH
-//----------------------------------------------------------------
 void CheapestByDay::post_search() {
-  for (const auto &dates : grouped_destinations_and_dates) {
-    for (const auto &deal : dates.second) {
-      exec_result.push_back(deal.second);
-    }
+  for (const auto &deal : grouped_by_date) {
+    exec_result.push_back(deal.second);
   }
 
   // sort by departure_date ASC
@@ -57,8 +53,6 @@ void CheapestByDay::post_search() {
   });
 }
 
-//----------------------------------------------------------------
-// CheapestByDay get_result
 //----------------------------------------------------------------
 std::vector<i::DealInfo> CheapestByDay::get_result() {
   return exec_result;

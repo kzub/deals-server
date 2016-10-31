@@ -3,6 +3,7 @@
 
 #include <functional>
 #include "deals_cheapest.hpp"
+#include "deals_cheapest_by_country.hpp"
 #include "deals_cheapest_by_date.hpp"
 #include "deals_database.hpp"
 #include "http.hpp"

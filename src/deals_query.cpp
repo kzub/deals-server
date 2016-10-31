@@ -1,9 +1,7 @@
 #include "deals_query.hpp"
 
 namespace deals {
-/* ----------------------------------------------------------
-**  DealsSearchQuery execute()    execute search process
-** ----------------------------------------------------------*/
+// ----------------------------------------------------------
 std::vector<i::DealInfo> DealsSearchQuery::execute() {
   if (filter_destination) {
     result_destinations_count = destination_values_set.size();
@@ -12,15 +10,12 @@ std::vector<i::DealInfo> DealsSearchQuery::execute() {
   }
 
   current_time = timing::getTimestampSec();
-  // run presearch in derived class
-  pre_search();
+  pre_search();  // run in derived class
 
   // table processor iterates table pages and call DealsSearchQuery::process_element()
   table.processRecords(*this);
 
-  // run postsearch in derived class
-  post_search();
-
+  post_search();  // run in derived class
   return get_result();
 };
 
@@ -28,7 +23,6 @@ std::vector<i::DealInfo> DealsSearchQuery::execute() {
 // DealsSearchQuery process_element()
 // function that will be called by TableProcessor
 // for iterating over all not expired pages in table
-//----------------------------------------------------------------
 void DealsSearchQuery::process_element(const i::DealInfo &deal) {
   // check if not expired
   if (deal.timestamp + DEALS_EXPIRES < current_time) {
