@@ -1,6 +1,7 @@
 #ifndef SRC_DEALS_TYPES_HPP
 #define SRC_DEALS_TYPES_HPP
 
+#include <memory>
 #include "shared_memory.hpp"
 
 #define DEALS_EXPIRES 60 * 60 * 12

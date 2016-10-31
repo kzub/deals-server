@@ -1,7 +1,6 @@
 #ifndef SRC_DEALS_HPP
 #define SRC_DEALS_HPP
 
-#include <memory>
 #include <unordered_map>
 #include "deals_cheapest.hpp"
 #include "deals_cheapest_by_date.hpp"
