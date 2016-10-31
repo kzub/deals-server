@@ -1,6 +1,7 @@
 #ifndef SRC_DEALS_TYPES_HPP
 #define SRC_DEALS_TYPES_HPP
 
+#include <algorithm>
 #include <memory>
 #include "shared_memory.hpp"
 
