@@ -16,20 +16,25 @@ void CheapestByCountry::process_deal(const i::DealInfo &deal) {
       return;  // deal price is far more expensive, skip grouping
     }
   }
-  if (grouped_max_price < deal.price) {
-    grouped_max_price = deal.price;
-  }
-
   auto &dst_deal = grouped_by_country[deal.destination_country];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     dst_deal = deal;
+    update_max_price(deal.price);
   }
   // if  not cheaper but same dates, replace with newer results
   else if (deal.departure_date == dst_deal.departure_date &&
            deal.return_date == dst_deal.return_date && deal.direct == dst_deal.direct) {
     dst_deal = deal;
+    update_max_price(deal.price);
     dst_deal.overriden = true;  // it is used in tests
+  }
+}
+
+//----------------------------------------------------------------
+void CheapestByCountry::update_max_price(uint32_t price) {
+  if (grouped_max_price < price) {
+    grouped_max_price = price;
   }
 }
 

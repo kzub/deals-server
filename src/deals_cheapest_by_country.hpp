@@ -23,6 +23,7 @@ class CheapestByCountry : public DealsSearchQuery {
   const std::vector<i::DealInfo> get_result() const final override;
 
  private:
+  void update_max_price(uint32_t);
   std::vector<i::DealInfo> exec_result;
   std::unordered_map<uint32_t, i::DealInfo> grouped_by_country;
   uint32_t grouped_max_price = 0;
