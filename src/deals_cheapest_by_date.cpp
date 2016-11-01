@@ -14,30 +14,30 @@ void CheapestByDay::pre_search() {
     throw types::Error("Date interval to large. 365 days is maximum\n");
   }
 
-  grouped_max_price = 0;
+  reset_group_max_price();
   filter_result_limit = departure_date_values.duration;
 }
 
 //---------------------------------------------------------
 void CheapestByDay::process_deal(const i::DealInfo &deal) {
-  if (grouped_by_date.size() >= departure_date_values.duration) {
-    if (grouped_max_price <= deal.price) {
-      return;  // deal price is far more expensive, skip grouping
+  if (grouped_by_date.size() >= filter_result_limit) {
+    if (more_than_group_max_price(deal.price)) {
+      return;
     }
-  }
-  if (grouped_max_price < deal.price) {
-    grouped_max_price = deal.price;
   }
 
   auto &dst_deal = grouped_by_date[deal.departure_date];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     dst_deal = deal;
+    update_group_max_price(deal.price);
   }
-  // if  not cheaper but same dates, replace with newer results
-  else if (deal.departure_date == dst_deal.departure_date &&
+  // if  not cheaper but same destination & dates, replace with newer results
+  else if (deal.destination == dst_deal.destination &&
+           deal.departure_date == dst_deal.departure_date &&
            deal.return_date == dst_deal.return_date && deal.direct == dst_deal.direct) {
     dst_deal = deal;
+    update_group_max_price(deal.price);
     dst_deal.overriden = true;  // it is used in tests
   }
 }

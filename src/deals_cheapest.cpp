@@ -3,7 +3,7 @@
 namespace deals {
 //----------------------------------------------------------------
 void SimplyCheapest::pre_search() {
-  grouped_max_price = 0;
+  reset_group_max_price();
   if (filter_destination) {
     filter_result_limit = destination_values_set.size();
   }
@@ -12,23 +12,22 @@ void SimplyCheapest::pre_search() {
 //---------------------------------------------------------
 void SimplyCheapest::process_deal(const i::DealInfo &deal) {
   if (grouped_destinations.size() >= filter_result_limit) {
-    if (grouped_max_price <= deal.price) {
-      return;  // deal price is far more expensive, skip grouping
+    if (more_than_group_max_price(deal.price)) {
+      return;
     }
-  }
-  if (grouped_max_price < deal.price) {
-    grouped_max_price = deal.price;
   }
 
   auto &dst_deal = grouped_destinations[deal.destination];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     dst_deal = deal;
+    update_group_max_price(deal.price);
   }
   // if  not cheaper but same dates and direct/stops, replace with newer results
   else if (deal.departure_date == dst_deal.departure_date &&
            deal.return_date == dst_deal.return_date && deal.direct == dst_deal.direct) {
     dst_deal = deal;
+    update_group_max_price(deal.price);
     dst_deal.overriden = true;
   }
 }

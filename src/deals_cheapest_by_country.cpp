@@ -3,7 +3,7 @@
 namespace deals {
 //---------------------------------------------------------
 void CheapestByCountry::pre_search() {
-  grouped_max_price = 0;
+  reset_group_max_price();
   if (filter_destination_country) {
     filter_result_limit = destination_country_set.size();
   }
@@ -12,8 +12,7 @@ void CheapestByCountry::pre_search() {
 //---------------------------------------------------------
 void CheapestByCountry::process_deal(const i::DealInfo &deal) {
   if (grouped_by_country.size() >= filter_result_limit) {
-    if (grouped_max_price <= deal.price) {
-      // deal price is far more expensive, skip grouping
+    if (more_than_group_max_price(deal.price)) {
       return;
     }
   }
@@ -22,24 +21,18 @@ void CheapestByCountry::process_deal(const i::DealInfo &deal) {
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     dst_deal = deal;
-    update_max_price(deal.price);
+    update_group_max_price(deal.price);
   }
-  // if  not cheaper but same dates, replace with newer results
+  // if  not cheaper but same  destination & dates, replace with newer results
   else if (deal.destination == dst_deal.destination &&
            deal.departure_date == dst_deal.departure_date &&
            deal.return_date == dst_deal.return_date && deal.direct == dst_deal.direct) {
     dst_deal = deal;
-    update_max_price(deal.price);
+    update_group_max_price(deal.price);
     dst_deal.overriden = true;  // it is used in tests
   }
 }
 
-//----------------------------------------------------------------
-void CheapestByCountry::update_max_price(uint32_t price) {
-  if (grouped_max_price < price) {
-    grouped_max_price = price;
-  }
-}
 //----------------------------------------------------------------
 void CheapestByCountry::post_search() {
   for (const auto &deal : grouped_by_country) {
