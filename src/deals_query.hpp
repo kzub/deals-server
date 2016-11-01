@@ -27,7 +27,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
     }
   }
   inline bool more_than_group_max_price(const uint32_t& price) {
-    return price < group_max_price;
+    return price > group_max_price;
   }
 
  private:
