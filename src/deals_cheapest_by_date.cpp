@@ -14,7 +14,6 @@ void CheapestByDay::pre_search() {
     throw types::Error("Date interval to large. 365 days is maximum\n");
   }
 
-  std::cout << "duration:" << std::to_string(departure_date_values.duration) << std::endl;
   reset_group_max_price();
   filter_result_limit = departure_date_values.duration;
 }
