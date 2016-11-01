@@ -14,6 +14,7 @@ void CheapestByDay::pre_search() {
     throw types::Error("Date interval to large. 365 days is maximum\n");
   }
 
+  std::cout << "duration:" << std::to_string(departure_date_values.duration) << std::endl;
   reset_group_max_price();
   filter_result_limit = departure_date_values.duration;
 }
@@ -33,9 +34,8 @@ void CheapestByDay::process_deal(const i::DealInfo &deal) {
     update_group_max_price(deal.price);
   }
   // if  not cheaper but same destination & dates, replace with newer results
-  else if (deal.destination == dst_deal.destination &&
-           deal.departure_date == dst_deal.departure_date &&
-           deal.return_date == dst_deal.return_date && deal.direct == dst_deal.direct) {
+  else if (deal.destination == dst_deal.destination && deal.return_date == dst_deal.return_date &&
+           deal.direct == dst_deal.direct) {
     dst_deal = deal;
     update_group_max_price(deal.price);
     dst_deal.overriden = true;  // it is used in tests
