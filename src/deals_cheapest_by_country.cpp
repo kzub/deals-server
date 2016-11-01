@@ -20,8 +20,7 @@ void CheapestByCountry::process_deal(const i::DealInfo &deal) {
 
   auto &dst_deal = grouped_by_country[deal.destination_country];
 
-  if (dst_deal.price == 0 ||
-      (deal.destination == dst_deal.destination && dst_deal.price >= deal.price)) {
+  if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     dst_deal = deal;
     update_max_price(deal.price);
   }
