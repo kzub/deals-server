@@ -40,9 +40,8 @@ void CheapestByCountry::post_search() {
   }
 
   // sort by departure_date ASC
-  std::sort(exec_result.begin(), exec_result.end(), [](const i::DealInfo &a, const i::DealInfo &b) {
-    return a.destination_country < b.destination_country;
-  });
+  std::sort(exec_result.begin(), exec_result.end(),
+            [](const i::DealInfo &a, const i::DealInfo &b) { return a.price < b.price; });
 }
 
 //----------------------------------------------------------------
