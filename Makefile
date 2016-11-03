@@ -7,6 +7,7 @@ SRCDIR := src
 BUILDDIR := build
 TARGET_DIR := bin
 TARGET_FILE := deals-server
+PREFIX ?= /usr/local
 
 UNAME := $(shell uname)
 
@@ -45,6 +46,9 @@ clean:
 tester:
 	$(CC) $(CFLAGS) test/tester.cpp $(INC) $(LIB) -o bin/tester
 
+install:
+	install -d $(DESTDIR)$(prefix)/bin/
+	install -m 0755 $(TARGET_DIR)/$(TARGET_FILE) $(DESTDIR)$(prefix)/bin/
 
 # Spikes
 ticket:
