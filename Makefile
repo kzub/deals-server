@@ -47,8 +47,8 @@ tester:
 	$(CC) $(CFLAGS) test/tester.cpp $(INC) $(LIB) -o bin/tester
 
 install:
-	install -d $(DESTDIR)$(prefix)/bin/
-	install -m 0755 $(TARGET_DIR)/$(TARGET_FILE) $(DESTDIR)$(prefix)/bin/
+	install -d $(DESTDIR)$(PREFIX)/bin/
+	install -m 0755 $(TARGET_DIR)/$(TARGET_FILE) $(DESTDIR)$(PREFIX)/bin/
 
 # Spikes
 ticket:
