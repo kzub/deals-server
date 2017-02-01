@@ -72,7 +72,6 @@ void DealsServer::process() {
 }
 
 // TODO
-// *) search by country
 // *) reduce storage types uint32t -> uint16
 // *) clear mem mechanism parallesation?
 // *) overwrite not expired pages on low mem
@@ -219,7 +218,7 @@ void DealsServer::getTop(Connection &conn) {
     }
 
     auto result = db_dst.getLocaleTop(locale, departure_date_from, departure_date_to, deals_limit);
-    for (auto &dst : result) {
+    for (const auto &dst : result) {
       destinations.add_code(dst.destination);
     }
   }
