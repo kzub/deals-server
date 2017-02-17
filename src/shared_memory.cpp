@@ -33,7 +33,7 @@ bool isLowMem() {  // cache??
   statvfs("/dev/shm/", &res);
   uint32_t freemem = 100 * res.f_bavail / res.f_blocks;
 
-  if (freemem <= LOWMEM_ERROR_PERCENT) {
+  if (freemem <= LOWMEM_WARNING_PERCENT) {
     std::cerr << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
     return true;
   }

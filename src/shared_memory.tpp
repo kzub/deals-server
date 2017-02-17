@@ -338,8 +338,9 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
 //-----------------------------------------------------
 template <typename ELEMENT_T>
 uint16_t Table<ELEMENT_T>::get_oldest_idx() {
-  if (lock->is_locked()) {
-    throw "NOT_LOCKED_WHILE_FIND_OLDEST";
+  if (!lock->is_locked()) {
+    std::cerr << "ERROR NOT_LOCKED_WHILE_FIND_OLDEST" << std::endl;
+    return 0;
   }
 
   uint32_t min_expire = UINT32_MAX;

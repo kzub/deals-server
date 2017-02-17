@@ -169,7 +169,7 @@ void DealsServer::terminateWithError(Connection &conn, types::Error &err) {
   if (ip.length() == 0) {
     ip = conn.get_client_address();
   }
-  std::cerr << ip << " " << conn.context.http.request.uri << " ERROR: " << err.message;
+  std::cerr << ip << " " << conn.context.http.request.uri << " ERROR: " << err.message << std::endl;
   if (err.code == types::ErrorCode::BadParameter) {
     conn.close(http::HttpResponse(400, "Bad request", err.message));
   } else {
