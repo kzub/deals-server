@@ -213,7 +213,6 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   uint32_t current_time = timing::getTimestampSec();
   TablePageIndexElement* index_record;
   bool current_record_was_cleared;
-  bool lowmem = isLowMem();  // cache?
 
   // std::cout << "CURRENT_TIME: " << current_time << std::endl;
   lock->enter();
@@ -244,7 +243,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
     }
 
     // we need to allocate new page and we have low memory
-    if (lowmem && index_record->expire_at == 0) {
+    if (index_record->expire_at == 0 && isLowMem()) {
       // instead allocating new page overwrite existing one. an oldest one.
       idx = get_oldest_idx();
       index_record = &table_index->shared_elements[idx];
