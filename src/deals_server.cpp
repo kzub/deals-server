@@ -72,6 +72,7 @@ void DealsServer::process() {
 }
 
 // TODO
+// *) add some indexes on page index record for search speed up
 // *) reduce storage types uint32t -> uint16
 // *) clear mem mechanism parallesation?
 // *) overwrite not expired pages on low mem

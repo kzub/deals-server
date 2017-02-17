@@ -10,24 +10,35 @@ namespace shared_mem {
 // Check system has free shared memory
 //-----------------------------------------------------------
 bool checkSharedMemAvailability() {
-  struct statvfs res;
-  statvfs("/dev/shm/", &res);
-#ifdef __APPLE__
-  // doesnt work on apple
+#ifdef __APPLE__  // doesnt work on apple
   return true;
 #endif
-  uint32_t freemem = (100 * res.f_bavail / res.f_blocks);
+  struct statvfs res;
+  statvfs("/dev/shm/", &res);
+  uint32_t freemem = 100 * res.f_bavail / res.f_blocks;
 
   if (freemem <= LOWMEM_ERROR_PERCENT) {
-    std::cout << "ERROR VERY LOW MEMORY:" << freemem << "%"
-              << " f_bavail:" << res.f_bavail << " f_blocks:" << res.f_blocks << std::endl;
-  } else if (freemem <= LOWMEM_WARNING_PERCENT) {
-    std::cout << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
+    std::cerr << "ERROR VERY LOW MEMORY:" << freemem << "%" << std::endl;
+    return false;
   }
-  std::cout << "MEMORY:" << freemem << "%" << std::endl;
+  std::cout << "MEMORY1:" << freemem << "%" << std::endl;
+  return true;
+}
 
-  // if false pages will not allocated by 'new SharedMemory()'
-  return freemem > LOWMEM_ERROR_PERCENT;
+bool isLowMem() {  // cache??
+#ifdef __APPLE__   // doesnt work on apple
+  return false;
+#endif
+  struct statvfs res;
+  statvfs("/dev/shm/", &res);
+  uint32_t freemem = 100 * res.f_bavail / res.f_blocks;
+
+  if (freemem <= LOWMEM_ERROR_PERCENT) {
+    std::cerr << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
+    return true;
+  }
+  std::cout << "MEMORY2:" << freemem << "%" << std::endl;
+  return false;
 }
 
 /* ----------------------------------------------------------

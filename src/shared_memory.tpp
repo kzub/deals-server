@@ -119,7 +119,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   // process every element in every page
   for (const auto& record : records_to_scan) {
     // call table processor routine
-    SharedMemoryPage<ELEMENT_T>* page = getPageByName(record.page_name);
+    auto* page = getPageByName(record.page_name);
     if (page == nullptr) {
       std::cerr << "ERROR Table::processRecords Cannot allocate page Table::processRecords()"
                 << std::endl;
@@ -159,7 +159,7 @@ void Table<ELEMENT_T>::cleanup() {
 
     if (index_current->expire_at > 0) {
       // mark as deleted
-      SharedMemoryPage<ELEMENT_T>* page = getPageByName(index_current->page_name);
+      auto* page = getPageByName(index_current->page_name);
       if (page == nullptr) {
         std::cerr << "ERROR Table::cleanup Cannot allocate page Table::cleanup()" << std::endl;
         continue;
@@ -213,6 +213,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   uint32_t current_time = timing::getTimestampSec();
   TablePageIndexElement* index_record;
   bool current_record_was_cleared;
+  bool lowmem = isLowMem();  // cache?
 
   // std::cout << "CURRENT_TIME: " << current_time << std::endl;
   lock->enter();
@@ -242,8 +243,19 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
       continue;
     }
 
-    // page fit our needs. let's use it
-    insert_page_name = table_index->page_name + ":" + std::to_string(idx);
+    // we need to allocate new page and we have low memory
+    if (lowmem && index_record->expire_at == 0) {
+      // instead allocating new page overwrite existing one. an oldest one.
+      idx = get_oldest_idx();
+      index_record = &table_index->shared_elements[idx];
+      index_record->expire_at = 1;
+      index_record->page_elements_available = max_elements_in_page;
+      insert_page_name = index_record->page_name;
+      std::cout << "USE OLDEST page:" << insert_page_name << std::endl;
+    } else {
+      // page fit our needs. let's use it
+      insert_page_name = table_index->page_name + ":" + std::to_string(idx);
+    }
 
     // page is empty -> use it
     // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
@@ -306,7 +318,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   // now we have page to insert
   // and position to insert
   // let's look for page now in local heap or allocate it
-  SharedMemoryPage<ELEMENT_T>* page = getPageByName(insert_page_name);
+  auto* page = getPageByName(insert_page_name);
 
   if (page == nullptr) {
     std::cerr << "ERROR Table::addRecord() page == nullptr" << std::endl;
@@ -320,6 +332,36 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   // std::cout << "COPY :" << insert_page_name << " idx:" << insert_element_idx
   // << " cout:" << records_cout << " size:" << sizeof(ELEMENT_T)*records_cout << std::endl;
   return ElementPointer<ELEMENT_T>(*this, insert_page_name, insert_element_idx, records_cout);
+}
+
+//-----------------------------------------------------
+// get_oldest_idx
+//-----------------------------------------------------
+template <typename ELEMENT_T>
+uint16_t Table<ELEMENT_T>::get_oldest_idx() {
+  if (lock->is_locked()) {
+    throw "NOT_LOCKED_WHILE_FIND_OLDEST";
+  }
+
+  uint32_t min_expire = UINT32_MAX;
+  uint16_t min_idx = 0;
+
+  // search for free space in pages
+  for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
+    // current page row (pointer to shared memory)
+    auto index_record = &table_index->shared_elements[idx];
+
+    if (index_record->expire_at == 0) {
+      break;
+    }
+
+    if (min_expire > index_record->expire_at) {
+      min_expire = index_record->expire_at;
+      min_idx = idx;
+    }
+  }
+
+  return min_idx;
 }
 
 //-----------------------------------------------------
@@ -343,7 +385,7 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::localGetPageByName(const std::str
 template <typename ELEMENT_T>
 SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& page_to_look) {
   // let's look for page now in local heap
-  SharedMemoryPage<ELEMENT_T>* page = localGetPageByName(page_to_look);
+  auto* page = localGetPageByName(page_to_look);
 
   // if not already open or created -> do it
   if (page == nullptr || !page->isAllocated()) {
@@ -412,15 +454,13 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
     }
 
     uint16_t cleared_counter = 0;
-    // std::cout << "idx:" << idx << " last_data_idx:" << last_data_idx << std::endl;
     // mark as unlinked, release this pages locally and unlink
     // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
     //                   last_data_idx ---^     ^        ^        ^        ^        ^--- idx
     if (idx > 0 && last_data_idx < --idx) {
       for (; last_data_idx < idx; idx--) {
         TablePageIndexElement& index_record = table_index->shared_elements[idx];
-        // std::cout << "try to CLEAR page memory:" << index_record.page_name << std::endl;
-        SharedMemoryPage<ELEMENT_T>* page = getPageByName(index_record.page_name);
+        auto* page = getPageByName(index_record.page_name);
 
         if (page == nullptr) {
           std::cerr << "ERROR Table::release_expired_memory_pages cannot acquire page:"
@@ -612,7 +652,7 @@ ELEMENT_T* ElementPointer<ELEMENT_T>::get_data() {
     return nullptr;
   }
 
-  SharedMemoryPage<ELEMENT_T>* page = table.getPageByName(page_name);
+  auto* page = table.getPageByName(page_name);
   if (page == nullptr) {
     std::cerr << "ERROR ElementPointer::get_data" << std::endl;
     return nullptr;

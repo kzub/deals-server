@@ -22,6 +22,7 @@ static_assert(MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > MEMPAGE_CHECK_EXPIRED_PAG
 static_assert(LOWMEM_WARNING_PERCENT > LOWMEM_ERROR_PERCENT, "CHECK LOWMEM SETTINGS");
 
 bool checkSharedMemAvailability();
+bool isLowMem();
 
 // result of page insertion
 enum class ErrorCode : int {
@@ -101,6 +102,7 @@ class Table {
   void release_open_pages();
   void clear_index_record(TablePageIndexElement& record);
   void release_expired_memory_pages();
+  uint16_t get_oldest_idx();
 
   locks::CriticalSection* lock;  // [interprocess memory access management]
   std::vector<SharedMemoryPage<ELEMENT_T>*> opened_pages_list;
@@ -111,7 +113,6 @@ class Table {
   uint32_t max_elements_in_page;
   uint32_t record_expire_seconds;
   uint32_t time_to_check_page_expire = 0;
-
   template <class T>
   friend class SharedMemoryPage;
 
