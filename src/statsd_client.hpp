@@ -46,9 +46,9 @@ class Client {
  public:
   int inc(const std::string& key, const Tags& tags = {}, float sample_rate = 1.0);
   int dec(const std::string& key, const Tags& tags = {}, float sample_rate = 1.0);
-  int count(const std::string& key, size_t value, const Tags& tags = {}, float sample_rate = 1.0);
-  int gauge(const std::string& key, size_t value, const Tags& tags = {}, float sample_rate = 1.0);
-  int timing(const std::string& key, size_t ms, const Tags& tags = {}, float sample_rate = 1.0);
+  int count(const std::string& key, int32_t value, const Tags& tags = {}, float sample_rate = 1.0);
+  int gauge(const std::string& key, int32_t value, const Tags& tags = {}, float sample_rate = 1.0);
+  int timing(const std::string& key, int32_t ms, const Tags& tags = {}, float sample_rate = 1.0);
 
  public:
   /**
@@ -60,7 +60,7 @@ class Client {
   /* (Low Level Api) manually send a message
    * type = "c", "g" or "ms"
    */
-  int send(std::string key, size_t value, const Tags& tags, const std::string& type,
+  int send(std::string key, int32_t value, const Tags& tags, const std::string& type,
            float sample_rate);
 
  protected:

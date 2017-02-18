@@ -91,7 +91,7 @@ int Client::init() {
 
 /* will change the original std::string */
 void Client::cleanup(std::string& key) {
-  size_t pos = key.find_first_of(":|@");
+  int32_t pos = key.find_first_of(":|@");
   while (pos != std::string::npos) {
     key[pos] = '_';
     pos = key.find_first_of(":|@");
@@ -106,19 +106,19 @@ int Client::inc(const std::string& key, const Tags& tags, float sample_rate) {
   return count(key, 1, tags, sample_rate);
 }
 
-int Client::count(const std::string& key, size_t value, const Tags& tags, float sample_rate) {
+int Client::count(const std::string& key, int32_t value, const Tags& tags, float sample_rate) {
   return send(key, value, tags, "c", sample_rate);
 }
 
-int Client::gauge(const std::string& key, size_t value, const Tags& tags, float sample_rate) {
+int Client::gauge(const std::string& key, int32_t value, const Tags& tags, float sample_rate) {
   return send(key, value, tags, "g", sample_rate);
 }
 
-int Client::timing(const std::string& key, size_t ms, const Tags& tags, float sample_rate) {
+int Client::timing(const std::string& key, int32_t ms, const Tags& tags, float sample_rate) {
   return send(key, ms, tags, "ms", sample_rate);
 }
 
-int Client::send(std::string key, size_t value, const Tags& tags, const std::string& type,
+int Client::send(std::string key, int32_t value, const Tags& tags, const std::string& type,
                  float sample_rate) {
   if (!should_send(sample_rate)) {
     return 0;
@@ -146,7 +146,7 @@ int Client::send(const std::string& message) {
 }
 
 int Client::send_to_daemon(const std::string& message) {
-  // std::cout << "send_to_daemon: " << message << std::endl;
+  std::cout << "send_to_daemon: " << message << std::endl;
   int ret = init();
   if (ret) {
     return ret;

@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "shared_memory.hpp"
+#include "statsd_client.hpp"
 #include "timing.hpp"
 
 namespace shared_mem {
@@ -251,6 +252,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
       index_record->page_elements_available = max_elements_in_page;
       insert_page_name = index_record->page_name;
       std::cout << "USE OLDEST page:" << insert_page_name << std::endl;
+      statsd::metric.inc("dealsrv.page_use", {{"page", "oldest"}});
     } else {
       // page fit our needs. let's use it
       insert_page_name = table_index->page_name + ":" + std::to_string(idx);
@@ -264,8 +266,11 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
       insert_element_idx = 0;
       if (current_record_was_cleared) {
         std::cout << "USE EXPIRED page:" << insert_page_name << std::endl;
+        statsd::metric.inc("dealsrv.page_use", {{"page", "expired"}});
       } else {
         std::cout << "USE NEW page:" << insert_page_name << std::endl;
+        statsd::metric.inc("dealsrv.page_use", {{"page", "new"}});
+        statsd::metric.inc("dealsrv.page_alloc");
       }
 
       // calculate capacity after we will put records
@@ -415,6 +420,7 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_expired_memory_pages() {
   uint32_t current_time = timing::getTimestampSec();
+  uint16_t cleared_counter = 0;
 
   // check local timer
   if (time_to_check_page_expire > current_time) {
@@ -453,7 +459,6 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       }
     }
 
-    uint16_t cleared_counter = 0;
     // mark as unlinked, release this pages locally and unlink
     // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
     //                   last_data_idx ---^     ^        ^        ^        ^        ^--- idx
@@ -481,6 +486,10 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   }
 
   lock->exit();
+
+  if (cleared_counter > 0) {
+    statsd::metric.count("dealsrv.page_alloc", -cleared_counter);
+  }
 
   // clear opened_pages_list from unlinked items
   // all processes must do that

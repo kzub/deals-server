@@ -3,6 +3,7 @@
 #include <sys/statvfs.h>
 
 #include "shared_memory.hpp"
+#include "statsd_client.hpp"
 #include "timing.hpp"
 
 namespace shared_mem {
@@ -13,7 +14,7 @@ bool checkSharedMemAvailability() {
 #ifdef __APPLE__  // doesnt work on apple
   return true;
 #endif
-  struct statvfs res;
+  static struct statvfs res;
   statvfs("/dev/shm/", &res);
   uint32_t freemem = 100 * res.f_bavail / res.f_blocks;
 
@@ -29,9 +30,11 @@ bool isLowMem() {  // cache??
 #ifdef __APPLE__   // doesnt work on apple
   return false;
 #endif
-  struct statvfs res;
+  static struct statvfs res;
   statvfs("/dev/shm/", &res);
   uint32_t freemem = 100 * res.f_bavail / res.f_blocks;
+
+  statsd::metric.gauge("dealsrv.free_shmem", freemem);
 
   if (freemem <= LOWMEM_WARNING_PERCENT) {
     std::cerr << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
