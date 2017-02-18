@@ -1,4 +1,3 @@
-#include "statsd_client.hpp"
 #include <math.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -7,6 +6,8 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "statsd_client.hpp"
 
 namespace statsd {
 
@@ -97,39 +98,43 @@ void Client::cleanup(std::string& key) {
   }
 }
 
-int Client::dec(const std::string& key, float sample_rate) {
-  return count(key, -1, sample_rate);
+int Client::dec(const std::string& key, const Tags& tags, float sample_rate) {
+  return count(key, -1, tags, sample_rate);
 }
 
-int Client::inc(const std::string& key, float sample_rate) {
-  return count(key, 1, sample_rate);
+int Client::inc(const std::string& key, const Tags& tags, float sample_rate) {
+  return count(key, 1, tags, sample_rate);
 }
 
-int Client::count(const std::string& key, size_t value, float sample_rate) {
-  return send(key, value, "c", sample_rate);
+int Client::count(const std::string& key, size_t value, const Tags& tags, float sample_rate) {
+  return send(key, value, tags, "c", sample_rate);
 }
 
-int Client::gauge(const std::string& key, size_t value, float sample_rate) {
-  return send(key, value, "g", sample_rate);
+int Client::gauge(const std::string& key, size_t value, const Tags& tags, float sample_rate) {
+  return send(key, value, tags, "g", sample_rate);
 }
 
-int Client::timing(const std::string& key, size_t ms, float sample_rate) {
-  return send(key, ms, "ms", sample_rate);
+int Client::timing(const std::string& key, size_t ms, const Tags& tags, float sample_rate) {
+  return send(key, ms, tags, "ms", sample_rate);
 }
 
-int Client::send(std::string key, size_t value, const std::string& type, float sample_rate) {
+int Client::send(std::string key, size_t value, const Tags& tags, const std::string& type,
+                 float sample_rate) {
   if (!should_send(sample_rate)) {
     return 0;
   }
 
   cleanup(key);
+  std::string buf = d.ns + key + ":" + std::to_string(value) + "|" + type;
 
-  char buf[256];
-  if (fequal(sample_rate, 1.0)) {
-    snprintf(buf, sizeof(buf), "%s%s:%zd|%s", d.ns.c_str(), key.c_str(), value, type.c_str());
-  } else {
-    snprintf(buf, sizeof(buf), "%s%s:%zd|%s|@%.2f", d.ns.c_str(), key.c_str(), value, type.c_str(),
-             sample_rate);
+  if (!fequal(sample_rate, 1.0)) {
+    buf = buf + "|@" + std::to_string(sample_rate);
+  }
+
+  if (tags.size() > 0) {
+    for (auto& t : tags) {
+      buf = buf + "," + t.first + "=" + t.second;
+    }
   }
 
   return send(buf);
