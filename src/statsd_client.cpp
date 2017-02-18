@@ -123,18 +123,19 @@ int Client::send(std::string key, size_t value, const Tags& tags, const std::str
   if (!should_send(sample_rate)) {
     return 0;
   }
-
   cleanup(key);
-  std::string buf = d.ns + key + ":" + std::to_string(value) + "|" + type;
+
+  std::string tagstext = "";
+  if (tags.size() > 0) {
+    for (auto& t : tags) {
+      tagstext = tagstext + "," + t.first + "=" + t.second;
+    }
+  }
+
+  std::string buf = d.ns + key + tagstext + ":" + std::to_string(value) + "|" + type;
 
   if (!fequal(sample_rate, 1.0)) {
     buf = buf + "|@" + std::to_string(sample_rate);
-  }
-
-  if (tags.size() > 0) {
-    for (auto& t : tags) {
-      buf = buf + "," + t.first + "=" + t.second;
-    }
   }
 
   return send(buf);
