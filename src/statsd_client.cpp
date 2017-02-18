@@ -1,11 +1,5 @@
 #include <math.h>
 #include <netdb.h>
-#include <netinet/in.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "statsd_client.hpp"
 
@@ -56,7 +50,7 @@ int Client::init() {
 
   d.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (d.sock == -1) {
-    snprintf(d.errmsg, sizeof(d.errmsg), "could not create socket, err=%m");
+    std::cerr << "could not create socket, err=" << std::to_string(errno) << std::endl;
     return -1;
   }
 
@@ -76,8 +70,8 @@ int Client::init() {
     if (ret) {
       close(d.sock);
       d.sock = -1;
-      snprintf(d.errmsg, sizeof(d.errmsg), "getaddrinfo fail, error=%d, msg=%s", ret,
-               gai_strerror(ret));
+      std::cerr << "getaddrinfo fail, error=" << std::to_string(ret)
+                << ", msg=" << gai_strerror(ret) << std::endl;
       return -2;
     }
     struct sockaddr_in* host_addr = (struct sockaddr_in*)result->ai_addr;
@@ -146,8 +140,7 @@ int Client::send(const std::string& message) {
 }
 
 int Client::send_to_daemon(const std::string& message) {
-  // std::cout << "send_to_daemon: " << message.length() << " B" << std::endl;
-  std::cout << "send_to_daemon: " << message << std::endl;
+  // std::cout << "send_to_daemon: " << message << std::endl;
   int ret = init();
   if (ret) {
     return ret;
@@ -155,15 +148,12 @@ int Client::send_to_daemon(const std::string& message) {
   ret = sendto(d.sock, message.data(), message.size(), 0, (struct sockaddr*)&d.server,
                sizeof(d.server));
   if (ret == -1) {
-    snprintf(d.errmsg, sizeof(d.errmsg), "sendto server fail, host=%s:%d, err=%m", d.host.c_str(),
-             d.port);
+    std::cerr << "sendto server fail, host=" << d.host.c_str() << ":" << std::to_string(d.port)
+              << ", err=" << std::to_string(errno) << std::endl;
     return -1;
   }
 
   return 0;
 }
 
-const char* Client::errmsg() {
-  return d.errmsg;
-}
-}
+}  // namespace statsd
