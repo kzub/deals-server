@@ -270,7 +270,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
       } else {
         std::cout << "USE NEW page:" << insert_page_name << std::endl;
         statsd::metric.inc("dealsrv.page_use", {{"page", "new"}});
-        statsd::metric.gauge("dealsrv.page_alloc");
+        statsd::metric.gauge("dealsrv.page_alloc", 1);
       }
 
       // calculate capacity after we will put records
