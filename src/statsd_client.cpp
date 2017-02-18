@@ -146,7 +146,7 @@ int Client::send(const std::string& message) {
 }
 
 int Client::send_to_daemon(const std::string& message) {
-  std::cout << "send_to_daemon: " << message << std::endl;
+  // std::cout << "send_to_daemon: " << message << std::endl;
   int ret = init();
   if (ret) {
     return ret;
