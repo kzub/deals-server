@@ -3,6 +3,7 @@
 
 #include "deals_server.hpp"
 #include "locks.hpp"
+#include "statsd_client.hpp"
 #include "timing.hpp"
 
 namespace deals_srv {
@@ -382,6 +383,12 @@ int main(int argc, char *argv[]) {
       std::cerr << "ERRORS FOUND IN TEST: " << std::endl;
       return -1;
     }
+  }
+
+  if (argc > 1 && std::string(argv[1]) == "stat") {
+    statsd::Client test;
+    test.inc("dealstest");
+    return 0;
   }
 
   if (argc < 3) {
