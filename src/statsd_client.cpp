@@ -1,5 +1,11 @@
 #include <math.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "statsd_client.hpp"
 
