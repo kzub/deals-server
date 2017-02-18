@@ -435,7 +435,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
     // search for free space in all table pages
     for (idx = 0; idx < table_max_pages; ++idx) {
       // current page row (pointer to shared memory)
-      const TablePageIndexElement& index_record = table_index->shared_elements[idx];
+      const auto& index_record = table_index->shared_elements[idx];
 
       // page expired -> make it empty and use it to save records
       // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
@@ -460,7 +460,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
     if (idx > 0 && last_data_idx < --idx) {
       for (; last_data_idx < idx; idx--) {
         TablePageIndexElement& index_record = table_index->shared_elements[idx];
-        auto* page = getPageByName(index_record.page_name);
+        const auto* page = getPageByName(index_record.page_name);
 
         if (page == nullptr) {
           std::cerr << "ERROR Table::release_expired_memory_pages cannot acquire page:"
@@ -485,7 +485,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   // clear opened_pages_list from unlinked items
   // all processes must do that
   std::vector<SharedMemoryPage<ELEMENT_T>*> new_pages_list;
-  for (auto page : opened_pages_list) {
+  for (const auto page : opened_pages_list) {
     if (page->shared_pageinfo->unlinked) {
       std::cout << "RELEASING unlinked page:" << page->page_name << std::endl;
       delete page;
