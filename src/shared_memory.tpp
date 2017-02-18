@@ -270,7 +270,7 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
       } else {
         std::cout << "USE NEW page:" << insert_page_name << std::endl;
         statsd::metric.inc("dealsrv.page_use", {{"page", "new"}});
-        statsd::metric.inc("dealsrv.page_alloc");
+        statsd::metric.gauge("dealsrv.page_alloc");
       }
 
       // calculate capacity after we will put records
@@ -488,7 +488,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   lock->exit();
 
   if (cleared_counter > 0) {
-    statsd::metric.count("dealsrv.page_alloc", -cleared_counter);
+    statsd::metric.gauge("dealsrv.page_alloc", -cleared_counter);
   }
 
   // clear opened_pages_list from unlinked items
