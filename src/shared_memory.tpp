@@ -487,7 +487,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   lock->exit();
 
   if (cleared_counter > 0) {
-    statsd::metric.count("dealsrv.page_use", -cleared_counter, {{"page", "new"}});
+    statsd::metric.count("dealsrv.page_use", cleared_counter, {{"page", "delete"}});
   }
 
   // clear opened_pages_list from unlinked items
