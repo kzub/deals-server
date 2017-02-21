@@ -56,7 +56,7 @@ void DealsDatabase::addDeal(const types::Required<types::IATACode> &origin,
   auto result = db_data->addRecord(data_pointer, data_size);
   if (result.error != shared_mem::ErrorCode::NO_ERROR) {
     std::cerr << "ERROR addRecord->DealData:" << (int)result.error << std::endl;
-    throw types::Error("Internal Error: addRecord->DealData", types::ErrorCode::InternalError);
+    throw types::Error("Internal Error: addRecord->DealData\n", types::ErrorCode::InternalError);
   }
 
   const types::Weekdays departure_day_of_week(departure_date);
@@ -91,7 +91,7 @@ void DealsDatabase::addDeal(const types::Required<types::IATACode> &origin,
   auto di_result = db_index->addRecord(&info);
   if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
     std::cerr << "ERROR addRecord->DealInfo:" << (int)di_result.error << std::endl;
-    throw types::Error("Internal Error: addRecord->DealInfo", types::ErrorCode::InternalError);
+    throw types::Error("Internal Error: addRecord->DealInfo\n", types::ErrorCode::InternalError);
   }
 }
 

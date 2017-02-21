@@ -18,6 +18,7 @@ class CriticalSection {
 
   void enter();
   void exit();
+  bool is_locked();
   void reset_not_for_production();
 
  private:
@@ -28,7 +29,7 @@ class CriticalSection {
   std::string name;
   bool initialized;
   bool unlock_needed;
-  sem_t *lock;
+  sem_t* lock;
 };
 
 int unit_test();

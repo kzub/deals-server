@@ -5,7 +5,7 @@
 #include <memory>
 #include "shared_memory.hpp"
 
-#define DEALS_EXPIRES 60 * 60 * 12
+#define DEALS_EXPIRES 60 * 60 * 24
 
 #define DEALINFO_TABLENAME "DealsInfo"
 #define DEALINFO_PAGES 5000

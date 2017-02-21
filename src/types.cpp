@@ -76,6 +76,7 @@ IATACodes::IATACodes(std::string _codes) {
 
 void IATACodes::add_code(uint32_t dbcode) {
   codes.insert({dbcode});
+  paramter_undefined = false;
 }
 
 const std::unordered_set<IATACode, CodeHash>& IATACodes::get_codes() const {
@@ -138,6 +139,7 @@ CountryCodes::CountryCodes(std::string _codes) {
 
 void CountryCodes::add_code(uint8_t dbcode) {
   codes.insert({dbcode});
+  paramter_undefined = false;
 }
 
 const std::unordered_set<CountryCode, CodeHash>& CountryCodes::get_codes() const {
