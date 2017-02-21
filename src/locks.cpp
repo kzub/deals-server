@@ -129,6 +129,13 @@ void CriticalSection::exit() {
 }
 
 //-----------------------------------------------
+// CriticalSection is_locked
+//-----------------------------------------------
+bool CriticalSection::is_locked() {
+  return unlock_needed;
+}
+
+//-----------------------------------------------
 // Testing...
 //-----------------------------------------------
 void testf(bool& second_enter) {
