@@ -3,6 +3,7 @@
 
 #include "deals_server.hpp"
 #include "locks.hpp"
+#include "statsd_client.hpp"
 #include "timing.hpp"
 
 namespace deals_srv {
@@ -42,9 +43,9 @@ void signalHandler(int signal) {
       sig = std::to_string(signal);
       break;
   }
-  std::cout << "GOT signal:" << sig << std::endl;
+  std::cout << "ERROR GOT signal:" << sig << std::endl;
   if (gotQuitSignal) {
-    std::cout << "SECOND TIME signal:" << sig << " exiting..." << std::endl;
+    std::cout << "ERROR GOT signal (SECOND TIME):" << sig << " exiting..." << std::endl;
     std::exit(-1);
   }
   gotQuitSignal = true;
@@ -72,6 +73,7 @@ void DealsServer::process() {
 }
 
 // TODO
+// *) add some indexes on page index record for search speed up
 // *) reduce storage types uint32t -> uint16
 // *) clear mem mechanism parallesation?
 // *) overwrite not expired pages on low mem
@@ -168,7 +170,7 @@ void DealsServer::terminateWithError(Connection &conn, types::Error &err) {
   if (ip.length() == 0) {
     ip = conn.get_client_address();
   }
-  std::cerr << ip << " " << conn.context.http.request.uri << " ERROR: " << err.message;
+  std::cerr << ip << " " << conn.context.http.request.uri << " ERROR: " << err.message << std::endl;
   if (err.code == types::ErrorCode::BadParameter) {
     conn.close(http::HttpResponse(400, "Bad request", err.message));
   } else {
@@ -381,6 +383,11 @@ int main(int argc, char *argv[]) {
       std::cerr << "ERRORS FOUND IN TEST: " << std::endl;
       return -1;
     }
+  }
+
+  if (argc > 1 && std::string(argv[1]) == "stat") {
+    statsd::metric.inc("dealstest", {{"port", "5000"}});
+    return 0;
   }
 
   if (argc < 3) {
