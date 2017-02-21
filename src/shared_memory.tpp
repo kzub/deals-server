@@ -72,6 +72,16 @@ void Table<ELEMENT_T>::clear_index_record(TablePageIndexElement& record) {
   record.page_name[0] = 0;
 }
 
+//------------------------------------------------------------------
+// clear_index_record_with_name
+//------------------------------------------------------------------
+template <typename ELEMENT_T>
+void Table<ELEMENT_T>::clear_index_record_with_name(TablePageIndexElement& record, uint16_t& idx) {
+  clear_index_record(record);
+  std::string name = table_index->page_name + ":" + std::to_string(idx);
+  std::memcpy(record.page_name, name.c_str(), MEMPAGE_NAME_MAX_LEN);
+}
+
 //-----------------------------------------------------
 // processRecords
 //-----------------------------------------------------
@@ -198,14 +208,8 @@ template <typename ELEMENT_T>
 ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer,
                                                       uint32_t records_cout,
                                                       uint32_t lifetime_seconds) {
-  // check if there is time to release some pages
   release_expired_memory_pages();
-
-  if (records_cout > max_elements_in_page) {
-    std::cout << "ERROR Table::addRecord records_cout > max_elements_in_page:"
-              << " records_cout:" << records_cout
-              << " max_elements_in_page:" << max_elements_in_page << std::endl;
-
+  if (!check_record_size(records_cout)) {
     return ElementPointer<ELEMENT_T>(*this, ErrorCode::RECORD_SIZE_TO_BIG);
   }
 
@@ -213,97 +217,57 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   uint32_t insert_element_idx;
   uint32_t current_time = timing::getTimestampSec();
   TablePageIndexElement* index_record;
-  bool current_record_was_cleared;
 
-  // std::cout << "CURRENT_TIME: " << current_time << std::endl;
   lock->enter();
 
-  // search for free space in pages
   for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
-    // current page row (pointer to shared memory)
-    index_record = &table_index->shared_elements[idx];
-    // std::cout << "===> " << table_index->page_name + ":" +
-    // std::to_string(idx) << " AVAIL:" << index_record->page_elements_available
-    // << " expire_at:" << std::to_string(index_record->expire_at) << std::endl;
-
-    current_record_was_cleared = false;
+    index_record = &table_index->shared_elements[idx];  // pointer to shared memory
     // page expired -> make it empty and use it to save records
-    // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
-    //   ^        ^              ^              ^        ^        ^        ^
-    if (index_record->expire_at > 0 && index_record->expire_at < current_time) {
-      // index_record->expire_at = 0;
-      clear_index_record(*index_record);
-      current_record_was_cleared = true;
-    }
-
-    // page exist and not fit (go next)
-    // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
-    //   ^        ^              ^              ^        ^        ^        ^
-    else if (index_record->expire_at > 0 && index_record->page_elements_available < records_cout) {
-      continue;
-    }
-
-    // we need to allocate new page and we have low memory
-    if (index_record->expire_at == 0 && isLowMem()) {
-      // instead allocating new page overwrite existing one. an oldest one.
-      idx = get_oldest_idx();
-      index_record = &table_index->shared_elements[idx];
-      index_record->expire_at = 1;
-      index_record->page_elements_available = max_elements_in_page;
-      insert_page_name = index_record->page_name;
-      std::cout << "USE OLDEST page:" << insert_page_name << std::endl;
-      statsd::metric.inc("dealsrv.page_use", {{"page", "oldest"}});
-    } else {
-      // page fit our needs. let's use it
-      insert_page_name = table_index->page_name + ":" + std::to_string(idx);
-    }
-
-    // page is empty -> use it
-    // [expired][expired][data][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
-    //                                                                              ^
-    if (index_record->expire_at == 0) {
-      // page still has full capacity, lets insert at the begining
-      insert_element_idx = 0;
-      if (current_record_was_cleared) {
-        std::cout << "USE EXPIRED page:" << insert_page_name << std::endl;
+    // [expired][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
+    //   ^        ^              ^        ^        ^        ^
+    if (index_record->expire_at > 0) {
+      if (index_record->expire_at < current_time) {
+        clear_index_record_with_name(*index_record, idx);
+        std::cout << "USE EXPIRED page:" << index_record->page_name << std::endl;
         statsd::metric.inc("dealsrv.page_use", {{"page", "expired"}});
-      } else {
-        std::cout << "USE NEW page:" << insert_page_name << std::endl;
-        statsd::metric.inc("dealsrv.page_use", {{"page", "new"}});
-      }
-
-      // calculate capacity after we will put records
-      index_record->page_elements_available = max_elements_in_page - records_cout;
-      // copy page_name to shared meme
-      std::memcpy(index_record->page_name, insert_page_name.c_str(), insert_page_name.length());
-
-      // fill with zero next index row in case last row  has no space
-      // [data][data][data][data][data][data][data][data][data][zero][unused][unused]...[unused]
-      //                                                         ^     ^- need to be marked as zero
-      if (!current_record_was_cleared && (idx + 1) < table_max_pages) {
-        // table_index->shared_elements[idx + 1].expire_at = 0;
-        clear_index_record(table_index->shared_elements[idx + 1]);
+      } else if (index_record->expire_at > 0 &&
+                 index_record->page_elements_available < records_cout) {
+        continue;
       }
     }
-    // or use current page
+    // page is empty -> check lowmem before use it
+    // [expired][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
+    //                                                                ^
     else {
-      // std::cout << "USE EXISTING page:" << insert_page_name << std::endl;
-      // max_elements_in_page stored in table
-      // must be the same on all program instances
-      insert_element_idx = max_elements_in_page - index_record->page_elements_available;
-      // decrease available elements
-      index_record->page_elements_available -= records_cout;
+      if (isLowMem()) {
+        // overwrite existing page. an oldest one.
+        idx = get_oldest_idx();
+        index_record = &table_index->shared_elements[idx];
+        clear_index_record_with_name(*index_record, idx);
+        std::cout << "USE OLDEST page:" << index_record->page_name << std::endl;
+        statsd::metric.inc("dealsrv.page_use", {{"page", "oldest"}});
+      } else {
+        clear_index_record_with_name(*index_record, idx);
+        std::cout << "USE NEW page:" << index_record->page_name << std::endl;
+        statsd::metric.inc("dealsrv.page_use", {{"page", "new"}});
+        // fill with zero next index row in case last row  has no space
+        // [data][data][data][data][data][data][data][data][zero][unused][unused]...[unused]
+        //                                                   ^     ^- need to be marked as zero
+        if (idx + 1 < table_max_pages) {
+          clear_index_record(table_index->shared_elements[idx + 1]);
+        }
+      }
     }
 
-    // page will expire after N seconds
-    uint32_t expire_time;
-    if (lifetime_seconds != 0) {
-      expire_time = current_time + lifetime_seconds;
-    } else {
-      expire_time = current_time + record_expire_seconds;
-    }
+    // max_elements_in_page stored in table, must be the same on all program instances
+    insert_element_idx = max_elements_in_page - index_record->page_elements_available;
+    index_record->page_elements_available -= records_cout;
 
-    // update page expire time only if record expire time greater
+    if (lifetime_seconds == 0) {
+      lifetime_seconds = record_expire_seconds;  // default value for current table
+    }
+    uint32_t expire_time = current_time + lifetime_seconds;
+
     if (expire_time > index_record->expire_at) {
       index_record->expire_at = expire_time;
     }
@@ -313,15 +277,9 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
 
   lock->exit();
 
-  if (insert_page_name.length() == 0) {
-    std::cerr << "ERROR Table::addRecord() insert_page_name.length() == 0" << std::endl;
-    return ElementPointer<ELEMENT_T>(*this, ErrorCode::NO_SPACE_TO_INSERT);
-  }
-
-  // now we have page to insert
-  // and position to insert
+  // now we have page to insert and position to insert
   // let's look for page now in local heap or allocate it
-  auto* page = getPageByName(insert_page_name);
+  auto* page = getPageByName(index_record->page_name);
 
   if (page == nullptr) {
     std::cerr << "ERROR Table::addRecord() page == nullptr" << std::endl;
@@ -332,8 +290,6 @@ ElementPointer<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_pointer
   std::memcpy(&page->shared_elements[insert_element_idx], records_pointer,
               sizeof(ELEMENT_T) * records_cout);
 
-  // std::cout << "COPY :" << insert_page_name << " idx:" << insert_element_idx
-  // << " cout:" << records_cout << " size:" << sizeof(ELEMENT_T)*records_cout << std::endl;
   return ElementPointer<ELEMENT_T>(*this, insert_page_name, insert_element_idx, records_cout);
 }
 
@@ -350,7 +306,6 @@ uint16_t Table<ELEMENT_T>::get_oldest_idx() {
   uint32_t min_expire = UINT32_MAX;
   uint16_t min_idx = 0;
 
-  // search for free space in pages
   for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     auto index_record = &table_index->shared_elements[idx];
@@ -406,6 +361,20 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
   }
 
   return page;
+}
+
+//------------------------------------------------------------------
+// check_record_size
+//------------------------------------------------------------------
+template <typename ELEMENT_T>
+bool Table<ELEMENT_T>::check_record_size(uint32_t records_cout) {
+  if (records_cout > max_elements_in_page) {
+    std::cerr << "ERROR Table::addRecord records_cout > max_elements_in_page:"
+              << " records_cout:" << records_cout
+              << " max_elements_in_page:" << max_elements_in_page << std::endl;
+    return false;
+  }
+  return true;
 }
 
 //------------------------------------------------------------------

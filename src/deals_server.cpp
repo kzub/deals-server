@@ -43,9 +43,9 @@ void signalHandler(int signal) {
       sig = std::to_string(signal);
       break;
   }
-  std::cout << "GOT signal:" << sig << std::endl;
+  std::cout << "ERROR GOT signal:" << sig << std::endl;
   if (gotQuitSignal) {
-    std::cout << "SECOND TIME signal:" << sig << " exiting..." << std::endl;
+    std::cout << "ERROR GOT signal (SECOND TIME):" << sig << " exiting..." << std::endl;
     std::exit(-1);
   }
   gotQuitSignal = true;

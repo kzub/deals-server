@@ -23,8 +23,22 @@ class Tags : public std::map<const std::string, std::string> {
 // };
 
 // using Tags = std::map<std::string, std::string>;
+#define makeType(Name, T) \
+  struct Name {           \
+   public:                \
+    T v;                  \
+  };
+
+#define VAR(Name) Name.v
+
+makeType(Flight, int);
 
 int main(int argc, char const *argv[]) {
+  Flight fv;
+  VAR(fv) = 10;
+
+  std::cout << std::to_string(VAR(fv)) << std::endl;
+
   Tags tags{{"key", "value"}, {"key2", "value2"}, {"key3", "value3"}};
   // std::map<std::string, std::string>{{"key", "value"}, {"key", "value"}, {"key2", "value2"}};
 

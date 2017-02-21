@@ -17,8 +17,8 @@ namespace shared_mem {
 static_assert(MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC,
               "CHECK MEM CLEAR SETTINGS");
 
-#define LOWMEM_WARNING_PERCENT 5
-#define LOWMEM_ERROR_PERCENT 3
+#define LOWMEM_WARNING_PERCENT 20
+#define LOWMEM_ERROR_PERCENT 10
 static_assert(LOWMEM_WARNING_PERCENT > LOWMEM_ERROR_PERCENT, "CHECK LOWMEM SETTINGS");
 
 bool checkSharedMemAvailability();
@@ -101,7 +101,9 @@ class Table {
   SharedMemoryPage<ELEMENT_T>* getPageByName(const std::string& page_name_to_look);
   void release_open_pages();
   void clear_index_record(TablePageIndexElement& record);
+  void clear_index_record_with_name(TablePageIndexElement& record, uint16_t& idx);
   void release_expired_memory_pages();
+  bool check_record_size(uint32_t records_cout);
   uint16_t get_oldest_idx();
 
   locks::CriticalSection* lock;  // [interprocess memory access management]
