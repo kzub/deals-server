@@ -87,7 +87,6 @@ class Table {
  public:
   Table(std::string table_name, uint16_t table_max_pages, uint32_t max_elements_in_page,
         uint32_t record_expire_seconds);
-  // cleanup all shared memory mappings on exit
   ~Table();
 
   ElementPointer<ELEMENT_T> addRecord(ELEMENT_T* el, uint32_t size = 1,
@@ -107,7 +106,6 @@ class Table {
   SharedMemoryPage<TablePageIndexElement>* table_index;  // [INDEX]
 
   uint16_t table_max_pages;
-  uint16_t last_known_index_length;
   uint32_t max_elements_in_page;
   uint32_t record_expire_seconds;
   uint32_t time_to_check_page_expire = 0;
@@ -144,7 +142,7 @@ class SharedMemoryPage {
   std::string page_name;
   uint32_t page_memory_size;
 
-  // pointer looked to shared memory
+  // pointers to shared memory
   void* shared_memory;
   ELEMENT_T* shared_elements;
 

@@ -23,7 +23,6 @@ template <typename ELEMENT_T>
 Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
                         uint32_t max_elements_in_page, uint32_t record_expire_seconds)
     : table_max_pages(table_max_pages),
-      last_known_index_length(0),
       max_elements_in_page(max_elements_in_page),
       record_expire_seconds(record_expire_seconds) {
   // max 6 digits (uint16_t) ->  ':65536' - suffix for pages
