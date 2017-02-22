@@ -30,12 +30,15 @@ void CheapestByDay::process_deal(const i::DealInfo &deal) {
   auto &dst_deal = grouped_by_date[deal.departure_date];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
+    if (dst_deal.price == deal.price && dst_deal.timestamp > deal.timestamp) {
+      return;
+    }
     dst_deal = deal;
     update_group_max_price(deal.price);
   }
   // if  not cheaper but same destination & dates, replace with newer results
   else if (deal.destination == dst_deal.destination && deal.return_date == dst_deal.return_date &&
-           deal.direct == dst_deal.direct) {
+           deal.direct == dst_deal.direct && dst_deal.timestamp < deal.timestamp) {
     dst_deal = deal;
     update_group_max_price(deal.price);
     dst_deal.overriden = true;  // it is used in tests
