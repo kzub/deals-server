@@ -19,7 +19,7 @@ std::vector<i::DealInfo> DealsSearchQuery::execute() {
     result.resize(filter_result_limit);
   }
 
-  return result;
+  return std::move(result);
 };
 
 //----------------------------------------------------------------

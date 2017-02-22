@@ -18,18 +18,6 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
   // preparations and actual processing
   std::vector<i::DealInfo> execute();
 
-  inline void reset_group_max_price() {
-    group_max_price = 0;
-  }
-  inline void update_group_max_price(const uint32_t& price) {
-    if (group_max_price < price) {
-      group_max_price = price;
-    }
-  }
-  inline bool more_than_group_max_price(const uint32_t& price) {
-    return price > group_max_price;
-  }
-
  private:
   // function that will be called by TableProcessor
   // for iterating over all not expired pages in table
