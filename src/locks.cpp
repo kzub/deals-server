@@ -38,17 +38,15 @@ CriticalSection::~CriticalSection() {
 // sem_timedwait definiton for osx
 //-----------------------------------------------
 #ifdef __APPLE__
-#define SLEEP_BETWEEN_TRIES_USEC 1000
 int sem_timedwait(sem_t* alock, const struct timespec* abs_timeout) {
-  uint32_t wait_retries = 0;
   while (1) {
     int res = sem_trywait(alock);
     if (res == -1) {
-      wait_retries++;
-      if (wait_retries * SLEEP_BETWEEN_TRIES_USEC / 1000000 > WAIT_FOR_LOCK_SEC) {
+      auto current_time = timing::getTimestampSec();
+      if (current_time > abs_timeout->tv_sec) {
         return -1;
       }
-      usleep(SLEEP_BETWEEN_TRIES_USEC);
+      usleep(100000);
       continue;
     }
     return 0;
@@ -61,6 +59,7 @@ int sem_timedwait(sem_t* alock, const struct timespec* abs_timeout) {
 // CriticalSection acciure
 //-----------------------------------------------
 void CriticalSection::semaphore_accuire() {
+  const struct timespec operation_timeout { timing::getTimestampSec() + WAIT_FOR_LOCK_SEC, 0 };
   int res = sem_timedwait(lock, &operation_timeout);
   if (res == -1) {
     std::cerr << "ERROR: CriticalSection::semaphore_accuire sem_timedwait() errno:" << errno

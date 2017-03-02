@@ -39,8 +39,6 @@ class AutoCloser {
   CriticalSection& cs;
 };
 
-const struct timespec operation_timeout { WAIT_FOR_LOCK_SEC, 0 };
-
 int unit_test();
 }  // namespace locks
 
