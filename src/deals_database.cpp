@@ -75,7 +75,7 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
     auto data_pointer = (char *)deal_data.get_element_data();
     std::string data = {data_pointer, deal.size};
 
-    if (1) {
+    if (0) {
       std::shared_ptr<DealInfoTest> testdata(new DealInfoTest{
           types::code_to_origin(deal.origin), types::code_to_origin(deal.destination),
           types::int_to_date(deal.departure_date), types::int_to_date(deal.return_date),
