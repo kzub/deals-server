@@ -367,9 +367,9 @@ int main(int argc, char *argv[]) {
       lock2.reset_not_for_production();
       lock3.reset_not_for_production();
 
-      // http::unit_test();
-      // deals::unit_test();
-      // timing::unit_test();
+      http::unit_test();
+      deals::unit_test();
+      timing::unit_test();
       locks::unit_test();
 
       std::cout << "ALL OK" << std::endl;
