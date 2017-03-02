@@ -73,10 +73,11 @@ void DealsServer::process() {
 }
 
 // TODO
-// *) add some indexes on page index record for search speed up
-// *) reduce storage types uint32t -> uint16
-// *) clear mem mechanism parallesation?
+// *) remove truncate methods
 // *) overwrite not expired pages on low mem
+// *) add some indexes on page index record for search speed up
+// *) reduce storage types uint32t -> uint16 (is it worth it? chech DealsData size)
+// *) clear mem mechanism parallesation?
 // *) logger with date/time
 // *) stat info: connections, records count (used/expired/total), opened pages
 
@@ -366,9 +367,9 @@ int main(int argc, char *argv[]) {
       lock2.reset_not_for_production();
       lock3.reset_not_for_production();
 
-      http::unit_test();
-      deals::unit_test();
-      timing::unit_test();
+      // http::unit_test();
+      // deals::unit_test();
+      // timing::unit_test();
       locks::unit_test();
 
       std::cout << "ALL OK" << std::endl;

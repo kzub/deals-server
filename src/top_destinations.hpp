@@ -40,8 +40,8 @@ void print(const DstInfo& deal);
 //-----------------------------------------------------------
 class TopDstDatabase {
  public:
-  TopDstDatabase();
-  ~TopDstDatabase();
+  TopDstDatabase() : db_index{TOPDST_TABLENAME, TOPDST_PAGES, TOPDST_ELEMENTS, TOPDST_EXPIRES} {
+  }
 
   void addDestination(const types::CountryCode& locale, const types::IATACode& destination,
                       const types::Date& departure_date);
@@ -61,7 +61,7 @@ class TopDstDatabase {
 
   void truncate();  // clear database
  private:
-  shared_mem::Table<i::DstInfo>* db_index;
+  shared_mem::Table<i::DstInfo> db_index;
 
   using CachedResult = const cache::Cache<std::vector<DstInfo>>;
   std::unordered_map<uint8_t, CachedResult> result_cache_by_locale;

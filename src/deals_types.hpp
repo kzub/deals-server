@@ -36,7 +36,7 @@ struct DealInfo {
 };
 
 using DealData = uint8_t;  // aka char
-using sharedDealData = shared_mem::ElementPointer<i::DealData>;
+using sharedDealData = shared_mem::ElementExtractor<i::DealData>;
 }  // namespace deals::i
 
 struct DealInfoTest {

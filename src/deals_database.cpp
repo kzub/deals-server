@@ -8,34 +8,11 @@
 
 namespace deals {
 //---------------------------------------------------------
-// DealsDatabase constructor
-//---------------------------------------------------------
-DealsDatabase::DealsDatabase() {
-  // 1k pages x 10k elements per page, '0m records total, expire 60 seconds
-  db_index = new shared_mem::Table<i::DealInfo>(DEALINFO_TABLENAME, DEALINFO_PAGES /* pages */,
-                                                DEALINFO_ELEMENTS /* elements in page */,
-                                                DEALS_EXPIRES /* page expire */);
-
-  // 10k pages x 3.2m per page = 32g bytes, expire 60 seconds
-  db_data = new shared_mem::Table<i::DealData>(DEALDATA_TABLENAME, DEALDATA_PAGES /* pages */,
-                                               DEALDATA_ELEMENTS /* elements in page */,
-                                               DEALS_EXPIRES /* page expire */);
-}
-
-//---------------------------------------------------------
-// DealsDatabase destructor
-//---------------------------------------------------------
-DealsDatabase::~DealsDatabase() {
-  delete db_data;
-  delete db_index;
-}
-
-//---------------------------------------------------------
 //  DealsDatabase  truncate
 //---------------------------------------------------------
 void DealsDatabase::truncate() {
-  db_data->cleanup();
-  db_index->cleanup();
+  db_data.cleanup();
+  db_index.cleanup();
 }
 
 //---------------------------------------------------------
@@ -53,11 +30,7 @@ void DealsDatabase::addDeal(const types::Required<types::IATACode> &origin,
   const uint32_t data_size = data.length();
 
   // 1) Add data and get data offset in db page --------------------------
-  auto result = db_data->addRecord(data_pointer, data_size);
-  if (result.error != shared_mem::ErrorCode::NO_ERROR) {
-    std::cerr << "ERROR addRecord->DealData:" << (int)result.error << std::endl;
-    throw types::Error("Internal Error: addRecord->DealData\n", types::ErrorCode::InternalError);
-  }
+  auto result = db_data.addRecord(data_pointer, data_size);
 
   const types::Weekdays departure_day_of_week(departure_date);
   const types::Weekdays return_day_of_week(return_date);
@@ -88,11 +61,7 @@ void DealsDatabase::addDeal(const types::Required<types::IATACode> &origin,
   }
 
   // 2) Add deal to index, with data position information --------------------------
-  auto di_result = db_index->addRecord(&info);
-  if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
-    std::cerr << "ERROR addRecord->DealInfo:" << (int)di_result.error << std::endl;
-    throw types::Error("Internal Error: addRecord->DealInfo\n", types::ErrorCode::InternalError);
-  }
+  auto di_result = db_index.addRecord(&info);
 }
 
 /*---------------------------------------------------------
@@ -102,11 +71,11 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
   std::vector<DealInfo> result;
 
   for (const auto &deal : i_deals) {
-    auto deal_data = i::sharedDealData{*db_data, deal.page_name, deal.index, deal.size};
-    auto data_pointer = (char *)deal_data.get_data();
+    auto deal_data = i::sharedDealData{db_data, deal.page_name, deal.index, deal.size};
+    auto data_pointer = (char *)deal_data.get_element_data();
     std::string data = {data_pointer, deal.size};
 
-    if (0) {
+    if (1) {
       std::shared_ptr<DealInfoTest> testdata(new DealInfoTest{
           types::code_to_origin(deal.origin), types::code_to_origin(deal.destination),
           types::int_to_date(deal.departure_date), types::int_to_date(deal.return_date),

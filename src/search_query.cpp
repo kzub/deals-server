@@ -126,18 +126,18 @@ void SearchQuery::stay_days(const types::Number& stay_from, const types::Number&
   filter_stay_days = true;
 
   if (stay_from.isDefined() && stay_from.get_value() > UINT8_MAX) {
-    throw "stay_from > 255";
+    throw types::Error("stay_from > 255");
   }
 
   if (stay_to.isDefined() && stay_to.get_value() > UINT8_MAX) {
-    throw "stay_to > 255";
+    throw types::Error("stay_to > 255");
   }
 
   stay_days_values.from = stay_from.isDefined() ? stay_from.get_value() : 0;
   stay_days_values.to = stay_to.isDefined() ? stay_to.get_value() : UINT8_MAX;
 
   if (stay_days_values.from > stay_days_values.to) {
-    throw "stay_from > stay_to";
+    throw types::Error("stay_from > stay_to");
   }
 }
 

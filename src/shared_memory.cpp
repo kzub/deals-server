@@ -26,8 +26,8 @@ bool checkSharedMemAvailability() {
   return true;
 }
 
-bool isLowMem() {  // cache??
-#ifdef __APPLE__   // doesnt work on apple
+bool isLowMem() {
+#ifdef __APPLE__  // doesnt work on apple
   return false;
 #endif
   static struct statvfs res;
@@ -37,7 +37,7 @@ bool isLowMem() {  // cache??
   statsd::metric.gauge("dealsrv.shmem_free", freemem);
 
   if (freemem <= LOWMEM_WARNING_PERCENT) {
-    std::cerr << "WARNGING LOW MEMORY:" << freemem << "%" << std::endl;
+    std::cerr << "WARNING LOW MEMORY:" << freemem << "%" << std::endl;
     return true;
   }
   std::cout << "MEMORY2:" << freemem << "%" << std::endl;
@@ -104,16 +104,8 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval 
   uint32_t idx;
   for (idx = 0; idx < number; ++idx) {
     TestInfo test = {numval};
-    ElementPointer<TestInfo> result = t->addRecord(&test, 1, lifetime);
-
-    if (result.error != ErrorCode::NO_ERROR) {
-      std::cout << "ERROR testAddMultipleRecords:" << (int)result.error << std::endl;
-    } else {
-      // std::cout << "OK:" << result.size << std::endl;
-    }
-    assert(result.error == ErrorCode::NO_ERROR);
+    ElementExtractor<TestInfo> result = t->addRecord(&test, 1, lifetime);
   }
-  // std::cout << "ADDED " << idx << " records" << std::endl;
 }
 
 //---------------------------------------------------------

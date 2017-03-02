@@ -25,8 +25,10 @@ std::string sprint(const DealInfo& deal);
 //------------------------------------------------------------
 class DealsDatabase {
  public:
-  DealsDatabase();
-  ~DealsDatabase();
+  DealsDatabase()
+      : db_index{DEALINFO_TABLENAME, DEALINFO_PAGES, DEALINFO_ELEMENTS, DEALS_EXPIRES},
+        db_data{DEALDATA_TABLENAME, DEALDATA_PAGES, DEALDATA_ELEMENTS, DEALS_EXPIRES} {
+  }
 
   void addDeal(const types::Required<types::IATACode>& origin,
                const types::Required<types::IATACode>& destination,
@@ -63,8 +65,8 @@ class DealsDatabase {
   // Let's transform internal format to external <DealInfo>
   std::vector<DealInfo> fill_deals_with_data(std::vector<i::DealInfo> i_deals);
 
-  shared_mem::Table<i::DealInfo>* db_index;
-  shared_mem::Table<i::DealData>* db_data;
+  shared_mem::Table<i::DealInfo> db_index;
+  shared_mem::Table<i::DealData> db_data;
 
   friend void unit_test();
 };
@@ -93,7 +95,7 @@ std::vector<DealInfo> DealsDatabase::searchFor(
     const types::Optional<types::Number>& limit,
     const types::Optional<types::Number>& max_lifetime_sec,
     const types::Optional<types::Boolean>& roundtrip_flights) {
-  QueryClass query(*db_index);  // <- table processed by search class
+  QueryClass query(db_index);  // <- table processed by search class
 
   query.origin(origin);
   query.destinations(destinations);

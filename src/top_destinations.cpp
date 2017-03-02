@@ -9,27 +9,10 @@
 
 namespace top {
 // -----------------------------------------------------------------
-//
-// -----------------------------------------------------------------
-TopDstDatabase::TopDstDatabase() {
-  // 1k pages x 10k elements per page, 10m records total, expire 60 seconds
-  db_index = new shared_mem::Table<i::DstInfo>(TOPDST_TABLENAME, TOPDST_PAGES /* pages */,
-                                               TOPDST_ELEMENTS /* elements in page */,
-                                               TOPDST_EXPIRES /* page expire */);
-}
-
-// -----------------------------------------------------------------
-//
-// -----------------------------------------------------------------
-TopDstDatabase::~TopDstDatabase() {
-  delete db_index;
-}
-
-// -----------------------------------------------------------------
-//
+// truncate
 // -----------------------------------------------------------------
 void TopDstDatabase::truncate() {
-  db_index->cleanup();
+  db_index.cleanup();
 }
 
 // -----------------------------------------------------------------
@@ -39,13 +22,7 @@ void TopDstDatabase::addDestination(const types::CountryCode& locale,
                                     const types::IATACode& destination,
                                     const types::Date& departure_date) {
   i::DstInfo info = {locale.get_code(), destination.get_code(), departure_date.get_code()};
-
-  // Secondly add deal to index, include data position information
-  auto di_result = db_index->addRecord(&info);
-  if (di_result.error != shared_mem::ErrorCode::NO_ERROR) {
-    std::cout << "ERROR addDestination():" << (int)di_result.error << std::endl;
-    throw types::Error("Internal Error: addRecord->DstInfo", types::ErrorCode::InternalError);
-  }
+  auto di_result = db_index.addRecord(&info);
 }
 
 // -----------------------------------------------------------------
@@ -125,7 +102,7 @@ std::vector<DstInfo> TopDstDatabase::getLocaleTop(
     return cache_result;
   }
 
-  TopDstSearchQuery query(*db_index);
+  TopDstSearchQuery query(db_index);
 
   query.locale(locale);
   query.departure_dates(departure_date_from, departure_date_to);

@@ -4,12 +4,13 @@
 #include <iostream>
 
 #include <semaphore.h>
+#include "types.hpp"
 
 namespace locks {
-
-#define WAIT_INFINITY_TIME TRUE
-#define SLEEP_BETWEEN_TRIES_USEC 10
-#define WAIT_FOR_LOCK_MSEC 5000
+#define WAIT_FOR_LOCK_SEC 30
+#ifdef __APPLE__
+int sem_timedwait(sem_t* lock, const struct timespec* abs_timeout);
+#endif
 
 class CriticalSection {
  public:
@@ -23,14 +24,22 @@ class CriticalSection {
 
  private:
   void semaphore_accuire();
-  void semaphore_release(bool nothrow = false);
-  void check();
+  void semaphore_release();
 
   std::string name;
-  bool initialized;
-  bool unlock_needed;
-  sem_t* lock;
+  bool unlock_needed = false;
+  sem_t* lock = nullptr;
 };
+
+class AutoCloser {
+ public:
+  AutoCloser(CriticalSection& cs) : cs(cs) {
+  }
+  ~AutoCloser();
+  CriticalSection& cs;
+};
+
+const struct timespec operation_timeout { WAIT_FOR_LOCK_SEC, 0 };
 
 int unit_test();
 }  // namespace locks
