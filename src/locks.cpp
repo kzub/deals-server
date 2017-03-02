@@ -120,7 +120,6 @@ bool CriticalSection::is_locked() {
 // AutoCloser destructor
 //-----------------------------------------------
 AutoCloser::~AutoCloser() {
-  std::cout << "Locks: AUTOUNLOCK" << std::endl;
   cs.exit();
 }
 
