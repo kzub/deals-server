@@ -432,6 +432,11 @@ uint32_t Table<ELEMENT_T>::find_old_records_expire() {
     return timing::getTimestampSec();
   }
 
+  auto current_time = getTimeForExpire();
+  if (min < current_time && current_time <= max) {
+    min = current_time;
+  }
+
   return min + ((max - min) * LOWMEM_CLEAR_PERCENT / 100);
 }
 
