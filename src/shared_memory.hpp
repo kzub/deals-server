@@ -3,6 +3,7 @@
 
 #include <sys/mman.h>
 #include <cinttypes>
+#include <functional>
 #include <iostream>
 #include <vector>
 
