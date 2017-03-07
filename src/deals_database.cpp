@@ -7,6 +7,13 @@
 #include "timing.hpp"
 
 namespace deals {
+DealsDatabase::DealsDatabase()
+    : db_index{DEALINFO_TABLENAME, DEALINFO_PAGES, DEALINFO_ELEMENTS, DEALS_EXPIRES},
+      db_data{DEALDATA_TABLENAME, DEALDATA_PAGES, DEALDATA_ELEMENTS, DEALS_EXPIRES} {
+  db_index.linkTable(db_data);
+  db_data.linkTable(db_index);
+}
+
 //---------------------------------------------------------
 //  DealsDatabase  truncate
 //---------------------------------------------------------

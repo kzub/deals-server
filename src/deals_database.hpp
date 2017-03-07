@@ -25,10 +25,7 @@ std::string sprint(const DealInfo& deal);
 //------------------------------------------------------------
 class DealsDatabase {
  public:
-  DealsDatabase()
-      : db_index{DEALINFO_TABLENAME, DEALINFO_PAGES, DEALINFO_ELEMENTS, DEALS_EXPIRES},
-        db_data{DEALDATA_TABLENAME, DEALDATA_PAGES, DEALDATA_ELEMENTS, DEALS_EXPIRES} {
-  }
+  DealsDatabase();
 
   void addDeal(const types::Required<types::IATACode>& origin,
                const types::Required<types::IATACode>& destination,

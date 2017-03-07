@@ -10,7 +10,7 @@ namespace shared_mem {
 //-----------------------------------------------------------
 // Check system has free shared memory
 //-----------------------------------------------------------
-bool checkSharedMemAvailability() {
+bool isMemAvailable() {
 #ifdef __APPLE__  // doesnt work on apple
   return true;
 #endif
@@ -22,11 +22,10 @@ bool checkSharedMemAvailability() {
     std::cerr << "ERROR VERY LOW MEMORY:" << freemem << "%" << std::endl;
     return false;
   }
-  std::cout << "MEMORY1:" << freemem << "%" << std::endl;
   return true;
 }
 
-bool isLowMem() {
+bool isMemLow() {
 #ifdef __APPLE__  // doesnt work on apple
   return false;
 #endif
@@ -40,9 +39,21 @@ bool isLowMem() {
     std::cerr << "WARNING LOW MEMORY:" << freemem << "%" << std::endl;
     return true;
   }
-  std::cout << "MEMORY2:" << freemem << "%" << std::endl;
+
+  std::cout << "MEMORY:" << std::to_string(freemem) << std::endl;
   return false;
 }
+
+//-----------------------------------------------------------
+// Check system has free shared memory
+//-----------------------------------------------------------
+uint32_t TimeAbstract::getTimeForExpire() {
+  return timing::getTimestampSec() + expiration_time_shift;
+}
+
+void TimeAbstract::setTimeForExpire(const uint32_t& time) {
+  expiration_time_shift = time - timing::getTimestampSec();
+};
 
 /* ----------------------------------------------------------
 **  TESTING......

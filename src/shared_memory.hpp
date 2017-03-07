@@ -18,14 +18,17 @@ namespace shared_mem {
 static_assert(MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > MEMPAGE_CHECK_EXPIRED_PAGES_INTERVAL_SEC,
               "CHECK MEM CLEAR SETTINGS");
 
-#define LOWMEM_WARNING_PERCENT 20
+#define LOWMEM_WARNING_PERCENT 17
 #define LOWMEM_ERROR_PERCENT 10
+#define LOWMEM_CLEAR_PERCENT 5
 static_assert(LOWMEM_WARNING_PERCENT > LOWMEM_ERROR_PERCENT, "CHECK LOWMEM SETTINGS");
 
 template <typename ELEMENT_T>
 class Table;
 
-bool checkSharedMemAvailability();
+bool isMemAvailable();
+bool isMemLow();
+enum class PageType : int { EXPIRED, OLDEST, NEW };
 //-------------------------------------------------------
 // SharedMemoryPage
 //-------------------------------------------------------
@@ -107,10 +110,22 @@ class TableProcessor {
 };
 
 //-----------------------------------------------
+// TimeAbstract
+//-----------------------------------------------
+class TimeAbstract {
+ public:
+  void setTimeForExpire(const uint32_t& time);
+  uint32_t getTimeForExpire();
+
+ private:
+  uint32_t expiration_time_shift = 0;
+};
+
+//-----------------------------------------------
 // Table
 //-----------------------------------------------
 template <typename ELEMENT_T>
-class Table {
+class Table : public TimeAbstract {
  public:
   Table(std::string table_name, uint16_t table_max_pages, uint32_t max_elements_in_page,
         uint32_t record_expire_seconds);
@@ -120,11 +135,13 @@ class Table {
                                         uint32_t lifetime_seconds = 0);
   void processRecords(TableProcessor<ELEMENT_T>& result);
   void cleanup();
+  void linkTable(TimeAbstract& table);
 
  private:
   SharedMemoryPage<ELEMENT_T>* localGetPageByName(const std::string& page_name_to_look);
   SharedMemoryPage<ELEMENT_T>* getPageByName(const std::string& page_name_to_look);
   void release_open_pages();
+  uint32_t find_old_records_expire();
   void clear_index_record(TablePageIndexElement& record);
   void release_expired_memory_pages();
   void update_record_expire(TablePageIndexElement* index_record, uint32_t current_time,
@@ -138,6 +155,7 @@ class Table {
   const uint32_t max_elements_in_page;
   const uint32_t record_expire_seconds;
   uint32_t time_to_check_page_expire = 0;
+  std::vector<std::reference_wrapper<TimeAbstract>> linked_tables;
 
   template <class T>
   friend class SharedMemoryPage;

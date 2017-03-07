@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "shared_memory.hpp"
+#include "statsd_client.hpp"
 #include "timing.hpp"
 
 namespace shared_mem {
@@ -58,7 +59,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
   //
   release_expired_memory_pages();
 
-  uint32_t timestamp_now = timing::getTimestampSec();
+  uint32_t timestamp_now = getTimeForExpire();
   std::vector<TablePageIndexElement> records_to_scan;
   records_to_scan.reserve(opened_pages_list.size());  // optimisation
   TablePageIndexElement* index_first = table_index.getElements();
@@ -165,25 +166,28 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
 
   std::string insert_page_name;
   uint32_t insert_element_idx;
-  uint32_t current_time = timing::getTimestampSec();
+  uint32_t current_time = getTimeForExpire();
+  uint32_t current_real_time = timing::getTimestampSec();
   TablePageIndexElement* index_record;
-  bool current_record_was_cleared;
+  auto current_record_type = PageType::NEW;
 
   lock.enter();
   locks::AutoCloser guard(lock);
 
-  // search for free space in pages
   for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
     // current page row (pointer to shared memory)
     index_record = &table_index.shared_elements[idx];
-    current_record_was_cleared = false;
 
     // page expired -> make it empty and use it to save records
     // [expired][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
     //   ^        ^              ^        ^        ^        ^
     if (index_record->expire_at > 0 && index_record->expire_at < current_time) {
+      if (index_record->expire_at > current_real_time) {
+        current_record_type = PageType::OLDEST;
+      } else {
+        current_record_type = PageType::EXPIRED;
+      }
       clear_index_record(*index_record);
-      current_record_was_cleared = true;
     }
     // page exist and not fit (go next)
     // [expired][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
@@ -201,10 +205,15 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
     if (index_record->expire_at == 0) {
       // page still has full capacity, lets insert at the begining
       insert_element_idx = 0;
-      if (current_record_was_cleared) {
-        std::cout << "USE EXPIRED page:" << insert_page_name << std::endl;
-      } else {
+      if (current_record_type == PageType::NEW) {
         std::cout << "USE NEW page:" << insert_page_name << std::endl;
+        statsd::metric.inc("dealsrv.page_use", {{"page", "new"}});
+      } else if (current_record_type == PageType::EXPIRED) {
+        std::cout << "USE EXPIRED page:" << insert_page_name << std::endl;
+        statsd::metric.inc("dealsrv.page_use", {{"page", "expired"}});
+      } else if (current_record_type == PageType::OLDEST) {
+        std::cout << "USE OLDEST page:" << insert_page_name << std::endl;
+        statsd::metric.inc("dealsrv.page_use", {{"page", "oldest"}});
       }
 
       // calculate capacity after we will put records
@@ -215,7 +224,7 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
       // fill with zero next index row in case last row  has no space
       // [data][data][data][data][data][data][data][data][data][zero][unused][unused]...[unused]
       //                                                         ^     ^- need to be marked as zero
-      if (!current_record_was_cleared && (idx + 1) < table_max_pages) {
+      if (current_record_type == PageType::NEW && (idx + 1) < table_max_pages) {
         clear_index_record(table_index.shared_elements[idx + 1]);
       }
     }
@@ -265,6 +274,14 @@ void Table<ELEMENT_T>::update_record_expire(TablePageIndexElement* index_record,
 }
 
 //-----------------------------------------------------
+// link table expirations timers
+//-----------------------------------------------------
+template <typename ELEMENT_T>
+void Table<ELEMENT_T>::linkTable(TimeAbstract& table) {
+  linked_tables.push_back(table);
+}
+
+//-----------------------------------------------------
 // localGetPageByName
 //-----------------------------------------------------
 template <typename ELEMENT_T>
@@ -302,7 +319,7 @@ SharedMemoryPage<ELEMENT_T>* Table<ELEMENT_T>::getPageByName(const std::string& 
 //        application should care about Table A & Table B consistency
 template <typename ELEMENT_T>
 void Table<ELEMENT_T>::release_expired_memory_pages() {
-  uint32_t current_time = timing::getTimestampSec();
+  uint32_t current_time = getTimeForExpire();
 
   // check local timer
   if (time_to_check_page_expire > current_time) {
@@ -313,9 +330,17 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
   lock.enter();
   locks::AutoCloser guard(lock);
 
-  // check shared timer
-  // only one process should perform maintenance
+  // check shared timer, only one process should perform maintenance
   if (table_index.shared_pageinfo->expiration_check <= current_time) {
+    //
+    if (shared_mem::isMemLow()) {
+      auto now_expired = find_old_records_expire();
+      std::cout << "find_old_records_expire: " << std::to_string(now_expired) << std::endl;
+      for (auto tbl : linked_tables) {
+        tbl.get().setTimeForExpire(now_expired + 1);
+      }
+    }
+
     uint16_t idx = 0;
     uint16_t last_data_idx = 0;
 
@@ -365,8 +390,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
 
   lock.exit();
 
-  // clear opened_pages_list from unlinked items
-  // all processes must do that
+  // clear opened_pages_list from unlinked items, all processes must do that
   std::vector<SharedMemoryPage<ELEMENT_T>*> new_pages_list;
   for (auto page : opened_pages_list) {
     if (page->shared_pageinfo->unlinked) {
@@ -377,6 +401,38 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
     }
   }
   opened_pages_list = std::move(new_pages_list);
+}
+
+//-----------------------------------------------------------------
+// find_old_records_expire
+//-----------------------------------------------------------------
+template <typename ELEMENT_T>
+uint32_t Table<ELEMENT_T>::find_old_records_expire() {
+  uint32_t min = UINT32_MAX;
+  uint32_t max = 0;
+
+  for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
+    const auto& index_record = table_index.shared_elements[idx];
+
+    if (index_record.expire_at == 0) {
+      break;
+    }
+
+    if (index_record.expire_at < min) {
+      min = index_record.expire_at;
+    }
+    if (index_record.expire_at > max) {
+      max = index_record.expire_at;
+    }
+  }
+
+  std::cout << "LOWMEM min:" << std::to_string(min) << " max:" << std::to_string(max) << std::endl;
+
+  if (min == UINT32_MAX || max == 0) {
+    return timing::getTimestampSec();
+  }
+
+  return min + ((max - min) * LOWMEM_CLEAR_PERCENT / 100);
 }
 
 /*-----------------------------------------------------------------
@@ -429,7 +485,7 @@ SharedMemoryPage<ELEMENT_T>::SharedMemoryPage(std::string page_name, uint32_t el
 
     std::cout << "OPENED:" << page_name << std::endl;
   } else {
-    if (!checkSharedMemAvailability()) {
+    if (!shared_mem::isMemAvailable()) {
       std::cerr << "ERROR SharedMemoryPage::SharedMemoryPage LOW SHARED MEMORY" << std::endl;
       close(fd);  // dont remove file!!! shm_unlink(page_name.c_str());
       throw types::Error("ERR_LOW_SHMEM\n", types::ErrorCode::InternalError);
