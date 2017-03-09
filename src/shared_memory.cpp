@@ -67,8 +67,6 @@ void reportMemUsage(const PageType current_record_type, const std::string& inser
 // Used to sync linked tables
 //-----------------------------------------------------------
 void update_global_expire(uint32_t value) {
-  std::cout << "update_global_expire:" << std::to_string(global_expire_at)
-            << " value:" << std::to_string(value) << std::endl;
   if (global_expire_at < value) {
     global_expire_at = value;
   }

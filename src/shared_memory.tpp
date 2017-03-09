@@ -68,18 +68,17 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
 
   for (uint16_t idx = 0; idx < table_max_pages; ++idx) {
     TablePageIndexElement& index_current = table_index.shared_elements[idx];
-
+    // or not used yet (stop here. next pages are unused)
+    // [expired][expired][data][expired][data][expired][expired][zero][unused][unused]...[unused]
+    //                                                            ^
+    if (index_current.expire_at == 0) {
+      break;
+    }
     // if page not empty and not expired
     // [expired][expired][data][expired][data][expired][expired][zero][unused][unused]...[unused]
     //                     ^              ^
     if (index_current.expire_at >= timestamp_now && index_current.expire_at > global_expire_at) {
       records_to_scan.push_back(&index_current);
-    }
-    // or not used yet (stop here. next pages are unused)
-    // [expired][expired][data][expired][data][expired][expired][zero][unused][unused]...[unused]
-    //                                                            ^
-    else if (index_current.expire_at == 0) {
-      break;
     }
     // [expired][data][expired][data][expired][expired][expired][zero][unused][unused]...[unused]
     //   ^              ^              ^        ^        ^
