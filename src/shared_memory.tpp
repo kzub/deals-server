@@ -156,7 +156,6 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
   release_expired_memory_pages();
   checkRecord(records_count);
 
-  bool lowMem = shared_mem::isMemLow();
   uint32_t current_time = timing::getTimestampSec();
   auto current_record_type = PageType::NEW;
   TablePageIndexElement* index_record;
@@ -195,7 +194,8 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
     throw types::Error("addRecord::NO_SPACE_TO_INSERT\n", types::ErrorCode::InternalError);
   }
 
-  if (lowMem) {
+  // use oldest page instead of creating new on lowmem
+  if (index_record->expire_at == 0 && shared_mem::isMemLow()) {
     idx = expire_min_idx;
     index_record = &table_index.shared_elements[idx];
     current_record_type = PageType::OLDEST;
@@ -204,17 +204,14 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
   }
 
   std::string insert_page_name = table_index.page_name + ":" + std::to_string(idx);
-  uint32_t insert_element_idx;
+  uint32_t insert_element_idx = max_elements_in_page - index_record->page_elements_available;
+  index_record->page_elements_available -= records_count;
+
   // page is empty -> use it
   // [expired][expired][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
   //                                                               ^
   if (index_record->expire_at == 0) {
     reportMemUsage(current_record_type, insert_page_name);
-    // page still has full capacity, lets insert at the begining
-    insert_element_idx = 0;
-    // calculate capacity after we will put records
-    index_record->page_elements_available = max_elements_in_page - records_count;
-    // copy page_name to shared memory
     std::memcpy(index_record->page_name, insert_page_name.c_str(), insert_page_name.length());
     // fill with zero next index row in case last row  has no space
     // [data][data][data][data][data][data][data][data][data][zero][unused][unused]...[unused]
@@ -223,18 +220,12 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
       clear_index_record(table_index.shared_elements[idx + 1]);
     }
   }
-  // or use current page
-  else {
-    insert_element_idx = max_elements_in_page - index_record->page_elements_available;
-    index_record->page_elements_available -= records_count;
-  }
 
   update_record_expire(index_record, current_time, lifetime_seconds);
   lock.exit();
 
   // we have page and position to insert let's find page in local heap or allocate it
   const auto page = getPageByName(insert_page_name);
-  // copy array of (records_count) elements to shared memeory
   std::memcpy(&page->shared_elements[insert_element_idx], records_pointer,
               sizeof(ELEMENT_T) * records_count);
 
