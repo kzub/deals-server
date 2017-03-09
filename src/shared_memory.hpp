@@ -26,7 +26,7 @@ static_assert(LOWMEM_PERCENT_FOR_PAGE_REUSING > LOWMEM_ERROR_PERCENT, "CHECK LOW
 template <typename ELEMENT_T>
 class Table;
 
-enum class PageType : int { EXPIRED, OLDEST, NEW };
+enum class PageType : int { EXPIRED, OLDEST, NEW, CURRENT };
 bool isMemAvailable();
 bool isMemLow();
 void reportMemUsage(const PageType current_record_type, const std::string& insert_page_name);
