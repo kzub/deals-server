@@ -8,7 +8,7 @@
 
 namespace shared_mem {
 //-----------------------------------------------------------
-// Check system has free shared memory
+// Check that system has free shared memory
 //-----------------------------------------------------------
 bool isMemAvailable() {
 #ifdef __APPLE__  // doesnt work on apple
@@ -25,6 +25,7 @@ bool isMemAvailable() {
   return true;
 }
 
+//-----------------------------------------------------------
 bool isMemLow() {
 #ifdef __APPLE__  // doesnt work on apple
   return false;
@@ -33,27 +34,45 @@ bool isMemLow() {
   statvfs("/dev/shm/", &res);
   uint32_t freemem = 100 * res.f_bavail / res.f_blocks;
 
-  statsd::metric.gauge("dealsrv.shmem_free", freemem);
-
-  if (freemem <= LOWMEM_WARNING_PERCENT) {
-    std::cerr << "WARNING LOW MEMORY:" << freemem << "%" << std::endl;
+  if (freemem <= LOWMEM_PERCENT_FOR_PAGE_REUSING) {
     return true;
   }
-
-  std::cout << "MEMORY:" << std::to_string(freemem) << std::endl;
   return false;
 }
 
 //-----------------------------------------------------------
-// Check system has free shared memory
-//-----------------------------------------------------------
-uint32_t TimeAbstract::getTimeForExpire() {
-  return timing::getTimestampSec() + expiration_time_shift;
+void reportMemUsage(const PageType current_record_type, const std::string& insert_page_name) {
+  if (current_record_type == PageType::NEW) {
+    std::cout << "USE NEW page:" << insert_page_name << std::endl;
+    statsd::metric.inc("dealsrv.page_use", {{"page", "new"}});
+  } else if (current_record_type == PageType::EXPIRED) {
+    std::cout << "USE EXPIRED page:" << insert_page_name << std::endl;
+    statsd::metric.inc("dealsrv.page_use", {{"page", "expired"}});
+  } else if (current_record_type == PageType::OLDEST) {
+    std::cout << "USE OLDEST page:" << insert_page_name << std::endl;
+    statsd::metric.inc("dealsrv.page_use", {{"page", "oldest"}});
+  }
+
+#ifndef __APPLE__  // doesnt work on apple
+  static struct statvfs res;
+  statvfs("/dev/shm/", &res);
+  uint32_t freemem = 100 * res.f_bavail / res.f_blocks;
+
+  statsd::metric.gauge("dealsrv.shmem_free", freemem);
+  std::cout << "(" << insert_page_name << ") MEMORY:" << std::to_string(freemem) << std::endl;
+#endif
 }
 
-void TimeAbstract::setTimeForExpire(const uint32_t& time) {
-  expiration_time_shift = time - timing::getTimestampSec();
-};
+//-----------------------------------------------------------
+// Used to sync linked tables
+//-----------------------------------------------------------
+void update_global_expire(uint32_t value) {
+  std::cout << "update_global_expire:" << std::to_string(global_expire_at)
+            << " value:" << std::to_string(value) << std::endl;
+  if (global_expire_at < value) {
+    global_expire_at = value;
+  }
+}
 
 /* ----------------------------------------------------------
 **  TESTING......

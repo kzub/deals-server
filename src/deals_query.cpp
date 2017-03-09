@@ -28,7 +28,8 @@ std::vector<i::DealInfo> DealsSearchQuery::execute() {
 // for iterating over all not expired pages in table
 void DealsSearchQuery::process_element(const i::DealInfo &deal) {
   // check if not expired
-  if (deal.timestamp + DEALS_EXPIRES < current_time) {
+  if ((deal.timestamp + DEALS_EXPIRES < current_time) ||
+      (deal.timestamp + DEALS_EXPIRES < shared_mem::global_expire_at)) {  // =( rethink it later
     return;
   }
 
