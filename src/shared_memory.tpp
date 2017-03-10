@@ -226,7 +226,6 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
     case PageType::OLDEST:
     case PageType::EXPIRED:
       clear_index_record(*index_record);
-      reportMemUsage(current_record_type, insert_page_name);
       break;
     case PageType::CURRENT:
       break;
