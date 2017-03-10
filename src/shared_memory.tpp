@@ -48,7 +48,16 @@ template <typename ELEMENT_T>
 void Table<ELEMENT_T>::clear_index_record(TablePageIndexElement& record) {
   record.expire_at = 0;
   record.page_elements_available = max_elements_in_page;
-  record.page_name[0] = 0;
+}
+
+//-----------------------------------------------------
+// clear_index_record_full
+//-----------------------------------------------------
+template <typename ELEMENT_T>
+void Table<ELEMENT_T>::clear_index_record_full(TablePageIndexElement& record) {
+  record.expire_at = 0;
+  record.page_elements_available = max_elements_in_page;
+  std::memset(&record.page_name, 0, MEMPAGE_NAME_MAX_LEN);
 }
 
 //-----------------------------------------------------
@@ -122,7 +131,7 @@ void Table<ELEMENT_T>::cleanup() {
       // mark as deleted
       page->shared_pageinfo->unlinked = true;
       SharedMemoryPage<ELEMENT_T>::unlink(index_current->page_name);
-      clear_index_record(*index_current);
+      clear_index_record_full(*index_current);
     } else {
       // stop here. next pages are unused
       break;
@@ -156,12 +165,12 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
   checkRecord(records_count);
 
   uint32_t current_time = timing::getTimestampSec();
-  auto current_record_type = PageType::CURRENT;
   TablePageIndexElement* index_record;
   uint32_t expire_min = UINT32_MAX;
   uint16_t expire_min_idx = 0;
   uint16_t idx;
 
+  auto current_record_type = PageType::UNKNOWN;
   lock.enter();
   locks::AutoCloser guard(lock);
   for (idx = 0; idx < table_max_pages; ++idx) {
@@ -176,42 +185,53 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
     //   ^        ^              ^        ^        ^        ^
     if (index_record->expire_at > 0 && index_record->expire_at < current_time) {
       current_record_type = PageType::EXPIRED;
-      clear_index_record(*index_record);
+      break;
     }
-    // page exist and not fit (go next)
+    // page exist and fit in size
     // [data][data][data][expired][expired][expired][expired][zero][unused][unused]...[unused]
     //   ^     ^     ^
-    else if (index_record->expire_at > 0 && index_record->page_elements_available < records_count) {
-      continue;
+    if (index_record->expire_at > 0 && index_record->page_elements_available >= records_count) {
+      current_record_type = PageType::CURRENT;
+      break;
     }
-    // page fit our needs. let's use it
-    break;
+    // we are at the end of current data
+    // [data][data][data][data][data][data][data][data][data][zero][unused][unused]...[unused]
+    //                                                         ^     ^- need to be marked as zero
+    if (index_record->expire_at == 0) {
+      current_record_type = PageType::NEW;
+      break;
+    }
   }
 
-  if (idx == table_max_pages) {
-    throw types::Error("addRecord::NO_SPACE_TO_INSERT\n", types::ErrorCode::InternalError);
-  }
-
-  std::string insert_page_name = table_index.page_name + ":" + std::to_string(idx);
-  // we are at the end of current data
-  // [data][data][data][data][data][data][data][data][data][zero][unused][unused]...[unused]
-  //                                                         ^     ^- need to be marked as zero
-  if (index_record->expire_at == 0) {
+  if (current_record_type == PageType::NEW) {
     if (shared_mem::isMemLow()) {
       current_record_type = PageType::OLDEST;
       idx = expire_min_idx;
-      insert_page_name = table_index.page_name + ":" + std::to_string(idx);
       index_record = &table_index.shared_elements[idx];
-      clear_index_record(*index_record);
       update_global_expire(expire_min);
-    } else {
-      current_record_type = PageType::NEW;
-      clear_index_record(*index_record);
-      std::memcpy(index_record->page_name, insert_page_name.c_str(), insert_page_name.length());
-      if ((idx + 1) < table_max_pages) {
-        clear_index_record(table_index.shared_elements[idx + 1]);
-      }
     }
+  }
+
+  std::string insert_page_name = table_index.page_name + ":" + std::to_string(idx);
+
+  if (current_record_type == PageType::NEW && shared_mem::isMemLow()) {
+    current_record_type = PageType::OLDEST;
+    idx = expire_min_idx;
+    index_record = &table_index.shared_elements[idx];
+  }
+
+  switch (current_record_type) {
+    case PageType::NEW:
+      std::memcpy(index_record->page_name, insert_page_name.c_str(), insert_page_name.length());
+    case PageType::OLDEST:
+    case PageType::EXPIRED:
+      clear_index_record(*index_record);
+      reportMemUsage(current_record_type, insert_page_name);
+      break;
+    case PageType::CURRENT:
+      break;
+    case PageType::UNKNOWN:
+      throw types::Error("addRecord::NO_SPACE_TO_INSERT\n", types::ErrorCode::InternalError);
   }
 
   uint32_t insert_element_idx = max_elements_in_page - index_record->page_elements_available;
@@ -352,7 +372,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
         page->shared_pageinfo->unlinked = true;
         SharedMemoryPage<ELEMENT_T>::unlink(page->page_name);
 
-        clear_index_record(index_record);
+        clear_index_record_full(index_record);
         // clear only certain portion per time;
         if (MEMPAGE_REMOVE_EXPIRED_PAGES_AT_ONCE <= ++cleared_counter) {
           break;

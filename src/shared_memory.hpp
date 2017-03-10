@@ -26,7 +26,7 @@ static_assert(LOWMEM_PERCENT_FOR_PAGE_REUSING > LOWMEM_ERROR_PERCENT, "CHECK LOW
 template <typename ELEMENT_T>
 class Table;
 
-enum class PageType : int { EXPIRED, OLDEST, NEW, CURRENT };
+enum class PageType : int { EXPIRED, OLDEST, NEW, CURRENT, UNKNOWN };
 bool isMemAvailable();
 bool isMemLow();
 void reportMemUsage(const PageType current_record_type, const std::string& insert_page_name);
@@ -133,6 +133,7 @@ class Table {
   SharedMemoryPage<ELEMENT_T>* getPageByName(const std::string& page_name_to_look);
   void release_open_pages();
   void clear_index_record(TablePageIndexElement& record);
+  void clear_index_record_full(TablePageIndexElement& record);
   void release_expired_memory_pages();
   void checkRecord(uint32_t& records_cout);
   void update_record_expire(TablePageIndexElement* index_record, uint32_t current_time,
