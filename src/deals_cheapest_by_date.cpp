@@ -8,11 +8,18 @@ void CheapestByDay::pre_search() {
     throw types::Error("departure dates interval must be specified\n");
   }
 
-  // 366 days - is a limit
   if (departure_date_values.duration > 366) {
     std::cerr << "ERROR departure_date_values.duration > 366:"
               << std::to_string(departure_date_values.duration) << std::endl;
     throw types::Error("Date interval to large. 365 days is maximum\n");
+  }
+
+  if (departure_date_values.duration == 1 && filter_return_date) {
+    if (!return_date_values.duration) {
+      std::cerr << "ERROR no return_date range" << std::endl;
+      throw types::Error("return dates interval must be specified\n");
+    }
+    group_by_return_date = true;
   }
 
   filter_result_limit = departure_date_values.duration;
@@ -20,7 +27,8 @@ void CheapestByDay::pre_search() {
 
 //---------------------------------------------------------
 void CheapestByDay::process_deal(const i::DealInfo &deal) {
-  auto &dst_deal = grouped_by_date[deal.departure_date];
+  const auto date = group_by_return_date ? deal.return_date : deal.departure_date;
+  auto &dst_deal = grouped_by_date[date];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
     if (dst_deal.price == deal.price && dst_deal.timestamp > deal.timestamp) {
@@ -42,10 +50,16 @@ void CheapestByDay::post_search() {
     exec_result.push_back(deal.second);
   }
 
-  // sort by departure_date ASC
-  std::sort(exec_result.begin(), exec_result.end(), [](const i::DealInfo &a, const i::DealInfo &b) {
-    return a.departure_date < b.departure_date;
-  });
+  if (group_by_return_date) {
+    std::sort(
+        exec_result.begin(), exec_result.end(),
+        [](const i::DealInfo &a, const i::DealInfo &b) { return a.return_date < b.return_date; });
+  } else {
+    std::sort(exec_result.begin(), exec_result.end(),
+              [](const i::DealInfo &a, const i::DealInfo &b) {
+                return a.departure_date < b.departure_date;
+              });
+  }
 }
 
 //----------------------------------------------------------------

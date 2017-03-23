@@ -25,6 +25,7 @@ class CheapestByDay : public DealsSearchQuery {
  private:
   std::vector<i::DealInfo> exec_result;
   std::unordered_map<uint32_t, i::DealInfo> grouped_by_date;
+  bool group_by_return_date = false;
 };
 }  // namespace deals
 #endif
