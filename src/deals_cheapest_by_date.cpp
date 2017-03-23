@@ -14,15 +14,16 @@ void CheapestByDay::pre_search() {
     throw types::Error("Date interval to large. 365 days is maximum\n");
   }
 
+  filter_result_limit = departure_date_values.duration;
+
   if (departure_date_values.duration == 1 && filter_return_date) {
     if (!return_date_values.duration) {
       std::cerr << "ERROR no return_date range" << std::endl;
       throw types::Error("return dates interval must be specified\n");
     }
     group_by_return_date = true;
+    filter_result_limit = return_date_values.duration;
   }
-
-  filter_result_limit = departure_date_values.duration;
 }
 
 //---------------------------------------------------------
