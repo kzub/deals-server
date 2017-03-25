@@ -3,9 +3,6 @@
 namespace deals {
 //----------------------------------------------------------------
 void SimplyCheapest::pre_search() {
-  if (filter_destination) {
-    filter_result_limit = destination_values_set.size();
-  }
 }
 
 //---------------------------------------------------------

@@ -33,9 +33,7 @@ class DealsSearchQuery : public shared_mem::TableProcessor<i::DealInfo>, public 
   virtual void post_search() = 0;
   virtual const std::vector<i::DealInfo> get_result() const = 0;
 
-  uint32_t group_max_price = 0;
   shared_mem::Table<i::DealInfo>& table;
-  uint32_t current_time = 0;
 
   friend class DealsDatabase;
 };

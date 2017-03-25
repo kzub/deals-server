@@ -203,22 +203,14 @@ ElementExtractor<ELEMENT_T> Table<ELEMENT_T>::addRecord(ELEMENT_T* records_point
     }
   }
 
-  if (current_record_type == PageType::NEW) {
-    if (shared_mem::isMemLow()) {
-      current_record_type = PageType::OLDEST;
-      idx = expire_min_idx;
-      index_record = &table_index.shared_elements[idx];
-      update_global_expire(expire_min);
-    }
-  }
-
-  std::string insert_page_name = table_index.page_name + ":" + std::to_string(idx);
-
   if (current_record_type == PageType::NEW && shared_mem::isMemLow()) {
     current_record_type = PageType::OLDEST;
     idx = expire_min_idx;
     index_record = &table_index.shared_elements[idx];
+    update_global_expire(index_record->expire_at);
   }
+
+  std::string insert_page_name = table_index.page_name + ":" + std::to_string(idx);
 
   switch (current_record_type) {
     case PageType::NEW:
