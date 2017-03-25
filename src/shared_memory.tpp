@@ -86,7 +86,7 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
     // if page not empty and not expired
     // [expired][expired][data][expired][data][expired][expired][zero][unused][unused]...[unused]
     //                     ^              ^
-    if (index_current.expire_at >= timestamp_now && index_current.expire_at > global_expire_at) {
+    if (index_current.expire_at > timestamp_now && index_current.expire_at > global_expire_at) {
       records_to_scan.push_back(&index_current);
     }
     // [expired][data][expired][data][expired][expired][expired][zero][unused][unused]...[unused]
@@ -348,7 +348,7 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       //                     ^
       if (index_record.expire_at > 0 &&
           index_record.expire_at + MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > current_time &&
-          index_record.expire_at > global_expire_at) {
+          index_record.expire_at + MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > global_expire_at) {
         //                         ^^^ to be sure page not being used by anyone
         last_data_idx = idx;
       }
