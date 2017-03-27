@@ -7,6 +7,8 @@
 
 #define DEALS_EXPIRES 60 * 60 * 24
 
+#define DEALS_DB_NAME "Deals"
+
 #define DEALINFO_TABLENAME "DealsInfo"
 #define DEALINFO_PAGES 5000
 #define DEALINFO_ELEMENTS 10000
@@ -37,6 +39,12 @@ struct DealInfo {
 
 using DealData = uint8_t;  // aka char
 using sharedDealData = shared_mem::ElementExtractor<i::DealData>;
+
+struct DealsContext : public shared_mem::DBContext {
+  uint32_t global_expire_at;
+  uint8_t reserved[1000];
+};
+
 }  // namespace deals::i
 
 struct DealInfoTest {

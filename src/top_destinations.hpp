@@ -40,7 +40,9 @@ void print(const DstInfo& deal);
 //-----------------------------------------------------------
 class TopDstDatabase {
  public:
-  TopDstDatabase() : db_index{TOPDST_TABLENAME, TOPDST_PAGES, TOPDST_ELEMENTS, TOPDST_EXPIRES} {
+  TopDstDatabase()
+      : db_context{TOPDST_TABLENAME},
+        db_index{TOPDST_TABLENAME, TOPDST_PAGES, TOPDST_ELEMENTS, TOPDST_EXPIRES, db_context} {
   }
 
   void addDestination(const types::CountryCode& locale, const types::IATACode& destination,
@@ -61,6 +63,7 @@ class TopDstDatabase {
 
   void truncate();  // clear database
  private:
+  shared_mem::Context db_context;
   shared_mem::Table<i::DstInfo> db_index;
 
   using CachedResult = const cache::Cache<std::vector<DstInfo>>;

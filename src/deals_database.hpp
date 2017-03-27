@@ -26,8 +26,9 @@ std::string sprint(const DealInfo& deal);
 class DealsDatabase {
  public:
   DealsDatabase()
-      : db_index{DEALINFO_TABLENAME, DEALINFO_PAGES, DEALINFO_ELEMENTS, DEALS_EXPIRES},
-        db_data{DEALDATA_TABLENAME, DEALDATA_PAGES, DEALDATA_ELEMENTS, DEALS_EXPIRES} {
+      : db_context{DEALS_DB_NAME},
+        db_index{DEALINFO_TABLENAME, DEALINFO_PAGES, DEALINFO_ELEMENTS, DEALS_EXPIRES, db_context},
+        db_data{DEALDATA_TABLENAME, DEALDATA_PAGES, DEALDATA_ELEMENTS, DEALS_EXPIRES, db_context} {
   }
 
   void addDeal(const types::Required<types::IATACode>& origin,
@@ -65,6 +66,7 @@ class DealsDatabase {
   // Let's transform internal format to external <DealInfo>
   std::vector<DealInfo> fill_deals_with_data(std::vector<i::DealInfo> i_deals);
 
+  shared_mem::Context db_context;
   shared_mem::Table<i::DealInfo> db_index;
   shared_mem::Table<i::DealData> db_data;
 

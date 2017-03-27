@@ -22,9 +22,12 @@ namespace shared_mem {
 *-----------------------------------------------------------------*/
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
-                        uint32_t max_elements_in_page, uint32_t record_expire_seconds)
-    : lock{table_name},
+                        uint32_t max_elements_in_page, uint32_t record_expire_seconds,
+                        Context& context)
+    : context(context),
+      lock{table_name},
       table_index{table_name, table_max_pages},
+      table_name{table_name},
       table_max_pages(table_max_pages),
       max_elements_in_page(max_elements_in_page),
       record_expire_seconds(record_expire_seconds) {
@@ -86,7 +89,8 @@ void Table<ELEMENT_T>::processRecords(TableProcessor<ELEMENT_T>& processor) {
     // if page not empty and not expired
     // [expired][expired][data][expired][data][expired][expired][zero][unused][unused]...[unused]
     //                     ^              ^
-    if (index_current.expire_at > timestamp_now && index_current.expire_at > global_expire_at) {
+    if (index_current.expire_at > timestamp_now &&
+        index_current.expire_at > context.shm.global_expire_at) {
       records_to_scan.push_back(&index_current);
     }
     // [expired][data][expired][data][expired][expired][expired][zero][unused][unused]...[unused]
@@ -340,7 +344,8 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
       //                     ^
       if (index_record.expire_at > 0 &&
           index_record.expire_at + MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > current_time &&
-          index_record.expire_at + MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC > global_expire_at) {
+          index_record.expire_at + MEMPAGE_REMOVE_EXPIRED_PAGES_DELAY_SEC >
+              context.shm.global_expire_at) {
         //                         ^^^ to be sure page not being used by anyone
         last_data_idx = idx;
       }
@@ -385,6 +390,16 @@ void Table<ELEMENT_T>::release_expired_memory_pages() {
     }
   }
   opened_pages_list = std::move(new_pages_list);
+}
+
+//-----------------------------------------------------------
+// Used to sync linked tables
+//-----------------------------------------------------------
+template <typename ELEMENT_T>
+void Table<ELEMENT_T>::update_global_expire(uint32_t value) {
+  if (context.shm.global_expire_at < value) {
+    context.shm.global_expire_at = value;
+  }
 }
 
 /*-----------------------------------------------------------------
@@ -534,4 +549,5 @@ ELEMENT_T* ElementExtractor<ELEMENT_T>::get_element_data() {
   const auto page = table.getPageByName(page_name);
   return page->getElements() + index;
 }
+
 }  // namespace shared_mem

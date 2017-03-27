@@ -63,13 +63,11 @@ void reportMemUsage(const PageType current_record_type, const std::string& inser
 #endif
 }
 
-//-----------------------------------------------------------
-// Used to sync linked tables
-//-----------------------------------------------------------
-void update_global_expire(uint32_t value) {
-  if (global_expire_at < value) {
-    global_expire_at = value;
-  }
+//-----------------------------------------------------
+// Context shared by all tables
+//-----------------------------------------------------
+Context::Context(std::string name) : data{name + "Context", 1}, shm{*data.getElements()} {
+  std::cout << "Context created: " << name << "Context" << std::endl;
 }
 
 /* ----------------------------------------------------------
@@ -140,7 +138,8 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval 
 // Test::unit_test
 //---------------------------------------------------------
 int unit_test() {
-  Table<TestInfo> index("TT", 1000, 100, 60);
+  Context ctx{"TT"};
+  Table<TestInfo> index("TT", 1000, 100, 60, ctx);
   index.cleanup();
   /* ----------------------------------------------------------
   **  Fill table

@@ -25,6 +25,7 @@ static_assert(LOWMEM_PERCENT_FOR_PAGE_REUSING > LOWMEM_ERROR_PERCENT, "CHECK LOW
 
 template <typename ELEMENT_T>
 class Table;
+class Context;
 
 enum class PageType : int { EXPIRED, OLDEST, NEW, CURRENT, UNKNOWN };
 bool isMemAvailable();
@@ -69,16 +70,37 @@ class SharedMemoryPage {
 
   template <class T>
   friend class Table;
+  friend class Context;
 };
 
+//-----------------------------------------------
+// DB Context
+//-----------------------------------------------
+struct DBContext {
+  uint32_t global_expire_at;
+  uint8_t reserved[1000];
+};
+
+class Context {
+ public:
+  Context(std::string name);
+
+ private:
+  SharedMemoryPage<DBContext> data;
+
+ public:
+  DBContext& shm;
+};
+
+//-----------------------------------------------
+// TablePageIndexElement
+//-----------------------------------------------
 // information about all open pages in all processes
 struct TablePageIndexElement {
   uint32_t expire_at;
   uint32_t page_elements_available;
   char page_name[MEMPAGE_NAME_MAX_LEN];
 };
-static uint32_t global_expire_at = 0;
-void update_global_expire(uint32_t value);
 
 //-----------------------------------------------
 // ElementExtractor
@@ -120,13 +142,14 @@ template <typename ELEMENT_T>
 class Table {
  public:
   Table(std::string table_name, uint16_t table_max_pages, uint32_t max_elements_in_page,
-        uint32_t record_expire_seconds);
+        uint32_t record_expire_seconds, Context& context);
   ~Table();
 
   ElementExtractor<ELEMENT_T> addRecord(ELEMENT_T* el, uint32_t size = 1,
                                         uint32_t lifetime_seconds = 0);
   void processRecords(TableProcessor<ELEMENT_T>& result);
   void cleanup();
+  const Context context;
 
  private:
   SharedMemoryPage<ELEMENT_T>* localGetPageByName(const std::string& page_name_to_look);
@@ -138,11 +161,13 @@ class Table {
   void checkRecord(uint32_t& records_cout);
   void update_record_expire(TablePageIndexElement* index_record, uint32_t current_time,
                             uint32_t lifetime_seconds);
+  void update_global_expire(uint32_t value);
 
   locks::CriticalSection lock;                          // [interprocess memory access management]
   SharedMemoryPage<TablePageIndexElement> table_index;  // [INDEX]
   std::vector<SharedMemoryPage<ELEMENT_T>*> opened_pages_list;
 
+  const std::string table_name;
   const uint16_t table_max_pages;
   const uint32_t max_elements_in_page;
   const uint32_t record_expire_seconds;
@@ -154,7 +179,6 @@ class Table {
   template <class T>
   friend class ElementExtractor;
 };
-
 }  // namespace shared_mem
 
 // template implementation...
