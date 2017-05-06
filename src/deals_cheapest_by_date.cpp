@@ -12,7 +12,7 @@ void CheapestByDay::pre_search() {
     return;
   }
 
-  if (departure_date_values.duration == 1) {
+  if (departure_date_values.duration <= 1) {
     group_by_return_date = true;
     if (return_date_values.duration) {
       filter_result_limit = return_date_values.duration;
