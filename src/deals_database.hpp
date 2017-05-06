@@ -113,6 +113,7 @@ std::vector<DealInfo> DealsDatabase::searchFor(
   query.roundtrip_flights(roundtrip_flights);
   query.max_lifetime_sec(max_lifetime_sec);
   query.result_limit(limit);
+  query.exact_departure_or_return_date(departure_or_return_date);
 
   // load deals data from data pages (DealData shared memory pagers)
   return fill_deals_with_data(query.execute());
