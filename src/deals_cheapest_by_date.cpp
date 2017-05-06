@@ -83,8 +83,23 @@ void CheapestByDay::post_search() {
   for (const auto &deal : grouped_by_date) {
     exec_result.push_back(deal.second);
   }
+  const auto exact_date = exact_date_value;
 
-  if (group_by_return_date) {
+  if (filter_exact_date) {
+    std::sort(exec_result.begin(), exec_result.end(),
+              [&exact_date](const i::DealInfo &a, const i::DealInfo &b) {
+                if (exact_date == a.return_date && exact_date == b.return_date) {
+                  return a.departure_date < b.departure_date;
+                }
+                if (exact_date == a.departure_date && exact_date == b.departure_date) {
+                  return a.return_date < b.return_date;
+                }
+                if (exact_date == a.return_date) {
+                  return true;
+                }
+                return false;
+              });
+  } else if (group_by_return_date) {
     std::sort(
         exec_result.begin(), exec_result.end(),
         [](const i::DealInfo &a, const i::DealInfo &b) { return a.return_date < b.return_date; });
