@@ -73,8 +73,8 @@ void DealsSearchQuery::process_element(const i::DealInfo &deal) {
     return;
   }
 
-  if (filter_exact_date &&
-      (deal.return_date != exact_date_value || deal.departure_date != exact_date_value)) {
+  if (filter_exact_date &&  //
+      deal.return_date != exact_date_value && deal.departure_date != exact_date_value) {
     return;
   }
 
