@@ -38,8 +38,14 @@ class SearchQuery {
   void departure_weekdays(const types::Weekdays& days_of_week);
   void return_weekdays(const types::Weekdays& days_of_week);
   void locale(const types::CountryCode& locale);
+  void calc_departue_return_max_duration(const types::Date& departure_date_from,
+                                         const types::Date& departure_date_to,
+                                         const types::Date& return_date_from,
+                                         const types::Date& return_date_to);
 
  protected:
+  DateValue departure_return_max_duration = 0;
+
   bool filter_origin = false;
   uint32_t origin_value;
 

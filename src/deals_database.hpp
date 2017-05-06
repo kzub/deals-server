@@ -114,7 +114,8 @@ std::vector<DealInfo> DealsDatabase::searchFor(
   query.max_lifetime_sec(max_lifetime_sec);
   query.result_limit(limit);
   query.exact_departure_or_return_date(departure_or_return_date);
-
+  query.calc_departue_return_max_duration(departure_date_from, departure_date_to, return_date_from,
+                                          return_date_to);
   // load deals data from data pages (DealData shared memory pagers)
   return fill_deals_with_data(query.execute());
 }  // namespace deals
