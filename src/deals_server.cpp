@@ -205,6 +205,7 @@ void DealsServer::getTop(Connection &conn) {
   Optional<Boolean> group_by_date(params, "group_by_date");                       // false
   Optional<Boolean> group_by_country(params, "group_by_country");                 // false
   Optional<CountryCode> locale(params, "locale");                                 // ru
+  Optional<Date> departure_or_return_date(params, "departure_or_return_date");    // 2016-05-01
 
   // temporary for backward compatibility
   Optional<Boolean> day_by_day(params, "day_by_day");
@@ -229,7 +230,7 @@ void DealsServer::getTop(Connection &conn) {
 #define TOP_SEARCH_PARAMS                                                                         \
   origin, destinations, destination_countries, departure_date_from, departure_date_to, dweekdays, \
       return_date_from, return_date_to, rweekdays, stay_from, stay_to, direct_flights,            \
-      deals_limit, timelimit, roundtrip_flights
+      deals_limit, timelimit, roundtrip_flights, departure_or_return_date
 
   if (group_by_date.isDefined() && group_by_date.isTrue()) {
     writeTopResult(conn, db.searchFor<deals::CheapestByDay>(TOP_SEARCH_PARAMS));

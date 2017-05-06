@@ -253,7 +253,7 @@ void unit_test() {
       ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"), od(params, "z"),
       od(params, "z"), ow(params, "z"), od(params, "z"), od(params, "z"), ow(params, "z"),
       on(params, "z"), on(params, "z"), ob(params, "z"), on(params, "z"), on(params, "10"),
-      ob(params, "z"));
+      ob(params, "z"), od(params, "z"));
 
   timer.tick("test1 START");
   for (auto &deal : result) {
@@ -312,7 +312,7 @@ void unit_test() {
       ri(params, "MOW"), ois(params, "AAA,PAR,BER,MAD"), oc(params, "z"), od(params, "2016-06-01"),
       od(params, "2016-06-23"), ow(params, "z"), od(params, "2016-06-10"), od(params, "2016-06-22"),
       ow(params, "z"), on(params, "z"), on(params, "z"), ob(params, "z"), on(params, "z"),
-      on(params, "10"), ob(params, "z"));
+      on(params, "10"), ob(params, "z"), od(params, "z"));
 
   timer.tick("test 2 START");
   for (auto &deal : result) {
@@ -372,7 +372,7 @@ void unit_test() {
       ri(params, "MOW"), ois(params, "z"), oc(params, "ZW,RU,IT"), od(params, "z"), od(params, "z"),
       ow(params, "thu,sat,sun"), od(params, "z"), od(params, "z"), ow(params, "wed,sun,mon"),
       on(params, "4"), on(params, "18"), ob(params, "false"), on(params, "z"), on(params, "2000"),
-      ob(params, "z"));
+      ob(params, "z"), od(params, "z"));
   timer.tick("test 3 START");
   std::cout << "search 3 result size:" << result.size() << std::endl;
   assert(result.size() > 0);

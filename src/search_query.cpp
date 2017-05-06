@@ -119,6 +119,15 @@ void SearchQuery::return_dates(const types::Date& return_date_from,
 }
 
 //--------------------------------------------------
+void SearchQuery::exact_departure_or_return_date(const types::Date& exact_date) {
+  if (exact_date.isUndefined()) {
+    return;
+  }
+  filter_exact_date = true;
+  exact_date_value = exact_date.get_code();
+}
+
+//--------------------------------------------------
 void SearchQuery::stay_days(const types::Number& stay_from, const types::Number& stay_to) {
   if (stay_from.isUndefined() && stay_to.isUndefined()) {
     return;

@@ -55,7 +55,8 @@ class DealsDatabase {
                                   const types::Optional<types::Boolean>& direct_flights,
                                   const types::Optional<types::Number>& limit,
                                   const types::Optional<types::Number>& max_lifetime_sec,
-                                  const types::Optional<types::Boolean>& roundtrip_flights);
+                                  const types::Optional<types::Boolean>& roundtrip_flights,
+                                  const types::Optional<types::Date>& departure_or_return_date);
 
   // clear database
   void truncate();
@@ -96,7 +97,8 @@ std::vector<DealInfo> DealsDatabase::searchFor(
     const types::Optional<types::Boolean>& direct_flights,
     const types::Optional<types::Number>& limit,
     const types::Optional<types::Number>& max_lifetime_sec,
-    const types::Optional<types::Boolean>& roundtrip_flights) {
+    const types::Optional<types::Boolean>& roundtrip_flights,
+    const types::Optional<types::Date>& departure_or_return_date) {
   QueryClass query(db_index);  // <- table processed by search class
 
   query.origin(origin);
