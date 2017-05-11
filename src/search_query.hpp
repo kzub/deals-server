@@ -12,6 +12,7 @@ struct DateInterval {
   uint32_t to;
   uint32_t duration;
 };
+using DateValue = uint32_t;
 
 struct StayInterval {
   uint8_t from;
@@ -27,6 +28,7 @@ class SearchQuery {
                        const types::Date& departure_date_to);
   void return_dates(const types::Date& return_date_from,  //
                     const types::Date& return_date_to);
+  void exact_departure_or_return_date(const types::Date& exact_date);
   void direct_flights(const types::Boolean& direct_flights);
   void roundtrip_flights(const types::Boolean& roundtrip);
   void max_lifetime_sec(const types::Number& max_lifetime);
@@ -36,8 +38,14 @@ class SearchQuery {
   void departure_weekdays(const types::Weekdays& days_of_week);
   void return_weekdays(const types::Weekdays& days_of_week);
   void locale(const types::CountryCode& locale);
+  void calc_departue_return_max_duration(const types::Date& departure_date_from,
+                                         const types::Date& departure_date_to,
+                                         const types::Date& return_date_from,
+                                         const types::Date& return_date_to);
 
  protected:
+  DateValue departure_return_max_duration = 0;
+
   bool filter_origin = false;
   uint32_t origin_value;
 
@@ -52,6 +60,9 @@ class SearchQuery {
 
   bool filter_return_date = false;
   DateInterval return_date_values;
+
+  bool filter_exact_date = false;
+  DateValue exact_date_value;
 
   bool filter_timestamp = false;
   uint32_t timestamp_value;

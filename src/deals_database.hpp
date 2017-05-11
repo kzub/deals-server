@@ -55,7 +55,8 @@ class DealsDatabase {
                                   const types::Optional<types::Boolean>& direct_flights,
                                   const types::Optional<types::Number>& limit,
                                   const types::Optional<types::Number>& max_lifetime_sec,
-                                  const types::Optional<types::Boolean>& roundtrip_flights);
+                                  const types::Optional<types::Boolean>& roundtrip_flights,
+                                  const types::Optional<types::Date>& departure_or_return_date);
 
   // clear database
   void truncate();
@@ -96,7 +97,8 @@ std::vector<DealInfo> DealsDatabase::searchFor(
     const types::Optional<types::Boolean>& direct_flights,
     const types::Optional<types::Number>& limit,
     const types::Optional<types::Number>& max_lifetime_sec,
-    const types::Optional<types::Boolean>& roundtrip_flights) {
+    const types::Optional<types::Boolean>& roundtrip_flights,
+    const types::Optional<types::Date>& departure_or_return_date) {
   QueryClass query(db_index);  // <- table processed by search class
 
   query.origin(origin);
@@ -111,7 +113,9 @@ std::vector<DealInfo> DealsDatabase::searchFor(
   query.roundtrip_flights(roundtrip_flights);
   query.max_lifetime_sec(max_lifetime_sec);
   query.result_limit(limit);
-
+  query.exact_departure_or_return_date(departure_or_return_date);
+  query.calc_departue_return_max_duration(departure_date_from, departure_date_to, return_date_from,
+                                          return_date_to);
   // load deals data from data pages (DealData shared memory pagers)
   return fill_deals_with_data(query.execute());
 }  // namespace deals

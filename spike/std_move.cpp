@@ -4,13 +4,17 @@
 
 class Test {
  public:
+  Test() {
+    std::cout << "Test zero:" << std::endl;
+    s = "zero";
+  }
+
   Test(std::string s) : s(s) {
-    throw "kak";
     std::cout << "Test:" << s << std::endl;
   }
 
   ~Test() {
-    std::cout << "~Test:" << s << std::endl;
+    std::cout << "~Test:" << s << " count:" << count << std::endl;
   }
 
   Test(Test&& t) {
@@ -18,44 +22,46 @@ class Test {
     s = "moved_" + t.s;
   }
 
+  Test(Test& t) {
+    s = "ref_" + t.s;
+    std::cout << "Test& " << s << std::endl;
+  }
+
   Test& operator=(Test&& t) {
-    std::cout << "Test operator&& " << s << std::endl;
+    std::cout << "Test operator= " << s << std::endl;
     s = "assignmoved_" + t.s;
     return *this;
   }
 
-  Test(Test& t) {
-    s = "copied_" + t.s;
-    std::cout << "Test& " << s << std::endl;
-  }
-
   std::string s;
   int count = 0;
-
   void print() {
-    std::cout << "print:" << s << ":" << count++ << std::endl;
+    std::cout << "print:" << s << " count:" << ++count << std::endl;
   }
 };
 
-Test test() {
+Test&& test() {
   Test k("F");
   k.print();
-  return k;
+  return std::move(k);
 }
 
 int main() {
-  Test* t = 0;
-  try {
-    t = new Test("T");
-  } catch (...) {
-    std::cout << "catch!" << std::endl;
-  }
+  // Test* t = 0;
+  // try {
+  //   t = new Test("T");
+  // } catch (const char* msg) {
+  //   std::cout << "catch:" << msg << std::endl;
+  // }
+  // std::cout << "mem:" << (void*)t << std::endl;
+  // t->print();
 
-  std::cout << "mem:" << (void*)t << std::endl;
-  //  t->print();
+  Test t("1");
+  // Test f;
+  // f = std::move(t);
+  // f = std::move(test());
+  t = std::move(test());
+  t.print();
 
-  // t = test();
-  // Test t("1");
-  // Test f = std::move(t);
   std::cout << "*finish*\n";
 }

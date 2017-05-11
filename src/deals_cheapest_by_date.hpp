@@ -23,6 +23,9 @@ class CheapestByDay : public DealsSearchQuery {
   const std::vector<i::DealInfo> get_result() const final override;
 
  private:
+  void checkInputParams();
+  query::DateValue getDateToGroup(const i::DealInfo& deal);
+
   std::vector<i::DealInfo> exec_result;
   std::unordered_map<uint32_t, i::DealInfo> grouped_by_date;
   bool group_by_return_date = false;

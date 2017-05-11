@@ -119,6 +119,36 @@ void SearchQuery::return_dates(const types::Date& return_date_from,
 }
 
 //--------------------------------------------------
+void SearchQuery::exact_departure_or_return_date(const types::Date& exact_date) {
+  if (exact_date.isUndefined()) {
+    return;
+  }
+  filter_exact_date = true;
+  exact_date_value = exact_date.get_code();
+}
+
+//--------------------------------------------------
+void SearchQuery::calc_departue_return_max_duration(const types::Date& departure_date_from,
+                                                    const types::Date& departure_date_to,
+                                                    const types::Date& return_date_from,
+                                                    const types::Date& return_date_to) {
+  if (departure_date_from.isDefined() && return_date_to.isDefined()) {
+    departure_return_max_duration = return_date_to.days_after(departure_date_from) + 1;
+    return;
+  }
+
+  DateValue dep_range = 0, ret_range = 0;
+  if (departure_date_from.isDefined() && departure_date_to.isDefined()) {
+    dep_range = departure_date_to.days_after(departure_date_from) + 1;
+  }
+  if (return_date_from.isDefined() && return_date_to.isDefined()) {
+    ret_range = return_date_to.days_after(return_date_from) + 1;
+  }
+
+  departure_return_max_duration = dep_range > ret_range ? dep_range : ret_range;
+}
+
+//--------------------------------------------------
 void SearchQuery::stay_days(const types::Number& stay_from, const types::Number& stay_to) {
   if (stay_from.isUndefined() && stay_to.isUndefined()) {
     return;
@@ -182,8 +212,10 @@ void SearchQuery::result_limit(const types::Number& limit) {
   if (limit.isUndefined()) {
     return;
   }
-  if (limit.get_value() > 0 && limit.get_value() < 1000) {
+  if (limit.get_value() > 0 && limit.get_value() <= 366) {
     filter_result_limit = limit.get_value();
+  } else {
+    throw types::Error("deals_limit to big\n");
   }
 }
 
