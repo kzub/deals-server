@@ -95,7 +95,7 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
 //---------------------------------------------------------
 // DealsDatabase  getUniqueRoutesDeals
 //--------------------------------------------------------
-const std::vector<DealInfo> DealsDatabase::getUniqueRoutesDeals() {
+const std::string DealsDatabase::getUniqueRoutesDeals() {
   return getUniqueRoutesRoutine(this->db_index);
 }
 

@@ -246,13 +246,6 @@ void DealsServer::getTop(Connection &conn) {
   }
 }
 
-//-----------------------------------------------------------
-// getUniqueRoutes
-//-----------------------------------------------------------
-void DealsServer::getUniqueRoutes(Connection &conn) {
-  writeTopResult(conn, db.getUniqueRoutesDeals());
-}
-
 //------------------------------------------------------------
 // DealsServer writeTopResult
 //------------------------------------------------------------
@@ -294,6 +287,26 @@ void DealsServer::writeTopResult(Connection &conn, const std::vector<deals::Deal
   rq_result.add_header("Content-Type", "application/octet-stream");
   rq_result.add_header("Content-Length", std::to_string(response.length()));
   rq_result.write(response);
+  conn.close(rq_result);
+}
+
+//-----------------------------------------------------------
+// getUniqueRoutes
+//-----------------------------------------------------------
+void DealsServer::getUniqueRoutes(Connection &conn) {
+  const auto result = db.getUniqueRoutesDeals();
+
+  if (result.size() == 0) {
+    http::HttpResponse rq_result(204, "Empty result");
+    rq_result.add_header("Content-Length", "0");
+    conn.close(rq_result);
+    return;
+  }
+
+  http::HttpResponse rq_result(200, "OK");
+  rq_result.add_header("Content-Type", "text/plain");
+  rq_result.add_header("Content-Length", std::to_string(result.length()));
+  rq_result.write(result);
   conn.close(rq_result);
 }
 

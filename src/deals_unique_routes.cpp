@@ -4,10 +4,10 @@ namespace deals {
 //------------------------------------------------------------
 // UniqueRoutes
 //------------------------------------------------------------
-const std::vector<DealInfo> getUniqueRoutesRoutine(shared_mem::Table<i::DealInfo>& table) {
+const std::string getUniqueRoutesRoutine(shared_mem::Table<i::DealInfo>& table) {
   UniqueProcessor up;
   table.processRecords(up);
-  return up.getResults();
+  return up.getStringResults();
 }
 
 void UniqueProcessor::process_element(const i::DealInfo& deal) {
@@ -29,14 +29,17 @@ void UniqueProcessor::process_element(const i::DealInfo& deal) {
   }
 }
 
-std::vector<DealInfo> UniqueProcessor::getResults() {
-  // std::vector<DealInfo> exec_result;
-  // for (const auto& deal : grouped_by_routes) {
-  //   utils::print(deal.second);
-  // }
+const std::string UniqueProcessor::getStringResults() {
+  std::string res;
+
+  for (const auto& elm : grouped_by_routes) {
+    res += types::code_to_origin(elm.second.origin) + "," +
+           types::code_to_origin(elm.second.destination) + "," + std::to_string(elm.second.price) +
+           "\n";
+  }
   std::cout << "Total unique routes:" << grouped_by_routes.size() << std::endl;
 
-  return {};
+  return res;
 }
 
 }  // namespace deals

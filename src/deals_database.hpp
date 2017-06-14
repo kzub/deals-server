@@ -53,7 +53,7 @@ class DealsDatabase {
                                   const types::Optional<types::Boolean>& roundtrip_flights,
                                   const types::Optional<types::Date>& departure_or_return_date);
 
-  const std::vector<DealInfo> getUniqueRoutesDeals();
+  const std::string getUniqueRoutesDeals();
 
   // clear database
   void truncate();

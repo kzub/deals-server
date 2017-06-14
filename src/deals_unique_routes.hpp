@@ -10,14 +10,14 @@ namespace deals {
 //------------------------------------------------------------
 // UniqueRoutes
 //------------------------------------------------------------
-const std::vector<DealInfo> getUniqueRoutesRoutine(shared_mem::Table<i::DealInfo>& table);
+const std::string getUniqueRoutesRoutine(shared_mem::Table<i::DealInfo>& table);
 
 //------------------------------------------------------------
 //
 //------------------------------------------------------------
 class UniqueProcessor : public shared_mem::TableProcessor<i::DealInfo> {
  public:
-  std::vector<DealInfo> getResults();
+  const std::string getStringResults();
 
  protected:
   // function that will be called for iterating over all not expired pages in table
