@@ -36,9 +36,10 @@ class DealsServer : public srv::TCPServer<Context> {
 
   void addDeal(Connection& conn);
   void getTop(Connection& conn);
+  void getUniqueRoutes(Connection& conn);
   void getDestiantionsTop(Connection& conn);
   void terminateWithError(Connection& conn, types::Error& err);
-  void writeTopResult(Connection& conn, std::vector<deals::DealInfo>&& result);
+  void writeTopResult(Connection& conn, const std::vector<deals::DealInfo>&& result);
 
   // in memory databases
   deals::DealsDatabase db;

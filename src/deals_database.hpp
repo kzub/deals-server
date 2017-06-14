@@ -5,6 +5,7 @@
 #include "deals_cheapest.hpp"
 #include "deals_cheapest_by_date.hpp"
 #include "deals_types.hpp"
+#include "deals_unique_routes.hpp"
 #include "search_query.hpp"
 #include "shared_memory.hpp"
 #include "types.hpp"
@@ -13,12 +14,6 @@
 namespace deals {
 
 void unit_test();
-
-namespace utils {
-void print(const i::DealInfo& deal);
-void print(const DealInfo& deal);
-std::string sprint(const DealInfo& deal);
-}  // namespace deals::utils
 
 //------------------------------------------------------------
 // DealsDatabase
@@ -57,6 +52,8 @@ class DealsDatabase {
                                   const types::Optional<types::Number>& max_lifetime_sec,
                                   const types::Optional<types::Boolean>& roundtrip_flights,
                                   const types::Optional<types::Date>& departure_or_return_date);
+
+  const std::vector<DealInfo> getUniqueRoutesDeals();
 
   // clear database
   void truncate();
@@ -118,6 +115,6 @@ std::vector<DealInfo> DealsDatabase::searchFor(
                                           return_date_to);
   // load deals data from data pages (DealData shared memory pagers)
   return fill_deals_with_data(query.execute());
-}  // namespace deals
 }
+}  // namespace deals
 #endif

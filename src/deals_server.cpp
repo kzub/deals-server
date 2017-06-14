@@ -106,6 +106,11 @@ void DealsServer::on_data(Connection &conn) {
         return;
       }
 
+      if ("/deals/uniqueRoutes" == path) {
+        getUniqueRoutes(conn);
+        return;
+      }
+
       if ("/destinations/top" == path) {
         getDestiantionsTop(conn);
         return;
@@ -241,10 +246,17 @@ void DealsServer::getTop(Connection &conn) {
   }
 }
 
+//-----------------------------------------------------------
+// getUniqueRoutes
+//-----------------------------------------------------------
+void DealsServer::getUniqueRoutes(Connection &conn) {
+  writeTopResult(conn, db.getUniqueRoutesDeals());
+}
+
 //------------------------------------------------------------
 // DealsServer writeTopResult
 //------------------------------------------------------------
-void DealsServer::writeTopResult(Connection &conn, std::vector<deals::DealInfo> &&result) {
+void DealsServer::writeTopResult(Connection &conn, const std::vector<deals::DealInfo> &&result) {
   if (result.size() == 0) {
     http::HttpResponse rq_result(204, "Empty result");
     rq_result.add_header("Content-Length", "0");

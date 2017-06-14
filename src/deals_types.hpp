@@ -71,5 +71,11 @@ class DealInfo {
   std::string data;
   std::shared_ptr<DealInfoTest> test;
 };
+
+namespace utils {
+void print(const i::DealInfo& deal);
+void print(const DealInfo& deal);
+std::string sprint(const DealInfo& deal);
+}  // namespace deals::utils
 }  // namespace deals
 #endif
