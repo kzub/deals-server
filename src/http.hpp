@@ -46,33 +46,28 @@ class HttpResponse;
 ------------------------------------------------------------------*/
 class HttpParser {
  public:
-  HttpParser()
-      : headers_written(false),
-        headers_end(0),
-        bytes_written(0),
-        content_length(0),
-        parsing_complete(false) {
-  }
-
   void write(const char* data, size_t size);
   void write(const std::string& msg);
   bool is_request_complete();
+  bool is_bad_request();
   bool is_headers_complete();
 
   // result data:
   std::string get_body();
   std::string get_headers();
+  std::string get_request_line();
 
   HttpHeaders headers;
   HttpRequest request;
 
  private:
-  bool headers_written;
   std::vector<std::string> msgs;
-  size_t headers_end;
-  size_t bytes_written;
-  size_t content_length;
-  bool parsing_complete;
+  size_t headers_end = 0;
+  size_t bytes_written = 0;
+  size_t content_length = 0;
+  bool headers_written = false;
+  bool parsing_complete = false;
+  bool bad_request = false;
 };
 
 /*------------------------------------------------------------------

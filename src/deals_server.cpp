@@ -93,6 +93,14 @@ void DealsServer::on_data(Connection &conn) {
   }
 
   conn.context.http.write(conn.get_data());
+
+  if (conn.context.http.is_bad_request()) {
+    types::Error err{"Bad HTTP Request format <" + conn.context.http.get_request_line() + ">",
+                     types::ErrorCode::InternalError};
+    terminateWithError(conn, err);
+    return;
+  }
+
   if (!conn.context.http.is_request_complete()) {
     return;
   }

@@ -128,6 +128,13 @@ bool HttpParser::is_request_complete() {
 }
 
 //------------------------------------------------------------------
+// HttpParser is_bad_request
+//------------------------------------------------------------------
+bool HttpParser::is_bad_request() {
+  return bad_request;
+}
+
+//------------------------------------------------------------------
 // HttpParser is_headers_complete
 //------------------------------------------------------------------
 bool HttpParser::is_headers_complete() {
@@ -180,7 +187,12 @@ void HttpParser::write(const std::string& msg) {
       }
     }
 
-    request.parse(concated_msg);
+    // check HTTP Request format
+    auto res = request.parse(concated_msg);
+    if (res != http::ParserResult::PARSE_OK) {
+      bad_request = true;
+      return;
+    }
 
     if (request.method == "GET") {
       parsing_complete = true;
@@ -207,6 +219,15 @@ std::string HttpParser::get_body() {
 //------------------------------------------------------------------
 std::string HttpParser::get_headers() {
   return utils::concat_string(msgs).substr(0, headers_end);
+}
+
+//------------------------------------------------------------------
+// return Request String
+//------------------------------------------------------------------
+std::string HttpParser::get_request_line() {
+  auto headers = get_headers();
+  auto pos = headers.find("\r\n");
+  return headers.substr(0, pos);
 }
 
 //******************* RESPONSE ****************************
