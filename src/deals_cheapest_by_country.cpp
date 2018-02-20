@@ -6,6 +6,11 @@ void CheapestByCountry::pre_search() {
   if (filter_destination_country) {
     filter_result_limit = destination_country_set.size();
   }
+
+  if (filter_all_combinations) {
+    std::cerr << "ERROR all_combinations not implemented for by_country aggregation" << std::endl;
+    throw types::Error("all_combinations flag not implemented for by_country aggregation\n");
+  }
 }
 
 //---------------------------------------------------------

@@ -12,6 +12,11 @@ void CheapestByDay::pre_search() {
     return;
   }
 
+  if (filter_all_combinations) {
+    filter_result_limit = departure_date_values.duration * return_date_values.duration;
+    return;
+  }
+
   if (departure_date_values.duration <= 1) {
     group_by_return_date = true;
     if (return_date_values.duration) {
@@ -38,6 +43,23 @@ void CheapestByDay::checkInputParams() {
               << " Ret:" << std::to_string(return_date_values.duration) << std::endl;
     throw types::Error("Date interval to large. 365 days is maximum\n");
   }
+  if (filter_all_combinations) {
+    if (!departure_date_values.duration || !return_date_values.duration) {
+      std::cerr << "ERROR Departure and return dates interval must be specified, if "
+                   "all_combination flag is set"
+                << std::endl;
+      throw types::Error(
+          "Departure and return dates interval must be specified, if all_combination flag is "
+          "set\n");
+    }
+    if (departure_date_values.duration > 10 || return_date_values.duration > 10) {
+      std::cerr << "ERROR all_combination: departure and return dates interval must be less than 10"
+                << std::endl;
+      throw types::Error(
+          "Departure and return dates interval must be less than 10, if all_combination flag is "
+          "set\n");
+    }
+  }
 }
 
 //---------------------------------------------------------
@@ -50,6 +72,10 @@ query::DateValue CheapestByDay::getDateToGroup(const i::DealInfo &deal) {
     // exact_date_value == deal.departure_date
     // set first bit to 1 for group return dates separately
     return deal.return_date | 0x80000000;
+  }
+
+  if (filter_all_combinations) {
+    return deal.departure_date + (deal.return_date | 0x80000000);
   }
 
   if (group_by_return_date) {

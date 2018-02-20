@@ -42,6 +42,7 @@ class SearchQuery {
                                          const types::Date& departure_date_to,
                                          const types::Date& return_date_from,
                                          const types::Date& return_date_to);
+  void all_combinations(const types::Boolean& all_combinations);
 
  protected:
   DateValue departure_return_max_duration = 0;
@@ -86,6 +87,8 @@ class SearchQuery {
 
   bool filter_locale = false;
   uint8_t locale_value;
+
+  bool filter_all_combinations = false;
 };
 
 }  // namespace query

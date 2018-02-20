@@ -228,4 +228,13 @@ void SearchQuery::locale(const types::CountryCode& locale) {
   locale_value = locale.get_code();
 }
 
+//--------------------------------------------------
+void SearchQuery::all_combinations(const types::Boolean& flag) {
+  if (flag.isUndefined()) {
+    return;
+  }
+
+  filter_all_combinations = flag.isTrue();
+}
+
 }  // deals namespace
