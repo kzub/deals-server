@@ -3,6 +3,10 @@
 namespace deals {
 //----------------------------------------------------------------
 void SimplyCheapest::pre_search() {
+  if (filter_all_combinations) {
+    std::cerr << "ERROR all_combinations not implemented for cheapest aggregation" << std::endl;
+    throw types::Error("all_combinations flag not implemented for cheapest aggregation\n");
+  }
 }
 
 //---------------------------------------------------------
