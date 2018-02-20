@@ -45,19 +45,16 @@ void CheapestByDay::checkInputParams() {
   }
   if (filter_all_combinations) {
     if (!departure_date_values.duration || !return_date_values.duration) {
-      std::cerr << "ERROR Departure and return dates interval must be specified, if "
-                   "all_combination flag is set"
+      std::cerr << "ERROR all_combination: Departure and return dates interval must be specified"
                 << std::endl;
       throw types::Error(
-          "Departure and return dates interval must be specified, if all_combination flag is "
-          "set\n");
+          "Departure and return dates must be specified, if all_combination flag is set\n");
     }
-    if (departure_date_values.duration > 10 || return_date_values.duration > 10) {
-      std::cerr << "ERROR all_combination: departure and return dates interval must be less than 10"
+    if (departure_date_values.duration > 11 || return_date_values.duration > 11) {
+      std::cerr << "ERROR all_combination: departure and return dates interval must be <= 10"
                 << std::endl;
       throw types::Error(
-          "Departure and return dates interval must be less than 10, if all_combination flag is "
-          "set\n");
+          "Departure and return dates interval must be <= 10, if all_combination flag is set\n");
     }
   }
 }
@@ -75,7 +72,7 @@ query::DateValue CheapestByDay::getDateToGroup(const i::DealInfo &deal) {
   }
 
   if (filter_all_combinations) {
-    return deal.departure_date + (deal.return_date | 0x80000000);
+    return (deal.departure_date << 18) ^ (deal.return_date);
   }
 
   if (group_by_return_date) {
@@ -132,6 +129,9 @@ void CheapestByDay::post_search() {
   } else {
     std::sort(exec_result.begin(), exec_result.end(),
               [](const i::DealInfo &a, const i::DealInfo &b) {
+                if (a.departure_date == b.departure_date) {
+                  return a.return_date < b.return_date;
+                }
                 return a.departure_date < b.departure_date;
               });
   }
