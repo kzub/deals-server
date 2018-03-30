@@ -24,8 +24,14 @@ void StatsProcessor::process_element(const i::DealInfo& deal) {
   }
 
   std::string route = types::int_to_date(deal.departure_date) + types::code_to_origin(deal.origin) +
-                      types::code_to_origin(deal.destination) +
-                      types::int_to_date(deal.return_date);
+                      types::code_to_origin(deal.destination);
+
+  if (deal.return_date) {
+    route = route + types::int_to_date(deal.return_date) + ",OW";
+  } else {
+    route = route + ",RT";
+  }
+
   group_by_route[route]++;
 }
 
