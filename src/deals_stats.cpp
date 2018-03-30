@@ -27,9 +27,9 @@ void StatsProcessor::process_element(const i::DealInfo& deal) {
                       types::code_to_origin(deal.destination);
 
   if (deal.return_date) {
-    route = route + types::int_to_date(deal.return_date) + ",OW";
+    route = route + types::int_to_date(deal.return_date) + ",RT";
   } else {
-    route = route + ",RT";
+    route = route + ",OW";
   }
 
   group_by_route[route]++;
