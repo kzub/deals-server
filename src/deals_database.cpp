@@ -99,4 +99,11 @@ const std::string DealsDatabase::getUniqueRoutesDeals() {
   return getUniqueRoutesRoutine(this->db_index);
 }
 
+//---------------------------------------------------------
+// DealsDatabase  stat
+//--------------------------------------------------------
+const std::string DealsDatabase::getStats() {
+  return getStatsRoutine(this->db_index);
+}
+
 }  // deals namespace

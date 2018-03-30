@@ -37,6 +37,7 @@ class DealsServer : public srv::TCPServer<Context> {
   void addDeal(Connection& conn);
   void getTop(Connection& conn);
   void getUniqueRoutes(Connection& conn);
+  void getStats(Connection& conn);
   void getDestiantionsTop(Connection& conn);
   void terminateWithError(Connection& conn, types::Error& err);
   void writeTopResult(Connection& conn, const std::vector<deals::DealInfo>&& result);

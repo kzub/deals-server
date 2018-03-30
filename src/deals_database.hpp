@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "deals_cheapest.hpp"
 #include "deals_cheapest_by_date.hpp"
+#include "deals_stats.hpp"
 #include "deals_types.hpp"
 #include "deals_unique_routes.hpp"
 #include "search_query.hpp"
@@ -55,6 +56,7 @@ class DealsDatabase {
                                   const types::Optional<types::Boolean>& all_combinations);
 
   const std::string getUniqueRoutesDeals();
+  const std::string getStats();
 
   // clear database
   void truncate();
