@@ -1,4 +1,5 @@
 #include "deals_stats.hpp"
+#include "types.hpp"
 
 namespace deals {
 //------------------------------------------------------------
@@ -21,10 +22,19 @@ void StatsProcessor::process_element(const i::DealInfo& deal) {
   if (deal.timestamp < min) {
     min = deal.timestamp;
   }
+
+  std::string route = types::int_to_date(deal.departure_date) + types::code_to_origin(deal.origin) +
+                      types::code_to_origin(deal.destination) +
+                      types::int_to_date(deal.return_date);
+  group_by_route[route]++;
 }
 
 const std::string StatsProcessor::getStringResults() {
   std::string res;
+
+  for (const auto& elm : group_by_route) {
+    std::cout << elm.first << "," << std::to_string(elm.second) << std::endl;
+  }
 
   res = "{\"elements\":" + std::to_string(elements) + ",\"size\":" + std::to_string(size) +
         ",\"min\":" + std::to_string(min) + ",\"max\":" + std::to_string(max) + "}";

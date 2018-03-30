@@ -26,6 +26,7 @@ class StatsProcessor : public shared_mem::TableProcessor<i::DealInfo> {
  protected:
   // function that will be called for iterating over all not expired pages in table
   void process_element(const i::DealInfo& element) final override;
+  std::unordered_map<std::string, uint32_t> group_by_route;
 };
 
 }  // namespace deals
