@@ -88,7 +88,9 @@ void CheapestByDay::process_deal(const i::DealInfo &deal) {
   auto &dst_deal = grouped_by_date[getDateToGroup(deal)];
 
   if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
-    if (dst_deal.price == deal.price && dst_deal.timestamp > deal.timestamp) {
+    // ignore same route and dates with lower price, but older timestamp
+    if (deal.destination == dst_deal.destination && deal.return_date == dst_deal.return_date &&
+        deal.direct == dst_deal.direct && dst_deal.timestamp > deal.timestamp) {
       return;
     }
     dst_deal = deal;

@@ -13,6 +13,7 @@ void print(const i::DealInfo& deal) {
 }
 void print(const DealInfo& deal) {
   if (deal.test == nullptr) {
+    // src/deals_database.hpp (TEST_BUILD = 1)
     std::cerr << "print() error: No test data. Rebuild code with testing enabled" << std::endl;
     return;
   }
@@ -24,6 +25,7 @@ void print(const DealInfo& deal) {
 
 std::string sprint(const DealInfo& deal) {
   if (deal.test == nullptr) {
+    // src/deals_database.hpp (TEST_BUILD = 1)
     std::cerr << "print() error: No test data. Rebuild code with testing enabled" << std::endl;
     return "no test data\n";
   }
