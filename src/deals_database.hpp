@@ -14,6 +14,7 @@
 
 namespace deals {
 
+#define TEST_BUILD 0
 void unit_test();
 
 //------------------------------------------------------------
@@ -21,11 +22,7 @@ void unit_test();
 //------------------------------------------------------------
 class DealsDatabase {
  public:
-  DealsDatabase()
-      : db_context{DEALS_DB_NAME},
-        db_index{DEALINFO_TABLENAME, DEALINFO_PAGES, DEALINFO_ELEMENTS, DEALS_EXPIRES, db_context},
-        db_data{DEALDATA_TABLENAME, DEALDATA_PAGES, DEALDATA_ELEMENTS, DEALS_EXPIRES, db_context} {
-  }
+  DealsDatabase();
 
   void addDeal(const types::Required<types::IATACode>& origin,
                const types::Required<types::IATACode>& destination,

@@ -8,6 +8,18 @@
 
 namespace deals {
 //---------------------------------------------------------
+//  DealsDatabase  constructor
+//---------------------------------------------------------
+DealsDatabase::DealsDatabase()
+    : db_context{DEALS_DB_NAME},
+      db_index{DEALINFO_TABLENAME, DEALINFO_PAGES, DEALINFO_ELEMENTS, DEALS_EXPIRES, db_context},
+      db_data{DEALDATA_TABLENAME, DEALDATA_PAGES, DEALDATA_ELEMENTS, DEALS_EXPIRES, db_context} {
+  if (TEST_BUILD) {
+    std::cout << "!!! TEST BUILD !!!!" << std::endl;
+  }
+}
+
+//---------------------------------------------------------
 //  DealsDatabase  truncate
 //---------------------------------------------------------
 void DealsDatabase::truncate() {
@@ -75,7 +87,7 @@ std::vector<DealInfo> DealsDatabase::fill_deals_with_data(std::vector<i::DealInf
     auto data_pointer = (char *)deal_data.get_element_data();
     std::string data = {data_pointer, deal.size};
 
-    if (0) {
+    if (TEST_BUILD) {
       std::shared_ptr<DealInfoTest> testdata(new DealInfoTest{
           types::code_to_origin(deal.origin), types::code_to_origin(deal.destination),
           types::int_to_date(deal.departure_date), types::int_to_date(deal.return_date),
