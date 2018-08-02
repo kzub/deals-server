@@ -108,6 +108,17 @@ TimeLord &TimeLord::operator+=(uint32_t step) {
 }
 
 //---------------------------------------------------
+TimeLord &TimeLord::operator-=(uint32_t step) {
+  tick_counter -= step;
+
+  if (tick_counter % ticks_in_second == 0) {
+    debug_time_shift -= step;
+  }
+
+  return *this;
+}
+
+//---------------------------------------------------
 void TimeLord::reset() {
   tick_counter = 1;
 }

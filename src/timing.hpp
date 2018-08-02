@@ -46,6 +46,7 @@ class TimeLord {
 
   operator uint32_t();
   TimeLord &operator++();
+  TimeLord &operator-=(uint32_t step);
   TimeLord &operator+=(uint32_t step);
   void reset();
   bool test(uint32_t x);

@@ -187,12 +187,16 @@ void unit_test() {
   params.add_object({"5000", "5000"});
   params.add_object({"6000", "6000"});
   params.add_object({"7000", "7000"});
+  params.add_object({"4900", "4900"});
+  params.add_object({"5900", "5900"});
+  params.add_object({"6900", "6900"});
 
   using ri = types::Required<types::IATACode>;
   using ois = types::Optional<types::IATACodes>;
   using rc = types::Required<types::CountryCode>;
-  using od = types::Optional<types::Date>;
   using rd = types::Required<types::Date>;
+  using od = types::Optional<types::Date>;
+  using rb = types::Required<types::Boolean>;
   using ob = types::Optional<types::Boolean>;
   using rn = types::Required<types::Number>;
   using on = types::Optional<types::Number>;
@@ -214,12 +218,22 @@ void unit_test() {
   time += 1000;
 
   // add data we will expect
+  // those are more expensice but newer. must be chosen to show
   db.addDeal(ri(params, "MOW"), ri(params, "MAD"), rc(params, "IT"), rd(params, "2016-05-01"),
-             od(params, "2016-05-21"), getRandomBool(), rn(params, "5000"), check);
+             od(params, "2016-05-21"), rb(params, "true"), rn(params, "5000"), check);
   db.addDeal(ri(params, "MOW"), ri(params, "BER"), rc(params, "GE"), rd(params, "2016-06-01"),
-             od(params, "2016-06-11"), getRandomBool(), rn(params, "6000"), check);
+             od(params, "2016-06-11"), rb(params, "false"), rn(params, "6000"), check);
   db.addDeal(ri(params, "MOW"), ri(params, "PAR"), rc(params, "FR"), rd(params, "2016-07-01"),
-             od(params, "2016-07-15"), getRandomBool(), rn(params, "7000"), check);
+             od(params, "2016-07-15"), rb(params, "true"), rn(params, "7000"), check);
+
+  time -= 1;
+  // those are cheaper, but older must NOT be choosen
+  db.addDeal(ri(params, "MOW"), ri(params, "MAD"), rc(params, "IT"), rd(params, "2016-05-01"),
+             od(params, "2016-05-21"), rb(params, "true"), rn(params, "4900"), check);
+  db.addDeal(ri(params, "MOW"), ri(params, "BER"), rc(params, "GE"), rd(params, "2016-06-01"),
+             od(params, "2016-06-11"), rb(params, "false"), rn(params, "5900"), check);
+  db.addDeal(ri(params, "MOW"), ri(params, "PAR"), rc(params, "FR"), rd(params, "2016-07-01"),
+             od(params, "2016-07-15"), rb(params, "true"), rn(params, "6900"), check);
 
   time += 5;
 
@@ -232,7 +246,6 @@ void unit_test() {
     db.addDeal(getRandomOrigin(), ri(params, "PAR"), rc(params, "FR"), getRandomDate(),
                getRandomDateOpt(), getRandomBool(), getRandomPrice(7200), dumb);
 
-    // MAD will be 2016 here: and > 8000 price
     db.addDeal(getRandomOrigin(), getRandomOrigin(), getRandomCountry(), getRandomDate(),
                getRandomDateOpt(), getRandomBool(), getRandomPrice(8000), dumb);
   }
