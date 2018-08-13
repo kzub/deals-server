@@ -73,9 +73,12 @@ class DealInfo {
 };
 
 namespace utils {
+
 void print(const i::DealInfo& deal);
 void print(const DealInfo& deal);
 std::string sprint(const DealInfo& deal);
+bool equal(const i::DealInfo& d1, const i::DealInfo& d2);
+
 }  // namespace deals::utils
 }  // namespace deals
 #endif

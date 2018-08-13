@@ -17,19 +17,15 @@ void CheapestByCountry::pre_search() {
 void CheapestByCountry::process_deal(const i::DealInfo &deal) {
   auto &dst_deal = grouped_by_country[deal.destination_country];
 
-  if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
+  if (dst_deal.price == 0 || deal.price <= dst_deal.price) {
     // ignore same route and dates with lower price, but older timestamp
-    if (deal.destination == dst_deal.destination && deal.return_date == dst_deal.return_date &&
-        deal.direct == dst_deal.direct && dst_deal.timestamp > deal.timestamp) {
+    if (utils::equal(deal, dst_deal) && dst_deal.timestamp > deal.timestamp) {
       return;
     }
     dst_deal = deal;
   }
   // if  not cheaper but same  destination & dates, replace with newer results
-  else if (deal.destination == dst_deal.destination &&
-           deal.departure_date == dst_deal.departure_date &&
-           deal.return_date == dst_deal.return_date && deal.direct == dst_deal.direct &&
-           dst_deal.timestamp < deal.timestamp) {
+  else if (utils::equal(deal, dst_deal) && dst_deal.timestamp < deal.timestamp) {
     dst_deal = deal;
     dst_deal.overriden = true;  // it is used in tests
   }

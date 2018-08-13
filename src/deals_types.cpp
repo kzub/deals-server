@@ -4,6 +4,7 @@
 //***********************************************************
 namespace deals {
 namespace utils {
+//-----------------------------------------------------------
 void print(const i::DealInfo& deal) {
   std::cout << "i::DEAL: (" << types::int_to_date(deal.departure_date) << ")"
             << types::code_to_origin(deal.origin) << "-" << types::code_to_origin(deal.destination)
@@ -11,6 +12,7 @@ void print(const i::DealInfo& deal) {
                                  : "             :")
             << deal.price << " " << deal.page_name << ":" << deal.index << std::endl;
 }
+//-----------------------------------------------------------
 void print(const DealInfo& deal) {
   if (deal.test == nullptr) {
     // src/deals_database.hpp (TEST_BUILD = 1)
@@ -22,7 +24,7 @@ void print(const DealInfo& deal) {
             << deal.test->destination << "(" << deal.test->return_date << ")"
             << (deal.test->overriden ? "w" : " ") << ": " << deal.test->price << std::endl;
 }
-
+//-----------------------------------------------------------
 std::string sprint(const DealInfo& deal) {
   if (deal.test == nullptr) {
     // src/deals_database.hpp (TEST_BUILD = 1)
@@ -33,6 +35,11 @@ std::string sprint(const DealInfo& deal) {
   return "(" + deal.test->departure_date + ")" + deal.test->origin + "-" + deal.test->destination +
          "(" + deal.test->return_date + ") : " + std::to_string(deal.test->price) + "|" +
          deal.data + "\n";
+}
+//-----------------------------------------------------------
+bool equal(const i::DealInfo& d1, const i::DealInfo& d2) {
+  return (d1.departure_date == d2.departure_date) && (d1.return_date == d2.return_date) &&
+         (d1.direct == d2.direct) && (d1.destination == d2.destination) && (d1.origin == d2.origin);
 }
 }  // utils namespace
 }  // namespace deals
