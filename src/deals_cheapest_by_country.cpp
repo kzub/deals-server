@@ -23,18 +23,20 @@ void CheapestByCountry::process_deal(const i::DealInfo &deal) {
       return;
     }
     dst_deal = deal;
+    grouped_by_country_hist[deal.destination_country].push_back(deal);
   }
   // if  not cheaper but same  destination & dates, replace with newer results
   else if (utils::equal(deal, dst_deal) && dst_deal.timestamp < deal.timestamp) {
     dst_deal = deal;
+    grouped_by_country_hist[deal.destination_country].push_back(deal);
     dst_deal.overriden = true;  // it is used in tests
   }
 }
 
 //----------------------------------------------------------------
 void CheapestByCountry::post_search() {
-  for (const auto &deal : grouped_by_country) {
-    exec_result.push_back(deal.second);
+  for (const auto &deal : grouped_by_country_hist) {
+    exec_result.push_back(utils::findCheapestAndLast(deal.second));
   }
 
   // sort by departure_date ASC

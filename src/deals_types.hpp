@@ -78,7 +78,7 @@ void print(const i::DealInfo& deal);
 void print(const DealInfo& deal);
 std::string sprint(const DealInfo& deal);
 bool equal(const i::DealInfo& d1, const i::DealInfo& d2);
-
+const i::DealInfo findCheapestAndLast(const std::vector<i::DealInfo>& history);
 }  // namespace deals::utils
 }  // namespace deals
 #endif

@@ -36,38 +36,12 @@ void SimplyCheapest::process_deal(const i::DealInfo &deal) {
 //----------------------------------------------------------------
 void SimplyCheapest::post_search() {
   for (auto &v : grouped_destinations_hist) {
-    exec_result.push_back(findCheapestAndLast(v.second));
+    exec_result.push_back(utils::findCheapestAndLast(v.second));
   }
 
   // sort by price ASC
   std::sort(exec_result.begin(), exec_result.end(),
             [](const i::DealInfo &a, const i::DealInfo &b) { return a.price < b.price; });
-}
-
-//----------------------------------------------------------------
-// check for result is not cheapest and outdated at the same time
-//----------------------------------------------------------------
-const i::DealInfo SimplyCheapest::findCheapestAndLast(std::vector<i::DealInfo> &history) {
-  auto last_deal = history.back();
-  history.pop_back();
-
-  for (auto i = 0; i < history.size(); i++) {
-    const auto &d = history[i];
-    // when result contain equivalent deals with different timestamps
-    if (utils::equal(d, last_deal)) {
-      // if cheapest is outdated => select previous deal from history
-      // and start from the begining
-      if (d.timestamp > last_deal.timestamp) {
-        last_deal = history.back();
-        history.pop_back();
-        i = 0;
-        continue;
-      }
-    }
-  }
-
-  // when we rich this point last_deal - is cheapest and newest available
-  return last_deal;
 }
 
 //----------------------------------------------------------------

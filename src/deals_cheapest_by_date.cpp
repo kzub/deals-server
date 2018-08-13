@@ -85,7 +85,8 @@ query::DateValue CheapestByDay::getDateToGroup(const i::DealInfo &deal) {
 //---------------------------------------------------------
 void CheapestByDay::process_deal(const i::DealInfo &deal) {
   //
-  auto &dst_deal = grouped_by_date[getDateToGroup(deal)];
+  const auto date = getDateToGroup(deal);
+  auto &dst_deal = grouped_by_date[date];
 
   if (dst_deal.price == 0 || deal.price <= dst_deal.price) {
     // ignore same route and dates with lower price, but older timestamp
@@ -93,18 +94,20 @@ void CheapestByDay::process_deal(const i::DealInfo &deal) {
       return;
     }
     dst_deal = deal;
+    grouped_by_date_hist[date].push_back(deal);
   }
   // if  not cheaper but same destination & dates, replace with newer results
   else if (utils::equal(deal, dst_deal) && dst_deal.timestamp < deal.timestamp) {
     dst_deal = deal;
+    grouped_by_date_hist[date].push_back(deal);
     dst_deal.overriden = true;  // it is used in tests
   }
 }
 
 //----------------------------------------------------------------
 void CheapestByDay::post_search() {
-  for (const auto &deal : grouped_by_date) {
-    exec_result.push_back(deal.second);
+  for (const auto &deal : grouped_by_date_hist) {
+    exec_result.push_back(utils::findCheapestAndLast(deal.second));
   }
   const auto exact_date = exact_date_value;
 
