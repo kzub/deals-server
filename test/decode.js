@@ -101,7 +101,7 @@ function dataProcessor(datas) {
 		var segments = [];
 		for(var id2 in deal.trips){
 			var trip = deal.trips[id2];
-			segments.push(trip.from + trip.to + '(' + trip.startDate + ')' + (id2==deal.trips.length-1?'':(trip.continued?'-':':')));
+			segments.push(trip.from + trip.to + '(' + trip.startDate + ')' + (id2==deal.trips.length-1?'':(trip.continued?'-':'===')));
 			// console.log(trip)
 		}
 		console.log(deal.origin + '-' + deal.destination + ':' + deal.destination_country, deal.price, segments.join(''), new Date(deal.dateCreated).toJSON().slice(0, 19));

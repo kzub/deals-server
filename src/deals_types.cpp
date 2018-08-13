@@ -65,8 +65,11 @@ const i::DealInfo findCheapestAndLast(const std::vector<i::DealInfo>& history) {
       // if cheapest is outdated => select previous deal from history
       // and start from the begining
       if (d.timestamp > last_deal.timestamp) {
-        len--;
         last_deal = history[len];
+        if (len == 0) {
+          break;
+        }
+        len--;
         i = 0;
         continue;
       }

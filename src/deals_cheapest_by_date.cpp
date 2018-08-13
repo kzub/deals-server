@@ -86,7 +86,7 @@ query::DateValue CheapestByDay::getDateToGroup(const i::DealInfo &deal) {
 //---------------------------------------------------------
 void CheapestByDay::process_deal(const i::DealInfo &deal) {
   //
-  const auto date = getDateToGroup(deal);
+  const auto &date = getDateToGroup(deal);
   auto &dst_deal = grouped_by_date[date];
 
   if (dst_deal.price == 0 || deal.price <= dst_deal.price) {
