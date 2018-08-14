@@ -24,9 +24,11 @@ void CheapestByCountry::process_deal(const i::DealInfo &deal) {
     }
     dst_deal = deal;
     grouped_by_country_hist[deal.destination_country].push_back(deal);
+    return;
   }
+
   // if  not cheaper but same  destination & dates, replace with newer results
-  else if (utils::equal(deal, dst_deal) && dst_deal.timestamp < deal.timestamp) {
+  if (utils::equal(deal, dst_deal) && dst_deal.timestamp < deal.timestamp) {
     dst_deal = deal;
     grouped_by_country_hist[deal.destination_country].push_back(deal);
     dst_deal.overriden = true;  // it is used in tests
