@@ -24,6 +24,7 @@ class SimplyCheapest : public DealsSearchQuery {
  private:
   std::vector<i::DealInfo> exec_result;
   std::unordered_map<uint32_t, i::DealInfo> grouped_destinations;
+  std::unordered_map<uint32_t, std::vector<i::DealInfo>> grouped_destinations_hist;
 };
 }  // namespace deals
 

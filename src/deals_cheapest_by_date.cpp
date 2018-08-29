@@ -37,7 +37,8 @@ void CheapestByDay::checkInputParams() {
     std::cerr << "ERROR no departure or return dates interval" << std::endl;
     throw types::Error("Departure or return dates interval must be specified\n");
   }
-  if (departure_date_values.duration > 366 || return_date_values.duration > 366) {
+  if ((filter_departure_date && departure_date_values.duration > 366) ||
+      (filter_return_date && return_date_values.duration > 366)) {
     std::cerr << "ERROR departure or return dates interval > 365."
               << " Dep:" << std::to_string(departure_date_values.duration)
               << " Ret:" << std::to_string(return_date_values.duration) << std::endl;
@@ -85,28 +86,31 @@ query::DateValue CheapestByDay::getDateToGroup(const i::DealInfo &deal) {
 //---------------------------------------------------------
 void CheapestByDay::process_deal(const i::DealInfo &deal) {
   //
-  auto &dst_deal = grouped_by_date[getDateToGroup(deal)];
+  const auto &date = getDateToGroup(deal);
+  auto &dst_deal = grouped_by_date[date];
 
-  if (dst_deal.price == 0 || dst_deal.price >= deal.price) {
+  if (dst_deal.price == 0 || deal.price <= dst_deal.price) {
     // ignore same route and dates with lower price, but older timestamp
-    if (deal.destination == dst_deal.destination && deal.return_date == dst_deal.return_date &&
-        deal.direct == dst_deal.direct && dst_deal.timestamp > deal.timestamp) {
+    if (utils::equal(deal, dst_deal) && dst_deal.timestamp > deal.timestamp) {
       return;
     }
     dst_deal = deal;
+    grouped_by_date_hist[date].push_back(deal);
+    return;
   }
+
   // if  not cheaper but same destination & dates, replace with newer results
-  else if (deal.destination == dst_deal.destination && deal.return_date == dst_deal.return_date &&
-           deal.direct == dst_deal.direct && dst_deal.timestamp < deal.timestamp) {
+  if (utils::equal(deal, dst_deal) && dst_deal.timestamp < deal.timestamp) {
     dst_deal = deal;
+    grouped_by_date_hist[date].push_back(deal);
     dst_deal.overriden = true;  // it is used in tests
   }
 }
 
 //----------------------------------------------------------------
 void CheapestByDay::post_search() {
-  for (const auto &deal : grouped_by_date) {
-    exec_result.push_back(deal.second);
+  for (const auto &deal : grouped_by_date_hist) {
+    exec_result.push_back(utils::findCheapestAndLast(deal.second));
   }
   const auto exact_date = exact_date_value;
 
