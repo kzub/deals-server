@@ -37,9 +37,9 @@ void CheapestByDay::checkInputParams() {
     std::cerr << "ERROR no departure or return dates interval" << std::endl;
     throw types::Error("Departure or return dates interval must be specified\n");
   }
-  if ((filter_departure_date && departure_date_values.duration > 366) ||
-      (filter_return_date && return_date_values.duration > 366)) {
-    std::cerr << "ERROR departure or return dates interval > 365."
+  if ((filter_departure_date && departure_date_values.duration > 367) ||
+      (filter_return_date && return_date_values.duration > 367)) {
+    std::cerr << "ERROR departure or return dates interval > 366."
               << " Dep:" << std::to_string(departure_date_values.duration)
               << " Ret:" << std::to_string(return_date_values.duration) << std::endl;
     throw types::Error("Date interval to large. 365 days is maximum\n");

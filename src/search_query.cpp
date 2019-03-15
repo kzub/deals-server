@@ -212,7 +212,7 @@ void SearchQuery::result_limit(const types::Number& limit) {
   if (limit.isUndefined()) {
     return;
   }
-  if (limit.get_value() > 0 && limit.get_value() <= 366) {
+  if (limit.get_value() > 0 && limit.get_value() <= 367) {
     filter_result_limit = limit.get_value();
   } else {
     throw types::Error("deals_limit to big\n");
