@@ -7,8 +7,8 @@ std::vector<i::DealInfo> DealsSearchQuery::execute() {
 
   // filter out expired deals inside record, record has many elements with different ages,
   // but record age equal max age of all elements inside it.  =/ rethink it later
-  min_timestamp = std::max(table.context.shm.global_expire_at - DEALS_EXPIRES,
-                           timing::getTimestampSec() - DEALS_EXPIRES);
+  min_timestamp =
+      std::max(table.context.shm.global_expire_at, timing::getTimestampSec()) - DEALS_EXPIRES;
 
   // table processor iterates table pages and call DealsSearchQuery::process_element()
   table.processRecords(*this);
