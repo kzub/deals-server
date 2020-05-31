@@ -25,7 +25,7 @@ static_assert(LOWMEM_PERCENT_FOR_PAGE_REUSING > LOWMEM_ERROR_PERCENT, "CHECK LOW
 
 template <typename ELEMENT_T>
 class Table;
-class Context;
+class SharedContext;
 
 enum class PageType : int { EXPIRED, OLDEST, NEW, CURRENT, UNKNOWN };
 bool isMemAvailable();
@@ -70,7 +70,7 @@ class SharedMemoryPage {
 
   template <class T>
   friend class Table;
-  friend class Context;
+  friend class SharedContext;
 };
 
 //-----------------------------------------------
@@ -81,9 +81,9 @@ struct DBContext {
   uint8_t reserved[1000];
 };
 
-class Context {
+class SharedContext {
  public:
-  Context(std::string name);
+  SharedContext(std::string name);
 
  private:
   SharedMemoryPage<DBContext> data;
@@ -112,7 +112,6 @@ class ElementExtractor {
       : page_name(page_name), index(index), size(size), table(table){};
 
   ELEMENT_T* get_element_data();
-  operator ELEMENT_T*();
 
   const std::string page_name;
   const uint32_t index;
@@ -142,14 +141,14 @@ template <typename ELEMENT_T>
 class Table {
  public:
   Table(std::string table_name, uint16_t table_max_pages, uint32_t max_elements_in_page,
-        uint32_t record_expire_seconds, Context& context);
+        uint32_t record_expire_seconds, SharedContext& context);
   ~Table();
 
   ElementExtractor<ELEMENT_T> addRecord(ELEMENT_T* el, uint32_t size = 1,
                                         uint32_t lifetime_seconds = 0);
   void processRecords(TableProcessor<ELEMENT_T>& result);
   void cleanup();
-  const Context context;
+  const SharedContext context;
 
  private:
   SharedMemoryPage<ELEMENT_T>* localGetPageByName(const std::string& page_name_to_look);

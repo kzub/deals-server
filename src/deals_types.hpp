@@ -40,11 +40,6 @@ struct DealInfo {
 using DealData = uint8_t;  // aka char
 using sharedDealData = shared_mem::ElementExtractor<i::DealData>;
 
-struct DealsContext : public shared_mem::DBContext {
-  uint32_t global_expire_at;
-  uint8_t reserved[1000];
-};
-
 }  // namespace deals::i
 
 struct DealInfoTest {

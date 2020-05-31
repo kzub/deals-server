@@ -63,7 +63,7 @@ class TopDstDatabase {
 
   void truncate();  // clear database
  private:
-  shared_mem::Context db_context;
+  shared_mem::SharedContext db_context;
   shared_mem::Table<i::DstInfo> db_index;
 
   using CachedResult = const cache::Cache<std::vector<DstInfo>>;

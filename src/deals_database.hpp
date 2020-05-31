@@ -64,7 +64,7 @@ class DealsDatabase {
   // Let's transform internal format to external <DealInfo>
   std::vector<DealInfo> fill_deals_with_data(std::vector<i::DealInfo> i_deals);
 
-  shared_mem::Context db_context;
+  shared_mem::SharedContext db_context;
   shared_mem::Table<i::DealInfo> db_index;
   shared_mem::Table<i::DealData> db_data;
 

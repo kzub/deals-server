@@ -23,7 +23,7 @@ namespace shared_mem {
 template <typename ELEMENT_T>
 Table<ELEMENT_T>::Table(std::string table_name, uint16_t table_max_pages,
                         uint32_t max_elements_in_page, uint32_t record_expire_seconds,
-                        Context& context)
+                        SharedContext& context)
     : context(context),
       lock{table_name},
       table_index{table_name, table_max_pages},
@@ -531,14 +531,6 @@ SharedMemoryPage<ELEMENT_T>::~SharedMemoryPage() {
 template <typename ELEMENT_T>
 ELEMENT_T* SharedMemoryPage<ELEMENT_T>::getElements() {
   return shared_elements;
-}
-
-//------------------------------------------------------------
-// operator ELEMENT_T*()
-//------------------------------------------------------------
-template <typename ELEMENT_T>
-ElementExtractor<ELEMENT_T>::operator ELEMENT_T*() {
-  return get_element_data();
 }
 
 /*-----------------------------------------------------------------

@@ -64,10 +64,11 @@ void reportMemUsage(const PageType current_record_type, const std::string& inser
 }
 
 //-----------------------------------------------------
-// Context shared by all tables
+// SharedContext shared by all tables
 //-----------------------------------------------------
-Context::Context(std::string name) : data{name + "Context", 1}, shm{*data.getElements()} {
-  std::cout << "Context created: " << name << "Context" << std::endl;
+SharedContext::SharedContext(std::string name)
+    : data{name + "Context", 1}, shm{*data.getElements()} {
+  std::cout << "SharedContext created: " << name << "SharedContext" << std::endl;
 }
 
 /* ----------------------------------------------------------
@@ -130,7 +131,7 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval 
   uint32_t idx;
   for (idx = 0; idx < number; ++idx) {
     TestInfo test = {numval};
-    ElementExtractor<TestInfo> result = t->addRecord(&test, 1, lifetime);
+    auto result = t->addRecord(&test, 1, lifetime);
   }
 }
 
@@ -138,7 +139,7 @@ void testAddMultipleRecords(Table<TestInfo>* t, uint32_t number, uint8_t numval 
 // Test::unit_test
 //---------------------------------------------------------
 int unit_test() {
-  Context ctx{"TT"};
+  SharedContext ctx{"TT"};
   Table<TestInfo> index("TT", 1000, 100, 60, ctx);
   index.cleanup();
   /* ----------------------------------------------------------
