@@ -59,7 +59,7 @@ var data = new Buffer(0);
 process.stdin.on('data', function(chunk){
 	if(usage){
 		clearTimeout(usage);
-		usage = 0;		
+		usage = 0;
 	}
 	data = Buffer.concat([data, chunk]);
 });
@@ -72,11 +72,14 @@ process.stdin.on('end', function(){
 					try {
 						zlib.inflate(item, function(err, jsontext){
 							var obj;
-							try{
+
+							try {
+								if (err) { throw err; }
 								obj = JSON.parse(jsontext);
-							}catch(e){
-								console.error('getDealsTop.parse2', 'length:', results.length,
-									    'jsontext:', jsontext);
+							}
+							catch(e) {
+								console.error('getDealsTop.parse2', 'results length:', results.length,
+									'item length:', item.length, 'jsontext:', jsontext);
 							}
 							cb(undefined, obj);
 						});
