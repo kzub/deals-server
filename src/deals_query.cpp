@@ -5,6 +5,11 @@ namespace deals {
 std::vector<i::DealInfo> DealsSearchQuery::execute() {
   pre_search();  // run in derived class
 
+  // filter out expired deals inside record, record has many elements with different ages,
+  // but record age equal max age of all elements inside it.  =/ rethink it later
+  min_timestamp = std::max(table.context.shm.global_expire_at - DEALS_EXPIRES,
+                           timing::getTimestampSec() - DEALS_EXPIRES);
+
   // table processor iterates table pages and call DealsSearchQuery::process_element()
   table.processRecords(*this);
 
@@ -25,9 +30,8 @@ std::vector<i::DealInfo> DealsSearchQuery::execute() {
 // function that will be called by TableProcessor
 // for iterating over all not expired pages in table
 void DealsSearchQuery::process_element(const i::DealInfo &deal) {
-  // check if not expired
-  if (deal.timestamp + DEALS_EXPIRES <=
-      table.context.shm.global_expire_at) {  // =( rethink it later
+  // check if not expired by now or data page was reused on lowMem (global_expire_at)
+  if (deal.timestamp <= min_timestamp) {
     return;
   }
 

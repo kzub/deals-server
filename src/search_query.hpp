@@ -46,6 +46,7 @@ class SearchQuery {
 
  protected:
   DateValue departure_return_max_duration = 0;
+  uint32_t min_timestamp = 0;
 
   bool filter_origin = false;
   uint32_t origin_value;
