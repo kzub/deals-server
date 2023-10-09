@@ -21,7 +21,7 @@ inline bool should_send(float sample_rate) {
     return true;
   }
 
-  float p = ((float)random() / RAND_MAX);
+  float p = ((float)random() / (float)RAND_MAX);
   return sample_rate > p;
 }
 
