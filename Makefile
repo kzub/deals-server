@@ -16,7 +16,7 @@ SRCEXT := cpp
 HEXT := hpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
-CFLAGS := -g -O3 -Wall -Werror -std=c++0x
+CFLAGS := -O3 -Wall -Werror -std=c++0x
 
 ifeq ($(UNAME), Linux)
 LIB :=  -L lib -lrt -pthread
